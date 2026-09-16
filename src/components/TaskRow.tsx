@@ -43,8 +43,6 @@ interface TaskRowProps {
   dragHandleProps?: Record<string, unknown>;
   /** Whether another task can be dropped onto this row to become its subtask. */
   nestable?: boolean;
-  /** Whether this list keeps its own order, so a drop on the row takes its place. */
-  reorderable?: boolean;
   /** Registers the row itself as the thing being dragged, for a subtask. */
   dragRef?: (node: HTMLElement | null) => void;
   /** The row is the one in flight. */
@@ -53,9 +51,9 @@ interface TaskRowProps {
 
 export function TaskRow({
   item, childrenOf, onOpen, depth = 0, showProject = true, dragHandleProps, nestable = false,
-  reorderable = false, dragRef, lifted = false,
+  dragRef, lifted = false,
 }: TaskRowProps) {
-  const { setRowRef, nestOver, landing } = useRowTarget(item.id, { nestable, reorderable });
+  const { setRowRef, nestOver, landing } = useRowTarget(item.id, { nestable });
   const { t, locale } = useT();
   const snapshot = useStore((s) => s.snapshot);
   const hour12 = useStore((s) => s.prefs.hour12);
@@ -264,9 +262,6 @@ export function TaskRow({
             depth={depth + 1}
             showProject={showProject}
             nestable={nestable}
-            /* Subtasks of one parent are a list of their own, in their own
-               order, wherever the list above them keeps one. */
-            reorderable={reorderable}
           />
         ))}
     </>

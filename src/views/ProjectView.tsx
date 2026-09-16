@@ -255,7 +255,7 @@ function ProjectBody({
             /* Only where the list is in the order you gave it: under any other
                sort a row dropped into another's place would be put straight
                back by the sort, which is a lie told with an animation. */
-            reorderable={current.sort === 'manual'}
+            reorderable={current.sort === 'manual' ? 'project' : undefined}
             /* A project with everything in sections still needs somewhere to
                put a task that belongs in none of them. */
             keepWhenEmpty
@@ -278,7 +278,7 @@ function ProjectBody({
               showProject={false}
               dropTarget={{ kind: 'section', sectionId: group.id, projectId }}
               onAddTask={() => onAddTaskTo({ projectId, sectionId: group.id })}
-              reorderable={current.sort === 'manual'}
+              reorderable={current.sort === 'manual' ? 'project' : undefined}
             />
             </Fragment>
           ))}

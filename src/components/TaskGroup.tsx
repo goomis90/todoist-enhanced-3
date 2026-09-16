@@ -3,7 +3,8 @@ import { useDraggable } from '@dnd-kit/core';
 import { Icon } from './Icon';
 import { DraggableTask } from './dnd/DraggableTask';
 import { Droppable } from './dnd/Droppable';
-import type { DropTarget } from '@/domain/dnd';
+import type { DropTarget, RowOrder } from '@/domain/dnd';
+import { RowListContext } from './dnd/RowList';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { formatDuration, effectiveEstimate } from '@/domain/estimates';
@@ -21,8 +22,11 @@ interface TaskGroupProps {
   defaultCollapsed?: boolean;
   /** Adds a task straight into this section. */
   onAddTask?: () => void;
-  /** The tasks here are in this list's own order, and can take each other's place. */
-  reorderable?: boolean;
+  /**
+   * Which of Todoist's orders this list is kept in, when a task can be dropped
+   * into a place in it. Left out, the rows take no drop of their own.
+   */
+  reorderable?: RowOrder;
   /** Stays on the page with nothing in it, so the line that fills it is there. */
   keepWhenEmpty?: boolean;
   /** An accent for the sections that carry meaning: late, and quick. */
@@ -38,7 +42,7 @@ interface TaskGroupProps {
 export function TaskGroup({
   title, items, childrenOf, onOpen, tint, actions,
   showProject = true, defaultCollapsed = false, dropTarget, onAddTask, accent,
-  sectionId, onRename, onDelete, reorderable = false, keepWhenEmpty = false,
+  sectionId, onRename, onDelete, reorderable, keepWhenEmpty = false,
 }: TaskGroupProps) {
   const { t, locale } = useT();
   const dragging = useStore((s) => s.draggingTaskId !== null);
@@ -126,7 +130,6 @@ export function TaskGroup({
             childrenOf={childrenOf}
             onOpen={onOpen}
             showProject={showProject}
-            reorderable={reorderable}
           />
         ))}
 
@@ -145,7 +148,17 @@ export function TaskGroup({
     </section>
   );
 
-  if (!dropTarget) return body(false);
+  /* Everything a row needs to answer a drop: how this list is numbered, what
+     is in it, and what the list itself means for a task arriving from
+     somewhere else. */
+  const list = reorderable
+    ? { order: reorderable, ids: items.map((item) => item.id), target: dropTarget }
+    : null;
+  const wrapped = (isOver: boolean) => (
+    <RowListContext.Provider value={list}>{body(isOver)}</RowListContext.Provider>
+  );
+
+  if (!dropTarget) return wrapped(false);
   /* Several sections can offer the same destination — Behind schedule, Quick
      and Today all mean "today" — and droppables sharing an id all report
      themselves as hovered at once. The title separates them. */
@@ -153,7 +166,7 @@ export function TaskGroup({
     <Droppable target={dropTarget} scope={`group:${sectionId ?? title ?? ''}`}>
       {/* A section being reordered passes over the groups too, and only the
           seams between them are its destinations. */}
-      {({ isOver }) => body(isOver && dragging)}
+      {({ isOver }) => wrapped(isOver && dragging)}
     </Droppable>
   );
 }

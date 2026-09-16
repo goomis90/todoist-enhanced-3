@@ -14,7 +14,7 @@ import { somedayItems, hasLabel } from '@/domain/views';
 import { summariseLoad } from '@/domain/load';
 import type { TranslationKey } from '@/i18n';
 import type { Item } from '@/domain/types';
-import type { DropTarget } from '@/domain/dnd';
+import type { DropTarget, RowOrder } from '@/domain/dnd';
 
 interface SimpleListViewProps {
   kind: 'someday' | 'inbox' | 'label';
@@ -63,9 +63,14 @@ function SimpleListBody({
      `ModeSurface` is what used to do the sorting: the sort in the display menu
      did nothing on these pages, and the order a task was put into could not
      show itself. */
+  /* The Inbox is one project and is numbered like one. Un jour and a tag page
+     gather tasks from every project, so they read the order Todoist keeps for
+     lists like that. */
+  const order: RowOrder = kind === 'inbox' ? 'project' : 'day';
+
   const ordered = useMemo(
-    () => sortItems(scoped, current.sort, childrenOf),
-    [scoped, current.sort, childrenOf],
+    () => sortItems(scoped, current.sort, childrenOf, order),
+    [scoped, current.sort, childrenOf, order],
   );
 
   const load = useMemo(
@@ -137,11 +142,7 @@ function SimpleListBody({
             dropTarget={dropTarget}
             onAddTask={() => onAddTaskTo(addition)}
             keepWhenEmpty
-            /* The Inbox is one project, so its list has an order of its own to
-               put a task into. Un jour and a tag page gather tasks from every
-               project, and Todoist counts an order inside one project only —
-               there is no line there for a row to take. */
-            reorderable={kind === 'inbox' && current.sort === 'manual'}
+            reorderable={current.sort === 'manual' ? order : undefined}
           />
         </div>
       ) : (
@@ -152,6 +153,7 @@ function SimpleListBody({
           group={current.group}
           sort={current.sort}
           onOpen={onOpen}
+          order={order}
           addToGroup={addToGroup}
         />
       )}
