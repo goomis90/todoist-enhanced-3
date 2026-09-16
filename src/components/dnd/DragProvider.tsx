@@ -10,8 +10,9 @@ import {
 } from '@/domain/dnd';
 import { siblingOrder } from '@/store/selectors';
 import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
-import { updateItem, moveItem, reorderItems } from '@/api/commands';
+import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
+import type { RowList } from './RowList';
 
 /**
  * Puts the preview under the pointer by its left edge rather than its centre.
@@ -275,8 +276,10 @@ export function DragProvider({ children }: { children: ReactNode }) {
     if (item && onRow && onRow !== item.id) {
       const row = snapshot.items[onRow];
       if (!row) return;
+      const list = (event.over.data.current as { list?: RowList } | undefined)?.list;
       if (nesting) await nestTask(item, row.id);
-      else await reorderTask(item, row);
+      else if (list?.order === 'day') await orderInList(item, row, list);
+      else if (list) await reorderTask(item, row);
       return;
     }
 
@@ -317,6 +320,71 @@ export function DragProvider({ children }: { children: ReactNode }) {
         : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
     toast(item.content, () => {
       void apply([undo], patch(before));
+    });
+  }
+
+  /**
+   * Dropped into a list that several projects feed: a week, a tag, everything
+   * put off.
+   *
+   * Their order cannot be `child_order`, which Todoist counts inside a single
+   * project — five projects on one page would each be counting from one. It is
+   * `day_order`, the number Todoist keeps for exactly these lists, so the order
+   * is written to Todoist like everything else here rather than into a corner
+   * of this app that only this browser can see.
+   *
+   * The list is also a place. A task dragged into it from another group means
+   * both things at once — this day, and here in it — so what the group would
+   * have done to a task dropped on it plainly is done first.
+   */
+  async function orderInList(item: Item, row: Item, list: RowList) {
+    const ids = [...list.ids];
+    const onto = ids.indexOf(row.id);
+    if (onto < 0) return;
+    const at = ids.indexOf(item.id);
+    if (at >= 0) ids.splice(onto, 0, ...ids.splice(at, 1));
+    else ids.splice(onto, 0, item.id);
+
+    const before = Object.fromEntries(
+      ids.filter((id) => snapshot.items[id]).map((id) => [id, snapshot.items[id].day_order]),
+    );
+    const after = Object.fromEntries(ids.map((id, index) => [id, index + 1]));
+
+    const mutation = list.target ? dropMutation(item, list.target) : null;
+    const was = {
+      due: item.due, labels: item.labels,
+      project_id: item.project_id, section_id: item.section_id,
+    };
+
+    const place = (
+      orders: Record<string, number>,
+      fields: Record<string, unknown>,
+    ) => (snap: typeof snapshot) => {
+      const items = { ...snap.items };
+      for (const [id, day_order] of Object.entries(orders)) {
+        if (items[id]) items[id] = { ...items[id], day_order };
+      }
+      if (items[item.id]) items[item.id] = { ...items[item.id], ...fields } as Item;
+      return { ...snap, items };
+    };
+
+    await apply(
+      [
+        ...(mutation?.update ? [updateItem(item.id, mutation.update)] : []),
+        ...(mutation?.move ? [moveItem(item.id, moveArgs(mutation.move))] : []),
+        updateDayOrders(after),
+      ],
+      place(after, mutation?.update ?? (mutation?.move ? { ...mutation.move, parent_id: null } : {})),
+    );
+
+    /* Only a task that changed lists is worth a toast: an order put back is
+       put back by looking at it. */
+    if (!mutation) return;
+    const undo = mutation.move
+      ? moveItem(item.id, moveArgs({ project_id: was.project_id, section_id: was.section_id }))
+      : updateItem(item.id, { due: was.due, labels: was.labels });
+    toast(item.content, () => {
+      void apply([undo, updateDayOrders(before)], place(before, was));
     });
   }
 

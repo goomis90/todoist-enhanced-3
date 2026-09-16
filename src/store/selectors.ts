@@ -6,6 +6,7 @@ import {
 import { estimateOf, effectiveEstimate } from '@/domain/estimates';
 import { dueDate } from '@/domain/dates';
 import { hasLabel, isOpen } from '@/domain/views';
+import type { RowOrder } from '@/domain/dnd';
 
 /** Index of parent id to its children, built once per snapshot. */
 export function childIndex(snapshot: Snapshot): Map<string, Item[]> {
@@ -84,10 +85,18 @@ export function countActiveFilters(filters: ViewFilters): number {
   return count;
 }
 
+/** Where a task sits in a hand-made order, or the end of it if it has no place yet. */
+const dayRank = (item: Item): number =>
+  (item.day_order > 0 ? item.day_order : Number.MAX_SAFE_INTEGER);
+
 export function sortItems(
   items: Item[],
   sort: SortKey,
   childrenOf: (id: string) => Item[],
+  /* Which number "manual" means here. A list of one project is numbered by
+     `child_order`; a list drawn from several can only be numbered by
+     `day_order`, and a task never put in place by hand has neither. */
+  order: RowOrder = 'project',
 ): Item[] {
   const copy = [...items];
   const estimate = (i: Item) => effectiveEstimate(i, childrenOf).minutes;
@@ -124,7 +133,9 @@ export function sortItems(
     }
     case 'manual':
     default:
-      return copy.sort((a, b) => a.child_order - b.child_order);
+      return order === 'day'
+        ? copy.sort((a, b) => dayRank(a) - dayRank(b) || a.child_order - b.child_order)
+        : copy.sort((a, b) => a.child_order - b.child_order);
   }
 }
 

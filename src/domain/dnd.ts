@@ -122,6 +122,16 @@ export const decodeRowTarget = (id: string): string | null =>
   (id.startsWith(ROW_PREFIX) ? id.slice(ROW_PREFIX.length) : null);
 
 /**
+ * How a list keeps the order its rows are dropped into.
+ *
+ * `project` is one project's own numbering, which is what Todoist counts and
+ * what a project page shows. `day` is the number Todoist keeps for the lists
+ * that cross projects — a week, a tag, everything you put off — because there
+ * is no other field that can hold an order across them.
+ */
+export type RowOrder = 'project' | 'day';
+
+/**
  * The tasks that share a place with this one, in the order they are drawn.
  *
  * Todoist counts `child_order` inside one container — a project, or a section
