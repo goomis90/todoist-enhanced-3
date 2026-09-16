@@ -667,8 +667,20 @@
   max-width:1160px;
 }
 
-/* A board keeps the same measure as every other view. It wraps its columns
-   onto a second row rather than asking the page to grow around it. */
+/* A board is not read line by line, so it runs to the edge of the workspace
+   instead of stopping at the reading measure. Only the board does: the title,
+   the figures and the controls above it are read, and they keep the measure
+   and the position they have on every other page. So the board starts on the
+   same left edge as they do and grows to the right, into space that was
+   empty. */
+.page:has(> .mode > .board) > .mode{
+  max-width:none;
+  margin-left:max(0px,(100% - 820px) / 2);
+  margin-right:0;
+}
+.page.wide:has(> .mode > .board) > .mode{
+  margin-left:max(0px,(100% - 1160px) / 2);
+}
 
 /* ---------- Behind schedule and Quick read as callouts ---------- */
 .group.accent-late,
@@ -739,8 +751,12 @@
   align-items:flex-start;
   scrollbar-width:thin;
 }
-/* Each column is wrapped by its drop zone, so the wrapper is the flex item. */
-.board > *{flex:0 0 min(272px,80vw);min-width:0;scroll-snap-align:start}
+/* Each column is wrapped by its drop zone, so the wrapper is the flex item.
+   A column takes its share of whatever width the board has, down to 272px and
+   no further — below that a title stops being readable, and past 420px a
+   column stops reading as a column. Grow, never shrink: seven days across a
+   laptop still scroll rather than being squeezed into slivers. */
+.board > *{flex:1 0 min(272px,80vw);max-width:420px;min-width:0;scroll-snap-align:start}
 .col{max-width:none;max-height:none}
 /* The arrows sit above the board on the right, and only when there is
    somewhere to go. */

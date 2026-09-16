@@ -131,7 +131,8 @@ function BoardSurface(props: ModeSurfaceProps) {
   if (columns.length === 0) return <p className="empty">{t('task.noTasks')}</p>;
 
   return (
-    /* The same measure as the list: columns share the page's width and edges. */
+    /* A board runs past the reading measure, to the right; what is read
+       above it does not. */
     <div className="mode">
       {(reach.left || reach.right) && (
         <div className="boardnav">
