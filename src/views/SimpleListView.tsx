@@ -14,6 +14,7 @@ import { somedayItems, hasLabel } from '@/domain/views';
 import { summariseLoad } from '@/domain/load';
 import type { TranslationKey } from '@/i18n';
 import type { Item } from '@/domain/types';
+import type { DropTarget } from '@/domain/dnd';
 
 interface SimpleListViewProps {
   kind: 'someday' | 'inbox' | 'label';
@@ -21,7 +22,9 @@ interface SimpleListViewProps {
   onOpen: (id: string) => void;
   onInsights: () => void;
   onUnestimated: () => void;
-  onAddTaskTo: (placement: { projectId?: string; sectionId?: string; date?: string }) => void;
+  onAddTaskTo: (placement: {
+    projectId?: string; sectionId?: string; date?: string; labels?: string[];
+  }) => void;
 }
 
 /**
@@ -63,6 +66,20 @@ function SimpleListBody({
 
   const title = kind === 'label' ? (labelName ?? '') : t(`nav.${kind}` as TranslationKey);
 
+  /* What this page is, said twice: as the place a dropped task lands, and as
+     the head start the composer opens with. */
+  const inboxId = snapshot.user?.inbox_project_id;
+  const dropTarget: DropTarget | undefined = kind === 'someday'
+    ? { kind: 'someday' }
+    : kind === 'inbox'
+      ? (inboxId ? { kind: 'project', projectId: inboxId } : undefined)
+      : (labelName ? { kind: 'label', label: labelName } : undefined);
+  const addition = kind === 'someday'
+    ? {}
+    : kind === 'inbox'
+      ? { projectId: inboxId }
+      : { labels: labelName ? [labelName] : [] };
+
   return (
     <div className="page">
       <PageHeader
@@ -85,14 +102,19 @@ function SimpleListBody({
       />
 
 
-      {kind === 'someday' && current.mode === 'list' && current.group === 'none' ? (
+      {current.mode === 'list' && current.group === 'none' ? (
+        /* One flat list is one place, so it is a group of its own rather than
+           a grouping of one: somewhere to drop a task, and a standing line to
+           add one that already belongs here — in the Inbox, in the project;
+           on a tag page, with the tag on. */
         <div className="mode">
           <TaskGroup
             items={scoped}
             childrenOf={childrenOf}
             onOpen={onOpen}
-            dropTarget={{ kind: 'someday' }}
-            onAddTask={() => onAddTaskTo({})}
+            dropTarget={dropTarget}
+            onAddTask={() => onAddTaskTo(addition)}
+            keepWhenEmpty
           />
         </div>
       ) : (
