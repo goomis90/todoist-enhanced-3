@@ -24,6 +24,8 @@ interface ComposerProps {
   defaultSectionId?: string;
   /** Pre-filled date when the task is added from a dated section. */
   defaultDate?: string;
+  /** Pre-filled tags, for a page that is one tag. */
+  defaultLabels?: string[];
 }
 
 /**
@@ -34,7 +36,7 @@ interface ComposerProps {
  * priority, tags and the estimate all sit on the row below.
  */
 export function Composer({
-  open, onClose, defaultProjectId, defaultSectionId, defaultDate,
+  open, onClose, defaultProjectId, defaultSectionId, defaultDate, defaultLabels,
 }: ComposerProps) {
   const { t } = useT();
   const snapshot = useStore((s) => s.snapshot);
@@ -62,7 +64,7 @@ export function Composer({
     setName('');
     setDescription('');
     setPriority(4);
-    setLabels([]);
+    setLabels(defaultLabels ?? []);
     setMinutes(null);
     setTagsOpen(false);
     setSubtasks([]);
@@ -73,7 +75,10 @@ export function Composer({
     setDate(defaultDate ?? '');
     setRecurrence(null);
     setDeadline('');
-  }, [open, defaultProjectId, defaultSectionId, defaultDate, snapshot.user?.inbox_project_id]);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps -- the array is
+       built fresh by the caller on every render; its contents are the dep. */
+  }, [open, defaultProjectId, defaultSectionId, defaultDate, defaultLabels?.join('\u0000'),
+    snapshot.user?.inbox_project_id]);
 
   const tags = Object.values(snapshot.labels)
     .filter((l) => !l.is_deleted && !l.name.startsWith('est-'))

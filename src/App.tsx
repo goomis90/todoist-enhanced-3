@@ -245,6 +245,7 @@ export interface ComposerPlacement {
   projectId?: string;
   sectionId?: string;
   date?: string;
+  labels?: string[];
 }
 
 /**
@@ -540,6 +541,7 @@ function AppShell({
         defaultProjectId={placement.projectId}
         defaultSectionId={placement.sectionId}
         defaultDate={placement.date}
+        defaultLabels={placement.labels}
       />
       <TaskDetail
         taskId={openTaskId}
