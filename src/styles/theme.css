@@ -663,19 +663,18 @@
   max-width:1160px;
 }
 
-/* A board is not read line by line, so it runs to the edge of the workspace
-   instead of stopping at the reading measure. Only the board does: the title,
-   the figures and the controls above it are read, and they keep the measure
-   and the position they have on every other page. So the board starts on the
-   same left edge as they do and grows to the right, into space that was
-   empty. */
+/* A board is not read line by line, so it takes the whole page rather than the
+   reading measure. Only the board does: the title, the figures and the
+   controls above it are read, and they keep the measure and the centring they
+   have on every other page.
+
+   It is the whole page and not "from the title's left edge rightwards", which
+   is what this was first: on a laptop that bought about forty pixels, which is
+   no wider than before by the only measure that counts. */
 .page:has(> .mode > .board) > .mode{
   max-width:none;
-  margin-left:max(0px,(100% - 820px) / 2);
+  margin-left:0;
   margin-right:0;
-}
-.page.wide:has(> .mode > .board) > .mode{
-  margin-left:max(0px,(100% - 1160px) / 2);
 }
 
 /* ---------- Behind schedule and Quick read as callouts ---------- */
