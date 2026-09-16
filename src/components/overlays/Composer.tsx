@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Overlay } from './Overlay';
 import { Icon } from '../Icon';
 import { EstimateField } from '../EstimateField';
+import { PlacementField } from '../PlacementField';
 import { Select } from '../Select';
 import { DateField } from '../DateField';
 import { TaskNameField } from '../TaskNameField';
@@ -74,14 +75,6 @@ export function Composer({
     setDeadline('');
   }, [open, defaultProjectId, defaultSectionId, defaultDate, snapshot.user?.inbox_project_id]);
 
-  const projects = Object.values(snapshot.projects)
-    .filter((p) => !p.is_archived && !p.is_deleted && !p.is_folder)
-    .sort((a, b) => a.child_order - b.child_order);
-
-  const sections = Object.values(snapshot.sections)
-    .filter((s) => s.project_id === projectId && !s.is_archived && !s.is_deleted)
-    .sort((a, b) => a.section_order - b.section_order);
-
   const tags = Object.values(snapshot.labels)
     .filter((l) => !l.is_deleted && !l.name.startsWith('est-'))
     .sort((a, b) => a.item_order - b.item_order);
@@ -148,7 +141,7 @@ export function Composer({
   /* The section follows the project it was named with. It watches both, so
      naming a project on its own clears a section belonging to the last one —
      and it does not re-run while the rest of the name is typed, which is what
-     lets a section chosen by hand in the field below stand. */
+     lets a section chosen by hand in the field stand. */
   useEffect(() => {
     if (readProject) setSectionId(readSection ?? '');
   }, [readProject, readSection, refusals]);
@@ -256,37 +249,19 @@ export function Composer({
             <DateField value={deadline} onChange={setDeadline} label={t('detail.deadline')} />
           </span>
 
-          {/* The Inbox is a project like any other and is already in this list.
-              It used to be offered a second time above it, as an empty value,
-              and that first one could not create anything. */}
+          {/* One field for both: a section is a place, not a setting applied
+              to the project chosen in the field before it. The Inbox is a
+              project like any other and is already in this list. */}
           <span className="cfield">
-            <Select
+            <PlacementField
               label={t('composer.project')}
-              value={projectId}
-              ariaLabel={t('composer.project')}
-              onChange={(next) => { setProjectId(next); setSectionId(''); }}
-              options={projects.map((p) => ({
-                value: p.id,
-                label: p.inbox_project ? t('nav.inbox') : p.name,
-                marker: p.color,
-              }))}
+              value={{ projectId, sectionId: sectionId || null }}
+              onChange={(place) => {
+                setProjectId(place.projectId);
+                setSectionId(place.sectionId ?? '');
+              }}
             />
           </span>
-
-          {sections.length > 0 && (
-            <span className="cfield">
-              <Select
-                label={t('detail.section')}
-                value={sectionId}
-                ariaLabel={t('detail.section')}
-                onChange={setSectionId}
-                options={[
-                  { value: '', label: t('group.noSection') },
-                  ...sections.map((s) => ({ value: s.id, label: s.name })),
-                ]}
-              />
-            </span>
-          )}
 
           <span className="cfield">
             <Select

@@ -1948,6 +1948,11 @@
 .listbox .opt.active{background:var(--hover)}
 .listbox .opt[aria-selected="true"]{color:var(--accent-dark);font-weight:600}
 .listbox .opt[aria-selected="true"] > .ic{color:var(--accent);margin-left:auto}
+/* A section is listed under the project it belongs to, indented and quieter,
+   the way the row's move menu lists the same places. */
+.listbox .opt.sectionopt{padding-left:22px}
+.listbox .opt.sectionopt .listbox-label{color:var(--muted)}
+.listbox .opt.sectionopt .ic{color:var(--faint)}
 
 /* ---------- The calendar ---------- */
 .datefield{display:grid;gap:4px;min-width:0}

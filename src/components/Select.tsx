@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { markerStyle } from '@/domain/colors';
 
 export interface SelectOption {
@@ -8,6 +8,12 @@ export interface SelectOption {
   label: string;
   /** A Todoist colour name, drawn as the project marker beside the label. */
   marker?: string;
+  /** Drawn in place of a marker, where the option is not a project. */
+  icon?: IconName;
+  /** Indented under the option above it, as a section is under its project. */
+  sub?: boolean;
+  /** What the face says once this is chosen, when the label alone would not place it. */
+  face?: string;
 }
 
 interface SelectProps {
@@ -164,10 +170,11 @@ export function Select({
           role="option"
           aria-selected={option.value === value}
           data-active={at === active || undefined}
-          className={`opt${at === active ? ' active' : ''}`}
+          className={`opt${at === active ? ' active' : ''}${option.sub ? ' sectionopt' : ''}`}
           onMouseEnter={() => setActive(at)}
           onMouseDown={(event) => { event.preventDefault(); choose(at); }}
         >
+          {option.icon && <Icon name={option.icon} size="sm" />}
           {option.marker !== undefined && (
             <span className="hash" style={markerStyle(option.marker)}>#</span>
           )}
@@ -191,10 +198,11 @@ export function Select({
         onClick={() => setOpen((v) => !v)}
         onKeyDown={onKeyDown}
       >
+        {current?.icon && <Icon name={current.icon} size="sm" />}
         {current?.marker !== undefined && (
           <span className="hash" style={markerStyle(current.marker)}>#</span>
         )}
-        <span className="fselect-value">{current?.label ?? placeholder ?? ''}</span>
+        <span className="fselect-value">{current?.face ?? current?.label ?? placeholder ?? ''}</span>
         <Icon name="caret" size="sm" />
       </button>
       {list && createPortal(list, document.body)}
