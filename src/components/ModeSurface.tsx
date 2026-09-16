@@ -131,7 +131,8 @@ function BoardSurface(props: ModeSurfaceProps) {
   if (columns.length === 0) return <p className="empty">{t('task.noTasks')}</p>;
 
   return (
-    /* A board takes the whole workspace rather than the reading measure. */
+    /* A board runs past the reading measure, to the right; what is read
+       above it does not. */
     <div className="mode">
       {(reach.left || reach.right) && (
         <div className="boardnav">
