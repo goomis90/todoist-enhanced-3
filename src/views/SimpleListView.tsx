@@ -128,6 +128,11 @@ function SimpleListBody({
             dropTarget={dropTarget}
             onAddTask={() => onAddTaskTo(addition)}
             keepWhenEmpty
+            /* The Inbox is one project, so its list has an order of its own to
+               put a task into. Un jour and a tag page gather tasks from every
+               project, and Todoist counts an order inside one project only —
+               there is no line there for a row to take. */
+            reorderable={kind === 'inbox' && current.sort === 'manual'}
           />
         </div>
       ) : (
