@@ -6,6 +6,76 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.6.0
+
+Dragging a task says three things instead of one, a list can be put in the
+order you want it in, and where a task lives is asked once.
+
+🆕 **A task can be put inside another one.** Drag a row a little to the
+right over another and an indented line says it will land inside it — the same
+line, in the same place, that the sidebar draws when a project is about to go
+inside another. Todoist keeps four levels of subtasks, so a row that would push
+a task past that simply does not take the drop. Board cards are left alone:
+they get dragged sideways all day and a drift to the right there means nothing.
+
+🆕 **And taken back out.** Drag a subtask out to the left and it becomes
+a task of its own, where it already lives. The row's menu offers the same thing
+in words, because a gesture nobody has been told about is not a way out of
+anything.
+
+🆕 **A list can be put in the order you want it in.** Drop a task
+straight onto a row and it takes that row's place. In a project and in the
+Inbox that is Todoist's own numbering inside a project. In My week, Upcoming,
+a tag page and Un jour — lists drawn from every project at once, where that
+numbering cannot say anything — it is `day_order`, the number Todoist keeps for
+exactly those lists and reads in its own Today view. Either way the order is in
+Todoist, not in a corner of this app that only this browser can see. A task
+dragged into a list from another group gets both things at once: the day, or
+the tag, and the place in it.
+
+🆕 **"Add task" stands where a task would go.** At the end of every
+section, at the top of a project above its first section, at the foot of every
+board column, and on the Inbox, Un jour and tag pages. It used to appear only
+under the pointer, at the same moment as the "add section" line below it, so
+the two traded places as you moved. A column offers it when the column is a
+place: a project column adds to that project, a tag column adds with that tag.
+On a tag page it opens with the tag already on.
+
+🆕 **A project and its sections are one field.** Creating a task asked
+for a project and then grew a second field for a section belonging to it — two
+decisions for one question. One list now, sections indented under the project
+they are in, exactly as the row's move menu has always shown them. The task
+panel has the same field, where the section could not be set at all.
+
+🎨 **A board takes the whole page.** It used to stop at the width a
+paragraph is read in and scroll sideways with empty space on both sides. The
+columns take their share of it too, between 272 and 420 pixels, so three
+sections fill a laptop instead of huddling on the left. What is read above the
+board — the title, the figures, the controls — keeps the measure and the
+position it has on every other page.
+
+🎨 **The preview under the pointer is a card.** It had no style of its
+own at all: sixteen-pixel text as wide as the page, floating on nothing.
+
+🎨 **The drag handle lines up with the checkbox** rather than with the
+middle of the row, so a task with a description no longer holds its handle
+somewhere below its own title.
+
+🐛 **The task panel really moves a task.** Its project picker wrote
+`project_id` through `item_update`, which takes neither a project nor a section
+— only `item_move` does. The task moved on screen and stayed where it was on
+Todoist until the next sync put it back. A move now settles what it does not
+carry: a task sent to a project leaves the section it was in, a task sent to a
+section joins that section's project.
+
+🐛 **The sort on the Inbox, Un jour and a tag page does something.**
+Those pages are drawn without the part of the app that sorts, so the control in
+their Display menu had never once changed the order of anything.
+
+🐛 **The count on Display can be read in the dark theme.** It was white
+on `--text`, which is nearly white there. So was the toast, undo button
+included — the one thing in the app you have to be able to read in a hurry.
+
 ## 1.5.0
 
 Reading a task's name: a guess you can turn down, an hour you can name, and a
