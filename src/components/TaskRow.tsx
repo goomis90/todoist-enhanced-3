@@ -268,8 +268,13 @@ export function TaskRow({
   );
 }
 
-/** Prefixes the id a subtask row is picked up by. */
-export const SUBTASK_DRAG_PREFIX = 'sub:';
+/**
+ * Prefixes the id a subtask row is picked up by.
+ *
+ * Deliberately not `sub:`, which is a prefix of the `subtask:` the task panel
+ * gives its own rows: every test for one would answer true for the other.
+ */
+export const SUBTASK_DRAG_PREFIX = 'subrow:';
 
 /**
  * A subtask that can be picked up by its handle.

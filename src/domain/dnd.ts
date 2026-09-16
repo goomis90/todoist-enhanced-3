@@ -131,15 +131,40 @@ function depthOf(items: Record<string, Item>, id: string): number {
   return depth;
 }
 
+/**
+ * The open subtasks of every task, built once per snapshot.
+ *
+ * Every row on screen asks `canNest` the same question the moment a drag
+ * crosses the indent threshold, and reading the depth below a task by walking
+ * the whole snapshot made that a scan of every task for every row. The
+ * snapshot is replaced rather than edited, so a new one builds a new index and
+ * the old one is collected with it.
+ */
+const childIndexes = new WeakMap<Record<string, Item>, Map<string, Item[]>>();
+
+function childrenIndex(items: Record<string, Item>): Map<string, Item[]> {
+  const cached = childIndexes.get(items);
+  if (cached) return cached;
+  const index = new Map<string, Item[]>();
+  for (const item of Object.values(items)) {
+    if (!item.parent_id || item.is_deleted) continue;
+    const siblings = index.get(item.parent_id);
+    if (siblings) siblings.push(item);
+    else index.set(item.parent_id, [item]);
+  }
+  childIndexes.set(items, index);
+  return index;
+}
+
 /** How many levels of open subtasks hang below a task; 0 for none. */
 function heightOf(items: Record<string, Item>, id: string): number {
-  let height = 0;
-  for (const other of Object.values(items)) {
-    if (other.parent_id === id && !other.is_deleted) {
-      height = Math.max(height, 1 + heightOf(items, other.id));
-    }
-  }
-  return height;
+  const index = childrenIndex(items);
+  const below = (parentId: string): number => {
+    let height = 0;
+    for (const child of index.get(parentId) ?? []) height = Math.max(height, 1 + below(child.id));
+    return height;
+  };
+  return below(id);
 }
 
 /**

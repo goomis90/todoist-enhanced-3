@@ -11,11 +11,13 @@ import { canNest, nestTargetId } from '@/domain/dnd';
  * falling through to the group would move the task somewhere nobody aimed.
  */
 export function useNestTarget(itemId: string, enabled: boolean) {
-  const nesting = useStore((s) => s.nesting);
+  /* Both answers are read from the state itself rather than one out of the
+     other, so neither of them is a render behind the drag. */
   const open = useStore((s) => enabled && s.nesting && s.draggingTaskId !== null);
   const allowed = useStore((s) => (
-    open && s.draggingTaskId !== null && canNest(s.snapshot.items, s.draggingTaskId, itemId)
+    enabled && s.nesting && s.draggingTaskId !== null
+      && canNest(s.snapshot.items, s.draggingTaskId, itemId)
   ));
   const { setNodeRef, isOver } = useDroppable({ id: nestTargetId(itemId), disabled: !open });
-  return { setNestRef: setNodeRef, nestOver: isOver && nesting && allowed };
+  return { setNestRef: setNodeRef, nestOver: isOver && allowed };
 }

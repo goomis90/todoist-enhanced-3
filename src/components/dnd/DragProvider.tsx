@@ -122,7 +122,8 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const setNesting = useStore((s) => s.setNesting);
   const setDraggingProject = useStore((s) => s.setDraggingProject);
   /** A subtask pulled out to the left: on release it becomes a task of its own. */
-  const [outdenting, setOutdenting] = useState(false);
+  const outdenting = useStore((s) => s.outdenting);
+  const setOutdenting = useStore((s) => s.setOutdenting);
 
   // A short distance threshold keeps a plain click on a task from starting a drag.
   const sensors = useSensors(
@@ -158,7 +159,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     setDraggingId(null);
     setDragging(null);
     setDraggingSection(null);
-    const nesting = useStore.getState().nesting;
+    const { nesting, outdenting: pulledOut } = useStore.getState();
     setNesting(false);
     setOutdenting(false);
     setDraggingProject(null);
@@ -166,7 +167,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     /* Pulled out to the left, a subtask leaves its parent and stays where it
        is otherwise: same project, same section, now at the top level. The
        pointer may well be over nothing by then, so this comes first. */
-    if (activeId.startsWith(SUBTASK_DRAG_PREFIX) && outdenting) {
+    if (activeId.startsWith(SUBTASK_DRAG_PREFIX) && pulledOut) {
       const sub = snapshot.items[taskIdOf(activeId)];
       if (sub?.parent_id && !(event.over && decodeNestTarget(String(event.over.id)))) {
         await promoteTask(sub);

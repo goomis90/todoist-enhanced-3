@@ -247,9 +247,12 @@ interface AppState {
   /** Runs one particular entry, by id, and takes it off the stack. */
   consumeUndo: (id: string) => Promise<void>;
   setDragging: (id: string | null) => void;
-  /** True while a dragged sidebar project would nest rather than reorder. */
+  /** True while a dragged sidebar project or task would nest rather than reorder. */
   nesting: boolean;
   setNesting: (nesting: boolean) => void;
+  /** True while a dragged subtask has been pulled out far enough to leave its parent. */
+  outdenting: boolean;
+  setOutdenting: (outdenting: boolean) => void;
   /** The sidebar project in flight, so folders can offer themselves. */
   draggingProjectId: string | null;
   setDraggingProject: (id: string | null) => void;
@@ -315,6 +318,7 @@ export const useStore = create<AppState>((set, get) => ({
   draggingTaskId: null,
   draggingSectionId: null,
   nesting: false,
+  outdenting: false,
   draggingProjectId: null,
   selection: [],
   demo: false,
@@ -1418,6 +1422,10 @@ export const useStore = create<AppState>((set, get) => ({
 
   setNesting(nesting) {
     if (get().nesting !== nesting) set({ nesting });
+  },
+
+  setOutdenting(outdenting) {
+    if (get().outdenting !== outdenting) set({ outdenting });
   },
 
   setDraggingProject(id) {
