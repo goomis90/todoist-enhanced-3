@@ -196,6 +196,7 @@ export const en = {
   'task.subtaskProgress': '{done}/{total}',
   'task.deadline': 'Deadline {date}',
   'task.noTasks': 'Nothing to show here.',
+  'task.unnest': 'Make it a task of its own',
   'task.openInTodoist': 'Open in Todoist',
   'task.duplicate': 'Duplicate',
   'task.delete': 'Delete',

@@ -1,7 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './Icon';
-import { useNestTarget } from './dnd/useNestTarget';
+import { useRowTarget } from './dnd/useRowTarget';
 import { TaskActions } from './TaskActions';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
@@ -43,6 +43,8 @@ interface TaskRowProps {
   dragHandleProps?: Record<string, unknown>;
   /** Whether another task can be dropped onto this row to become its subtask. */
   nestable?: boolean;
+  /** Whether this list keeps its own order, so a drop on the row takes its place. */
+  reorderable?: boolean;
   /** Registers the row itself as the thing being dragged, for a subtask. */
   dragRef?: (node: HTMLElement | null) => void;
   /** The row is the one in flight. */
@@ -51,9 +53,9 @@ interface TaskRowProps {
 
 export function TaskRow({
   item, childrenOf, onOpen, depth = 0, showProject = true, dragHandleProps, nestable = false,
-  dragRef, lifted = false,
+  reorderable = false, dragRef, lifted = false,
 }: TaskRowProps) {
-  const { setNestRef, nestOver } = useNestTarget(item.id, nestable);
+  const { setRowRef, nestOver, landing } = useRowTarget(item.id, { nestable, reorderable });
   const { t, locale } = useT();
   const snapshot = useStore((s) => s.snapshot);
   const hour12 = useStore((s) => s.prefs.hour12);
@@ -104,8 +106,8 @@ export function TaskRow({
   return (
     <>
       <div
-        ref={(node) => { setNestRef(node); dragRef?.(node); }}
-        className={`task${settling ? ' done settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${lifted ? ' dragging' : ''}`}
+        ref={(node) => { setRowRef(node); dragRef?.(node); }}
+        className={`task${settling ? ' done settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}`}
         role="button"
         tabIndex={0}
         /* The tour lights up a parent together with the children under it,
@@ -262,6 +264,9 @@ export function TaskRow({
             depth={depth + 1}
             showProject={showProject}
             nestable={nestable}
+            /* Subtasks of one parent are a list of their own, in their own
+               order, wherever the list above them keeps one. */
+            reorderable={reorderable}
           />
         ))}
     </>

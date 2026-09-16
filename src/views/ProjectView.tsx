@@ -247,6 +247,10 @@ function ProjectBody({
             showProject={false}
             dropTarget={{ kind: 'section', sectionId: null, projectId }}
             onAddTask={() => onAddTaskTo({ projectId })}
+            /* Only where the list is in the order you gave it: under any other
+               sort a row dropped into another's place would be put straight
+               back by the sort, which is a lie told with an animation. */
+            reorderable={current.sort === 'manual'}
           />
           {sectionGroups.map((group, index) => (
             <Fragment key={group.id}>
@@ -266,6 +270,7 @@ function ProjectBody({
               showProject={false}
               dropTarget={{ kind: 'section', sectionId: group.id, projectId }}
               onAddTask={() => onAddTaskTo({ projectId, sectionId: group.id })}
+              reorderable={current.sort === 'manual'}
             />
             </Fragment>
           ))}

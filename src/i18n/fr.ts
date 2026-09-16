@@ -198,6 +198,7 @@ export const fr: Record<TranslationKey, string> = {
   'task.subtaskProgress': '{done}/{total}',
   'task.deadline': 'Échéance {date}',
   'task.noTasks': 'Rien à afficher ici.',
+  'task.unnest': 'En faire une tâche à part entière',
   'task.openInTodoist': 'Ouvrir dans Todoist',
   'task.duplicate': 'Dupliquer',
   'task.delete': 'Supprimer',

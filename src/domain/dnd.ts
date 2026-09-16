@@ -107,16 +107,36 @@ export function dropMutation(item: Item, target: DropTarget): DropMutation | nul
 }
 
 /**
- * The droppable id of a task row that accepts another task as its subtask.
+ * The droppable id of a task row that another task can be dropped onto.
  *
- * Kept apart from `DropTarget`: nesting is not a destination with a mutation
- * of its own but a change of parent, and it needs the parent row to find the
- * project and section the task follows it into.
+ * One target, two readings, told apart by direction the way the sidebar tells
+ * them apart: straight down the list the task takes that row's position, out
+ * to the right it goes inside it. Kept apart from `DropTarget` because neither
+ * is a destination with a mutation of its own — both need the row itself, one
+ * for its place among its siblings and the other for the project and section
+ * the task follows it into.
  */
-const NEST_PREFIX = 'nest:';
-export const nestTargetId = (itemId: string): string => `${NEST_PREFIX}${itemId}`;
-export const decodeNestTarget = (id: string): string | null =>
-  id.startsWith(NEST_PREFIX) ? id.slice(NEST_PREFIX.length) : null;
+const ROW_PREFIX = 'row:';
+export const rowTargetId = (itemId: string): string => `${ROW_PREFIX}${itemId}`;
+export const decodeRowTarget = (id: string): string | null =>
+  (id.startsWith(ROW_PREFIX) ? id.slice(ROW_PREFIX.length) : null);
+
+/**
+ * The tasks that share a place with this one, in the order they are drawn.
+ *
+ * Todoist counts `child_order` inside one container — a project, or a section
+ * of it, or a parent task — so those are the tasks a reorder can renumber, and
+ * a task dropped in from anywhere else has to join the container first.
+ */
+export function siblingTasks(items: Record<string, Item>, of: Item): string[] {
+  return Object.values(items)
+    .filter((other) => !other.is_deleted
+      && other.project_id === of.project_id
+      && (other.section_id ?? null) === (of.section_id ?? null)
+      && (other.parent_id ?? null) === (of.parent_id ?? null))
+    .sort((a, b) => a.child_order - b.child_order)
+    .map((other) => other.id);
+}
 
 /**
  * How many levels of subtasks Todoist keeps under a task. It refuses a move

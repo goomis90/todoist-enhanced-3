@@ -21,6 +21,8 @@ interface TaskGroupProps {
   defaultCollapsed?: boolean;
   /** Adds a task straight into this section. */
   onAddTask?: () => void;
+  /** The tasks here are in this list's own order, and can take each other's place. */
+  reorderable?: boolean;
   /** An accent for the sections that carry meaning: late, and quick. */
   accent?: 'late' | 'quick';
   /** When set, the whole group accepts tasks dropped onto it. */
@@ -34,7 +36,7 @@ interface TaskGroupProps {
 export function TaskGroup({
   title, items, childrenOf, onOpen, tint, actions,
   showProject = true, defaultCollapsed = false, dropTarget, onAddTask, accent,
-  sectionId, onRename, onDelete,
+  sectionId, onRename, onDelete, reorderable = false,
 }: TaskGroupProps) {
   const { t, locale } = useT();
   const dragging = useStore((s) => s.draggingTaskId !== null);
@@ -121,6 +123,7 @@ export function TaskGroup({
             childrenOf={childrenOf}
             onOpen={onOpen}
             showProject={showProject}
+            reorderable={reorderable}
           />
         ))}
 

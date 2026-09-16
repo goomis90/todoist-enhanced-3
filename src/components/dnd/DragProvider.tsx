@@ -1,14 +1,17 @@
 import { useState, type ReactNode } from 'react';
 import {
   DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors,
-  type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragStartEvent,
+  type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragOverEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import type { Modifier } from '@dnd-kit/core';
 import { useStore } from '@/store/store';
-import { canNest, decodeNestTarget, decodeTarget, dropMutation, moveArgs } from '@/domain/dnd';
+import {
+  canNest, decodeRowTarget, decodeTarget, dropMutation, moveArgs, siblingTasks,
+} from '@/domain/dnd';
 import { siblingOrder } from '@/store/selectors';
 import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
-import { updateItem, moveItem } from '@/api/commands';
+import { updateItem, moveItem, reorderItems } from '@/api/commands';
 import type { Item } from '@/domain/types';
 
 /**
@@ -71,11 +74,31 @@ const collisionsForKind: CollisionDetection = (args) => {
   const hits = pointerWithin(args).filter(
     (collision) => accepted.includes(dropKind(String(collision.id))),
   );
-  /* A row that takes a subtask lies inside the droppable of its group, so the
-     pointer is within both; the row is the narrower, deliberate answer. */
-  const rows = hits.filter((c) => decodeNestTarget(String(c.id)) !== null);
-  return rows.length ? rows : hits;
+  /* A row lies inside the droppable of its group, so the pointer is within
+     both; the row is the narrower, deliberate answer. */
+  const rows = hits.filter((c) => decodeRowTarget(String(c.id)) !== null);
+  if (rows.length) return rows;
+
+  /* A row is picked up by a handle drawn outside it, in the gutter, so a task
+     dragged straight down the list is carried by a pointer that is beside
+     every row and inside none of them — and the list it is being reordered in
+     could never see it. Each row answers for its own gutter. */
+  const pointer = args.pointerCoordinates;
+  if (pointer && accepted.includes('target')) {
+    const beside = args.droppableContainers.filter((container) => {
+      if (decodeRowTarget(String(container.id)) === null) return false;
+      const rect = args.droppableRects.get(container.id);
+      return rect !== undefined
+        && pointer.y >= rect.top && pointer.y <= rect.top + rect.height
+        && pointer.x >= rect.left - HANDLE_GUTTER_PX && pointer.x <= rect.left + rect.width;
+    });
+    if (beside.length) return beside.map((container) => ({ id: container.id }));
+  }
+  return hits;
 };
+
+/** How far to the left of a row its own drag handle is drawn. */
+const HANDLE_GUTTER_PX = 36;
 
 /**
  * When the last drag ended, for the click that a browser fires on a drop.
@@ -121,9 +144,14 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const nestProject = useStore((s) => s.nestProject);
   const setNesting = useStore((s) => s.setNesting);
   const setDraggingProject = useStore((s) => s.setDraggingProject);
+  const nestingNow = useStore((s) => s.nesting);
   /** A subtask pulled out to the left: on release it becomes a task of its own. */
   const outdenting = useStore((s) => s.outdenting);
   const setOutdenting = useStore((s) => s.setOutdenting);
+  /* Whether the pointer is on a row, which is all the preview needs to know to
+     say what the drop would mean. Nothing reads it when the drag ends, so it
+     stays here rather than joining the flags in the store. */
+  const [onRow, setOnRow] = useState(false);
 
   // A short distance threshold keeps a plain click on a task from starting a drag.
   const sensors = useSensors(
@@ -153,6 +181,10 @@ export function DragProvider({ children }: { children: ReactNode }) {
     setOutdenting(id.startsWith(SUBTASK_DRAG_PREFIX) && event.delta.x <= -NEST_THRESHOLD_PX);
   }
 
+  function onDragOver(event: DragOverEvent) {
+    setOnRow(decodeRowTarget(String(event.over?.id ?? '')) !== null);
+  }
+
   async function onDragEnd(event: DragEndEvent) {
     const activeId = String(event.active.id);
     dragClock.endedAt = Date.now();
@@ -162,6 +194,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const { nesting, outdenting: pulledOut } = useStore.getState();
     setNesting(false);
     setOutdenting(false);
+    setOnRow(false);
     setDraggingProject(null);
 
     /* Pulled out to the left, a subtask leaves its parent and stays where it
@@ -169,7 +202,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
        pointer may well be over nothing by then, so this comes first. */
     if (activeId.startsWith(SUBTASK_DRAG_PREFIX) && pulledOut) {
       const sub = snapshot.items[taskIdOf(activeId)];
-      if (sub?.parent_id && !(event.over && decodeNestTarget(String(event.over.id)))) {
+      if (sub?.parent_id && !(event.over && decodeRowTarget(String(event.over.id)))) {
         await promoteTask(sub);
         return;
       }
@@ -247,9 +280,14 @@ export function DragProvider({ children }: { children: ReactNode }) {
     }
 
     const item = snapshot.items[taskIdOf(activeId)];
-    const parentId = decodeNestTarget(String(event.over.id));
-    if (item && parentId) {
-      await nestTask(item, parentId);
+    /* One row, the two readings of it. Out to the right the task goes inside
+       the row; straight onto it, the task takes its place. */
+    const onRow = decodeRowTarget(String(event.over.id));
+    if (item && onRow && onRow !== item.id) {
+      const row = snapshot.items[onRow];
+      if (!row) return;
+      if (nesting) await nestTask(item, row.id);
+      else await reorderTask(item, row);
       return;
     }
 
@@ -290,6 +328,76 @@ export function DragProvider({ children }: { children: ReactNode }) {
         : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
     toast(item.content, () => {
       void apply([undo], patch(before));
+    });
+  }
+
+  /**
+   * Dropped straight onto another row: the task takes that row's place.
+   *
+   * The same splice the sidebar does with projects, so dragging down lands
+   * below the row you aimed at and dragging up lands above it. `child_order`
+   * is counted inside one container, so a task arriving from another section
+   * joins that container first, in the same batch — otherwise Todoist would
+   * renumber it among tasks it does not live with.
+   */
+  async function reorderTask(item: Item, row: Item) {
+    const container = {
+      project_id: row.project_id,
+      section_id: row.section_id,
+      parent_id: row.parent_id,
+    };
+    const joining = item.project_id !== container.project_id
+      || (item.section_id ?? null) !== (container.section_id ?? null)
+      || (item.parent_id ?? null) !== (container.parent_id ?? null);
+
+    const siblings = siblingTasks(snapshot.items, joining ? { ...item, ...container } : item);
+    const onto = siblings.indexOf(row.id);
+    if (onto < 0) return;
+    const next = [...siblings];
+    const at = next.indexOf(item.id);
+    if (at >= 0) next.splice(onto, 0, ...next.splice(at, 1));
+    else next.splice(onto, 0, item.id);
+
+    /* Every task whose number this changes, on both sides of the move, so the
+       undo can put the numbering back exactly as it was. */
+    const touched = new Set([...siblingTasks(snapshot.items, item), ...siblings, item.id]);
+    const before = [...touched]
+      .filter((id) => snapshot.items[id])
+      .map((id) => ({ id, child_order: snapshot.items[id].child_order }));
+    const after = next.map((id, index) => ({ id, child_order: index + 1 }));
+
+    const place = (
+      fields: Partial<Item>,
+      orders: Array<{ id: string; child_order: number }>,
+    ) => (snap: typeof snapshot) => {
+      const items = { ...snap.items, [item.id]: { ...snap.items[item.id], ...fields } };
+      for (const { id, child_order } of orders) {
+        if (items[id]) items[id] = { ...items[id], child_order };
+      }
+      return { ...snap, items };
+    };
+
+    const move = container.parent_id
+      ? moveItem(item.id, { parent_id: container.parent_id })
+      : moveItem(item.id, moveArgs({
+        project_id: container.project_id, section_id: container.section_id,
+      }));
+    await apply(
+      joining ? [move, reorderItems(after)] : [reorderItems(after)],
+      place(joining ? container : {}, after),
+    );
+
+    /* A task put back in line is undone by looking at it, so only a task that
+       also left its section is worth a toast. */
+    if (!joining) return;
+    const home = {
+      project_id: item.project_id, section_id: item.section_id, parent_id: item.parent_id,
+    };
+    const back = home.parent_id
+      ? moveItem(item.id, { parent_id: home.parent_id })
+      : moveItem(item.id, moveArgs({ project_id: home.project_id, section_id: home.section_id }));
+    toast(item.content, () => {
+      void apply([back, reorderItems(before)], place(home, before));
     });
   }
 
@@ -355,6 +463,8 @@ export function DragProvider({ children }: { children: ReactNode }) {
     : draggingId && !draggingId.startsWith('section:')
       ? snapshot.items[taskIdOf(draggingId)]
       : null;
+  /* Over a row, out to the right: the drop would put the task inside it. */
+  const indenting = onRow && nestingNow && dragging !== null;
   const draggingSection = draggingId?.startsWith('section:')
     ? snapshot.sections[draggingId.slice('section:'.length)]
     : null;
@@ -365,6 +475,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       collisionDetection={collisionsForKind}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
+      onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
       {children}
@@ -372,7 +483,14 @@ export function DragProvider({ children }: { children: ReactNode }) {
           instead of following the pointer. */}
       <DragOverlay dropAnimation={null} modifiers={[anchorLeftOfCursor]}>
         {dragging && (
-          <div className={`dragoverlay${outdenting ? ' outdent' : ''}`}>{dragging.content}</div>
+          /* The preview says which of the two gestures is under way, because
+             the row it is over says the same thing at the same moment: an
+             arrow into the row it would go inside, a bar on the side it is
+             being pulled out of. */
+          <div className={`dragoverlay${outdenting ? ' outdent' : ''}${indenting ? ' indent' : ''}`}>
+            {indenting && <span className="indentmark" aria-hidden="true">↳</span>}
+            {dragging.content}
+          </div>
         )}
         {draggingSection && (
           <div className="dragoverlay section">{draggingSection.name || '—'}</div>

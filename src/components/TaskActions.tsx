@@ -155,6 +155,29 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   }, [destinations, dest]);
 
   /**
+   * Lifts a subtask out of its parent, leaving it where it already lives.
+   *
+   * Moving a task to a project is what clears its parent — `item_update` does
+   * not carry one — so the destination is the project and section it is in
+   * already, which changes nothing but the one thing being asked for.
+   */
+  async function unnest() {
+    const parentId = item.parent_id;
+    if (!parentId) return;
+    const patch = (parent_id: string | null) => (snap: Snapshot): Snapshot => ({
+      ...snap,
+      items: { ...snap.items, [item.id]: { ...snap.items[item.id], parent_id } as Item },
+    });
+    await apply(
+      [moveItem(item.id, moveArgs({ project_id: item.project_id, section_id: item.section_id }))],
+      patch(null),
+    );
+    toast(item.content, () => {
+      void apply([moveItem(item.id, { parent_id: parentId })], patch(parentId));
+    });
+  }
+
+  /**
    * Sends the task to a view.
    *
    * The destination decides the change, using the same table drag and drop
@@ -558,6 +581,13 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
           <button className="opt" onClick={() => { setMenu('none'); onOpen(item.id); }}>
             <span><Icon name="edit" size="sm" /> {t('detail.title')}</span>
           </button>
+          {/* Dragging a subtask out to the left does this too, but a gesture
+              nobody has been told about is not a way out of anything. */}
+          {item.parent_id && (
+            <button className="opt" onClick={() => { setMenu('none'); void unnest(); }}>
+              <span><Icon name="subtask" size="sm" /> {t('task.unnest')}</span>
+            </button>
+          )}
           <button
             className="opt"
             onClick={() => {

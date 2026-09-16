@@ -14,6 +14,8 @@ interface DraggableTaskProps {
    * card everywhere else people have used one.
    */
   surface?: 'row' | 'card';
+  /** The list keeps its own order, so rows can be dropped into each other's place. */
+  reorderable?: boolean;
 }
 
 /**
@@ -24,7 +26,7 @@ interface DraggableTaskProps {
  * keeps a plain click on a card from starting a drag too.
  */
 export function DraggableTask({
-  item, childrenOf, onOpen, showProject, surface = 'row',
+  item, childrenOf, onOpen, showProject, surface = 'row', reorderable = false,
 }: DraggableTaskProps) {
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id: item.id });
   const card = surface === 'card';
@@ -47,6 +49,7 @@ export function DraggableTask({
         /* A board card is moved sideways between columns all the time; a
            drift to the right there must not read as "put it inside". */
         nestable={!card}
+        reorderable={!card && reorderable}
       />
     </div>
   );
