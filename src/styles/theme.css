@@ -747,8 +747,12 @@
   align-items:flex-start;
   scrollbar-width:thin;
 }
-/* Each column is wrapped by its drop zone, so the wrapper is the flex item. */
-.board > *{flex:0 0 min(272px,80vw);min-width:0;scroll-snap-align:start}
+/* Each column is wrapped by its drop zone, so the wrapper is the flex item.
+   A column takes its share of whatever width the board has, down to 272px and
+   no further — below that a title stops being readable, and past 420px a
+   column stops reading as a column. Grow, never shrink: seven days across a
+   laptop still scroll rather than being squeezed into slivers. */
+.board > *{flex:1 0 min(272px,80vw);max-width:420px;min-width:0;scroll-snap-align:start}
 .col{max-width:none;max-height:none}
 /* The arrows sit above the board on the right, and only when there is
    somewhere to go. */
