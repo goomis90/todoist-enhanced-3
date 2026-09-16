@@ -343,18 +343,14 @@
 .subcaret{width:26px;height:26px;margin:0;vertical-align:0;color:var(--muted)}
 .subcaret:hover{color:var(--text);background:var(--hover)}
 
-/* "Add task" appears at the end of a section on hover. At rest it takes no
-   room either: a callout with an empty band under its last row looked as if
-   something had failed to load. It unfolds rather than jumping in. */
-.sectionadd{
-  max-height:0;margin-top:0;padding-block:0;opacity:0;overflow:hidden;
-  transition:max-height .2s ease-out,opacity .16s ease-out,
-    margin-top .2s ease-out,padding .2s ease-out;
-}
+/* "Add task" stands at the end of a section instead of unfolding when the
+   pointer comes near. A control you only meet by moving over the page is one
+   you forget is there, and this one used to open at the same moment as the
+   "add section" seam just below it, so the two took turns under one pointer.
+   Quiet at rest, it reads as the end of the section rather than a row in it. */
+.sectionadd{margin-top:var(--s2);padding-block:6px;color:var(--faint)}
 .group:hover .sectionadd,
-.group:focus-within .sectionadd{
-  max-height:40px;margin-top:var(--s2);padding-block:6px;opacity:1;
-}
+.group:focus-within .sectionadd{color:var(--muted)}
 
 /* On a narrow screen the handle has nowhere to hang, and touch has no hover. */
 @media (max-width:700px){

@@ -27,6 +27,8 @@ interface ModeSurfaceProps {
     title: string;
     items: Item[];
     dropTarget?: DropTarget;
+    /** Adds a task straight into this column, from the end of it. */
+    onAddTask?: () => void;
     /** A day column knows its capacity, and shows its load against it. */
     capacityMinutes?: number | null;
   }>;
@@ -192,6 +194,14 @@ function BoardSurface(props: ModeSurfaceProps) {
               />
             ))}
             {column.items.length === 0 && <p className="empty">{t('group.empty')}</p>}
+            {/* Not a card: a card is a task, and the thing that makes one is
+                the end of the column rather than something sitting in it. */}
+            {column.onAddTask && (
+              <button className="coladd" onClick={column.onAddTask}>
+                <Icon name="plus" size="sm" />
+                {t('nav.addTaskHere')}
+              </button>
+            )}
             </section>
           );
 

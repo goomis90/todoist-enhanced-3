@@ -151,8 +151,11 @@ function ProjectBody({
             sectionId: group.id === 'none' ? null : group.id,
             projectId,
           },
+          onAddTask: () => onAddTaskTo(
+            group.id === 'none' ? { projectId } : { projectId, sectionId: group.id },
+          ),
         })),
-    [sectionGroups, looseItems, projectId, t],
+    [sectionGroups, looseItems, projectId, t, onAddTaskTo],
   );
 
   if (!project) {
@@ -251,6 +254,9 @@ function ProjectBody({
                sort a row dropped into another's place would be put straight
                back by the sort, which is a lie told with an animation. */
             reorderable={current.sort === 'manual'}
+            /* A project with everything in sections still needs somewhere to
+               put a task that belongs in none of them. */
+            keepWhenEmpty
           />
           {sectionGroups.map((group, index) => (
             <Fragment key={group.id}>
