@@ -24,7 +24,9 @@ interface ProjectViewProps {
   onInsights: () => void;
   onUnestimated: () => void;
   /** Adds a task straight into a section of this project. */
-  onAddTaskTo: (placement: { projectId: string; sectionId?: string }) => void;
+  onAddTaskTo: (placement: {
+    projectId: string; sectionId?: string; date?: string; labels?: string[];
+  }) => void;
   /** Opens the project sheet, to edit this one or add one beside it. */
   onProjectSheet: (target: ProjectSheetTarget) => void;
 }
@@ -311,6 +313,17 @@ function ProjectBody({
           sort={current.sort}
           onOpen={onOpen}
           showProject={false}
+          /* A day column and a tag column are places inside this project; a
+             priority column is not one, and says nothing. */
+          addToGroup={(key) => {
+            if (current.group === 'day' && key !== 'none') {
+              return () => onAddTaskTo({ projectId, date: key });
+            }
+            if (current.group === 'label' && key !== 'none') {
+              return () => onAddTaskTo({ projectId, labels: [key] });
+            }
+            return undefined;
+          }}
         />
       )}
     </div>
