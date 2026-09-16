@@ -1,8 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors,
-  type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragOverEvent,
-  type DragStartEvent,
+  type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import type { Modifier } from '@dnd-kit/core';
 import { useStore } from '@/store/store';
@@ -144,14 +143,9 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const nestProject = useStore((s) => s.nestProject);
   const setNesting = useStore((s) => s.setNesting);
   const setDraggingProject = useStore((s) => s.setDraggingProject);
-  const nestingNow = useStore((s) => s.nesting);
   /** A subtask pulled out to the left: on release it becomes a task of its own. */
   const outdenting = useStore((s) => s.outdenting);
   const setOutdenting = useStore((s) => s.setOutdenting);
-  /* Whether the pointer is on a row, which is all the preview needs to know to
-     say what the drop would mean. Nothing reads it when the drag ends, so it
-     stays here rather than joining the flags in the store. */
-  const [onRow, setOnRow] = useState(false);
 
   // A short distance threshold keeps a plain click on a task from starting a drag.
   const sensors = useSensors(
@@ -181,10 +175,6 @@ export function DragProvider({ children }: { children: ReactNode }) {
     setOutdenting(id.startsWith(SUBTASK_DRAG_PREFIX) && event.delta.x <= -NEST_THRESHOLD_PX);
   }
 
-  function onDragOver(event: DragOverEvent) {
-    setOnRow(decodeRowTarget(String(event.over?.id ?? '')) !== null);
-  }
-
   async function onDragEnd(event: DragEndEvent) {
     const activeId = String(event.active.id);
     dragClock.endedAt = Date.now();
@@ -194,7 +184,6 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const { nesting, outdenting: pulledOut } = useStore.getState();
     setNesting(false);
     setOutdenting(false);
-    setOnRow(false);
     setDraggingProject(null);
 
     /* Pulled out to the left, a subtask leaves its parent and stays where it
@@ -463,8 +452,6 @@ export function DragProvider({ children }: { children: ReactNode }) {
     : draggingId && !draggingId.startsWith('section:')
       ? snapshot.items[taskIdOf(draggingId)]
       : null;
-  /* Over a row, out to the right: the drop would put the task inside it. */
-  const indenting = onRow && nestingNow && dragging !== null;
   const draggingSection = draggingId?.startsWith('section:')
     ? snapshot.sections[draggingId.slice('section:'.length)]
     : null;
@@ -475,7 +462,6 @@ export function DragProvider({ children }: { children: ReactNode }) {
       collisionDetection={collisionsForKind}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
-      onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
       {children}
@@ -483,14 +469,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
           instead of following the pointer. */}
       <DragOverlay dropAnimation={null} modifiers={[anchorLeftOfCursor]}>
         {dragging && (
-          /* The preview says which of the two gestures is under way, because
-             the row it is over says the same thing at the same moment: an
-             arrow into the row it would go inside, a bar on the side it is
-             being pulled out of. */
-          <div className={`dragoverlay${outdenting ? ' outdent' : ''}${indenting ? ' indent' : ''}`}>
-            {indenting && <span className="indentmark" aria-hidden="true">↳</span>}
-            {dragging.content}
-          </div>
+          <div className={`dragoverlay${outdenting ? ' outdent' : ''}`}>{dragging.content}</div>
         )}
         {draggingSection && (
           <div className="dragoverlay section">{draggingSection.name || '—'}</div>
