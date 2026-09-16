@@ -17,6 +17,7 @@ import { dueForDate, readRecurrence } from '@/domain/recurrence';
 import { EstimateField } from '../EstimateField';
 import { TaskNameField } from '../TaskNameField';
 import { Select } from '../Select';
+import { PlacementField } from '../PlacementField';
 import { DateField } from '../DateField';
 import { markerStyle } from '@/domain/colors';
 import { toDisplayPriority, toTodoistPriority, type DisplayPriority, type Item } from '@/domain/types';
@@ -608,19 +609,22 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
         </div>
 
         <aside className="detail-side">
+          {/* The section belongs here with the project rather than being left
+              to the breadcrumb: this is the panel a task is edited in, and
+              where it lives was the one property it could read but not change.
+              A move, not an update — `item_update` takes neither a project nor
+              a section, so the field used to move the task on screen only. */}
           <div className="prop">
             <span>{t('detail.project')}</span>
-            <Select
-              value={item.project_id}
+            <PlacementField
               ariaLabel={t('detail.project')}
-              onChange={(next) => void updateTask(item.id, { project_id: next })}
-              options={Object.values(snapshot.projects)
-                .filter((p) => !p.is_archived && !p.is_deleted && !p.is_folder)
-                .map((p) => ({
-                  value: p.id,
-                  label: p.inbox_project ? t('nav.inbox') : p.name,
-                  marker: p.color,
-                }))}
+              value={{ projectId: item.project_id, sectionId: item.section_id }}
+              onChange={(place) => void moveTask(
+                item.id,
+                place.sectionId
+                  ? { section_id: place.sectionId }
+                  : { project_id: place.projectId },
+              )}
             />
           </div>
 

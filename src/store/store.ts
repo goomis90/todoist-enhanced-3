@@ -941,8 +941,22 @@ export const useStore = create<AppState>((set, get) => ({
     );
   },
 
+  /**
+   * Sends a task to one place.
+   *
+   * `item_move` takes a project or a section, never both, and the one it is
+   * given settles the other: a task sent to a project is no longer in any of
+   * its sections, and a task sent to a section is in that section's project.
+   * The command carries the destination alone, so the snapshot has to say the
+   * rest or the task keeps drawing where it used to be until the next sync
+   * quietly puts it back.
+   */
   async moveTask(id, target) {
-    await get().apply([moveItem(id, target)], (snapshot) => patchItem(snapshot, id, target));
+    const { sections } = get().snapshot;
+    const settled = target.section_id
+      ? { ...target, project_id: sections[target.section_id]?.project_id ?? target.project_id }
+      : { ...target, section_id: null };
+    await get().apply([moveItem(id, target)], (snapshot) => patchItem(snapshot, id, settled));
   },
 
   async setTaskLabels(id, labels) {
