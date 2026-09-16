@@ -9,7 +9,7 @@ import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
-import { applyFilters, rootItems } from '@/store/selectors';
+import { applyFilters, rootItems, sortItems } from '@/store/selectors';
 import { somedayItems, hasLabel } from '@/domain/views';
 import { summariseLoad } from '@/domain/load';
 import type { TranslationKey } from '@/i18n';
@@ -58,6 +58,15 @@ function SimpleListBody({
 
     return applyFilters(selection, current.filters, snapshot, childrenOf);
   }, [items, kind, labelName, current.filters, snapshot, childrenOf]);
+
+  /* The one flat list is drawn straight rather than through `ModeSurface`, and
+     `ModeSurface` is what used to do the sorting: the sort in the display menu
+     did nothing on these pages, and the order a task was put into could not
+     show itself. */
+  const ordered = useMemo(
+    () => sortItems(scoped, current.sort, childrenOf),
+    [scoped, current.sort, childrenOf],
+  );
 
   const load = useMemo(
     () => summariseLoad(scoped, childrenOf, null),
@@ -122,7 +131,7 @@ function SimpleListBody({
            on a tag page, with the tag on. */
         <div className="mode">
           <TaskGroup
-            items={scoped}
+            items={ordered}
             childrenOf={childrenOf}
             onOpen={onOpen}
             dropTarget={dropTarget}
