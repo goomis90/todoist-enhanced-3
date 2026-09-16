@@ -21,6 +21,13 @@ interface ModeSurfaceProps {
   sort: SortKey;
   onOpen: (id: string) => void;
   showProject?: boolean;
+  /**
+   * What a column of the current grouping means as a place to add a task,
+   * where it means anything: a project column is a project, a tag column is a
+   * tag, a priority column is not a place and gets no line. The page decides,
+   * because only the page knows what it grouped.
+   */
+  addToGroup?: (groupKey: string) => (() => void) | undefined;
   /** Board columns come from sections when a project supplies them. */
   boardColumns?: Array<{
     id: string;
@@ -84,6 +91,7 @@ function ListSurface(props: ModeSurfaceProps) {
           childrenOf={props.childrenOf}
           onOpen={props.onOpen}
           showProject={props.showProject}
+          onAddTask={props.addToGroup?.(group.key)}
         />
       ))}
     </div>
@@ -196,8 +204,11 @@ function BoardSurface(props: ModeSurfaceProps) {
             {column.items.length === 0 && <p className="empty">{t('group.empty')}</p>}
             {/* Not a card: a card is a task, and the thing that makes one is
                 the end of the column rather than something sitting in it. */}
-            {column.onAddTask && (
-              <button className="coladd" onClick={column.onAddTask}>
+            {(column.onAddTask ?? props.addToGroup?.(column.id)) && (
+              <button
+                className="coladd"
+                onClick={column.onAddTask ?? props.addToGroup?.(column.id)}
+              >
                 <Icon name="plus" size="sm" />
                 {t('nav.addTaskHere')}
               </button>

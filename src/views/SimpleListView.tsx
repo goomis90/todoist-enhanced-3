@@ -80,6 +80,19 @@ function SimpleListBody({
       ? { projectId: inboxId }
       : { labels: labelName ? [labelName] : [] };
 
+  /* Grouped, in a list or on a board, a column is only somewhere to add a task
+     when the column is a place: a project, a tag. A priority or an estimate is
+     something a task has, not somewhere it goes, and a line offering to put one
+     there would be writing a promise the composer never keeps. */
+  const addToGroup = (key: string): (() => void) | undefined => {
+    if (current.group === 'none') return () => onAddTaskTo(addition);
+    if (current.group === 'project') return () => onAddTaskTo({ ...addition, projectId: key });
+    if (current.group === 'label' && key !== 'none') {
+      return () => onAddTaskTo({ ...addition, labels: [...(addition.labels ?? []), key] });
+    }
+    return undefined;
+  };
+
   return (
     <div className="page">
       <PageHeader
@@ -125,6 +138,7 @@ function SimpleListBody({
           group={current.group}
           sort={current.sort}
           onOpen={onOpen}
+          addToGroup={addToGroup}
         />
       )}
     </div>
