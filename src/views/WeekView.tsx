@@ -112,7 +112,10 @@ function WeekBody({
     toast(t('group.rescheduleAll'));
   }
 
-  const sortedGroup = (list: typeof scoped) => sortItems(list, current.sort, childrenOf);
+  /* A week is drawn from every project at once, so the order it is put into
+     is the one Todoist keeps for lists like this one. */
+  const sortedGroup = (list: typeof scoped) => sortItems(list, current.sort, childrenOf, 'day');
+  const byHand = current.sort === 'manual' ? ('day' as const) : undefined;
 
   /* The board shows the same five buckets the list does. Without this it fell
      back to the generic grouping, which for "no grouping" is a single column
@@ -140,7 +143,9 @@ function WeekBody({
       scope === 'today' ? today : scope === 'anytime' ? anytime : [...today, ...anytime];
     return columns
       .filter((column) => column.items.length > 0 || column.dropTarget)
-      .map((column) => ({ ...column, items: sortItems(column.items, current.sort, childrenOf) }));
+      .map((column) => ({
+        ...column, items: sortItems(column.items, current.sort, childrenOf, 'day'),
+      }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups, prefs.showQuickGroup, current.sort, childrenOf, t, scope]);
 
@@ -175,6 +180,7 @@ function WeekBody({
             items={sortedGroup(groups.overdue)}
             childrenOf={childrenOf}
             onOpen={onOpen}
+            reorderable={byHand}
             accent="late"
             onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
             actions={
@@ -194,6 +200,7 @@ function WeekBody({
               items={sortedGroup(groups.quick)}
               childrenOf={childrenOf}
               onOpen={onOpen}
+              reorderable={byHand}
               accent="quick"
               dropTarget={{ kind: 'quick' }}
               onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
@@ -205,6 +212,7 @@ function WeekBody({
             items={sortedGroup(groups.untimed)}
             childrenOf={childrenOf}
             onOpen={onOpen}
+            reorderable={byHand}
             dropTarget={{ kind: 'today' }}
             onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
           />
@@ -225,6 +233,7 @@ function WeekBody({
               items={sortedGroup(groups.anytime)}
               childrenOf={childrenOf}
               onOpen={onOpen}
+              reorderable={byHand}
               dropTarget={{ kind: 'anytime' }}
               onAddTask={() => onAddTaskTo({})}
             />
@@ -239,6 +248,7 @@ function WeekBody({
           mode={current.mode}
           group={current.group}
           sort={current.sort}
+          order="day"
           onOpen={onOpen}
           /* Only when nothing else was asked for: a board grouped by project
              is a board of projects, not of the week's buckets. */

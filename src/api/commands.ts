@@ -88,5 +88,15 @@ export const moveItem = (
 export const reorderItems = (items: Array<{ id: string; child_order: number }>): Command =>
   command('item_reorder', { items });
 
+/**
+ * The order of tasks in a list made of several projects.
+ *
+ * `child_order` is counted inside one project, so it has nothing to say about
+ * a week drawn from five of them. `day_order` is the number Todoist keeps for
+ * exactly that list, and its own Today view reads it.
+ */
+export const updateDayOrders = (orders: Record<string, number>): Command =>
+  command('item_update_day_orders', { ids_to_orders: orders });
+
 export const updateProject = (id: string, args: Record<string, unknown>): Command =>
   command('project_update', { id, ...args });

@@ -24,7 +24,9 @@ interface ProjectViewProps {
   onInsights: () => void;
   onUnestimated: () => void;
   /** Adds a task straight into a section of this project. */
-  onAddTaskTo: (placement: { projectId: string; sectionId?: string }) => void;
+  onAddTaskTo: (placement: {
+    projectId: string; sectionId?: string; date?: string; labels?: string[];
+  }) => void;
   /** Opens the project sheet, to edit this one or add one beside it. */
   onProjectSheet: (target: ProjectSheetTarget) => void;
 }
@@ -151,8 +153,11 @@ function ProjectBody({
             sectionId: group.id === 'none' ? null : group.id,
             projectId,
           },
+          onAddTask: () => onAddTaskTo(
+            group.id === 'none' ? { projectId } : { projectId, sectionId: group.id },
+          ),
         })),
-    [sectionGroups, looseItems, projectId, t],
+    [sectionGroups, looseItems, projectId, t, onAddTaskTo],
   );
 
   if (!project) {
@@ -247,6 +252,13 @@ function ProjectBody({
             showProject={false}
             dropTarget={{ kind: 'section', sectionId: null, projectId }}
             onAddTask={() => onAddTaskTo({ projectId })}
+            /* Only where the list is in the order you gave it: under any other
+               sort a row dropped into another's place would be put straight
+               back by the sort, which is a lie told with an animation. */
+            reorderable={current.sort === 'manual' ? 'project' : undefined}
+            /* A project with everything in sections still needs somewhere to
+               put a task that belongs in none of them. */
+            keepWhenEmpty
           />
           {sectionGroups.map((group, index) => (
             <Fragment key={group.id}>
@@ -266,6 +278,7 @@ function ProjectBody({
               showProject={false}
               dropTarget={{ kind: 'section', sectionId: group.id, projectId }}
               onAddTask={() => onAddTaskTo({ projectId, sectionId: group.id })}
+              reorderable={current.sort === 'manual' ? 'project' : undefined}
             />
             </Fragment>
           ))}
@@ -305,6 +318,17 @@ function ProjectBody({
           sort={current.sort}
           onOpen={onOpen}
           showProject={false}
+          /* A day column and a tag column are places inside this project; a
+             priority column is not one, and says nothing. */
+          addToGroup={(key) => {
+            if (current.group === 'day' && key !== 'none') {
+              return () => onAddTaskTo({ projectId, date: key });
+            }
+            if (current.group === 'label' && key !== 'none') {
+              return () => onAddTaskTo({ projectId, labels: [key] });
+            }
+            return undefined;
+          }}
         />
       )}
     </div>

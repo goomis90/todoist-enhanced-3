@@ -5,10 +5,14 @@ import {
 } from '@dnd-kit/core';
 import type { Modifier } from '@dnd-kit/core';
 import { useStore } from '@/store/store';
-import { decodeTarget, dropMutation, moveArgs } from '@/domain/dnd';
+import {
+  canNest, decodeRowTarget, decodeTarget, dropMutation, moveArgs, siblingTasks,
+} from '@/domain/dnd';
 import { siblingOrder } from '@/store/selectors';
-import { updateItem, moveItem } from '@/api/commands';
+import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
+import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
+import type { RowList } from './RowList';
 
 /**
  * Puts the preview under the pointer by its left edge rather than its centre.
@@ -67,10 +71,34 @@ const ACCEPTS: Record<ReturnType<typeof dragKind>, Array<ReturnType<typeof dropK
  */
 const collisionsForKind: CollisionDetection = (args) => {
   const accepted = ACCEPTS[dragKind(String(args.active.id))];
-  return pointerWithin(args).filter(
+  const hits = pointerWithin(args).filter(
     (collision) => accepted.includes(dropKind(String(collision.id))),
   );
+  /* A row lies inside the droppable of its group, so the pointer is within
+     both; the row is the narrower, deliberate answer. */
+  const rows = hits.filter((c) => decodeRowTarget(String(c.id)) !== null);
+  if (rows.length) return rows;
+
+  /* A row is picked up by a handle drawn outside it, in the gutter, so a task
+     dragged straight down the list is carried by a pointer that is beside
+     every row and inside none of them — and the list it is being reordered in
+     could never see it. Each row answers for its own gutter. */
+  const pointer = args.pointerCoordinates;
+  if (pointer && accepted.includes('target')) {
+    const beside = args.droppableContainers.filter((container) => {
+      if (decodeRowTarget(String(container.id)) === null) return false;
+      const rect = args.droppableRects.get(container.id);
+      return rect !== undefined
+        && pointer.y >= rect.top && pointer.y <= rect.top + rect.height
+        && pointer.x >= rect.left - HANDLE_GUTTER_PX && pointer.x <= rect.left + rect.width;
+    });
+    if (beside.length) return beside.map((container) => ({ id: container.id }));
+  }
+  return hits;
 };
+
+/** How far to the left of a row its own drag handle is drawn. */
+const HANDLE_GUTTER_PX = 36;
 
 /**
  * When the last drag ended, for the click that a browser fires on a drop.
@@ -84,14 +112,18 @@ export const dragClock = {
 };
 
 /**
- * How far right a sidebar project has to be dragged before the drop nests it
- * rather than reordering it.
+ * How far right a sidebar project, or a task row, has to be dragged before the
+ * drop nests it rather than reordering or moving it.
  *
  * The same gesture means two things, told apart by direction: straight down
  * the list moves it, out to the right puts it inside. It is the indent every
  * outliner uses, and it costs no second handle and no modifier key.
  */
 export const NEST_THRESHOLD_PX = 28;
+
+/** A dragged item's task id, whether it was picked up as a row or a subtask. */
+const taskIdOf = (activeId: string): string =>
+  activeId.startsWith(SUBTASK_DRAG_PREFIX) ? activeId.slice(SUBTASK_DRAG_PREFIX.length) : activeId;
 
 /**
  * Drag and drop across the whole app.
@@ -112,6 +144,9 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const nestProject = useStore((s) => s.nestProject);
   const setNesting = useStore((s) => s.setNesting);
   const setDraggingProject = useStore((s) => s.setDraggingProject);
+  /** A subtask pulled out to the left: on release it becomes a task of its own. */
+  const outdenting = useStore((s) => s.outdenting);
+  const setOutdenting = useStore((s) => s.setOutdenting);
 
   // A short distance threshold keeps a plain click on a task from starting a drag.
   const sensors = useSensors(
@@ -127,7 +162,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     /* None of these is a task being filed somewhere, so the "a task is in
        flight" flag stays down and the empty drop zones stay closed. A subtask
        being reordered is moving inside its parent, not out of it. */
-    setDragging(isSection || isProject || isSubtask ? null : id);
+    setDragging(isSection || isProject || isSubtask ? null : taskIdOf(id));
     setDraggingSection(isSection ? id.slice('section:'.length) : null);
     setDraggingProject(isProject ? id.slice('project-row:'.length) : null);
   }
@@ -135,8 +170,10 @@ export function DragProvider({ children }: { children: ReactNode }) {
   /* The indent has to be visible while it is being made, not discovered on
      release, so the row under the pointer is told what the drop would mean. */
   function onDragMove(event: DragMoveEvent) {
-    if (!String(event.active.id).startsWith('project-row:')) return;
+    const id = String(event.active.id);
+    if (id.startsWith('section:')) return;
     setNesting(event.delta.x >= NEST_THRESHOLD_PX);
+    setOutdenting(id.startsWith(SUBTASK_DRAG_PREFIX) && event.delta.x <= -NEST_THRESHOLD_PX);
   }
 
   async function onDragEnd(event: DragEndEvent) {
@@ -145,9 +182,21 @@ export function DragProvider({ children }: { children: ReactNode }) {
     setDraggingId(null);
     setDragging(null);
     setDraggingSection(null);
-    const nesting = useStore.getState().nesting;
+    const { nesting, outdenting: pulledOut } = useStore.getState();
     setNesting(false);
+    setOutdenting(false);
     setDraggingProject(null);
+
+    /* Pulled out to the left, a subtask leaves its parent and stays where it
+       is otherwise: same project, same section, now at the top level. The
+       pointer may well be over nothing by then, so this comes first. */
+    if (activeId.startsWith(SUBTASK_DRAG_PREFIX) && pulledOut) {
+      const sub = snapshot.items[taskIdOf(activeId)];
+      if (sub?.parent_id && !(event.over && decodeRowTarget(String(event.over.id)))) {
+        await promoteTask(sub);
+        return;
+      }
+    }
     if (!event.over) return;
 
     /* A section is dragged whole, into a slot between two others. It is not a
@@ -220,7 +269,20 @@ export function DragProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const item = snapshot.items[activeId];
+    const item = snapshot.items[taskIdOf(activeId)];
+    /* One row, the two readings of it. Out to the right the task goes inside
+       the row; straight onto it, the task takes its place. */
+    const onRow = decodeRowTarget(String(event.over.id));
+    if (item && onRow && onRow !== item.id) {
+      const row = snapshot.items[onRow];
+      if (!row) return;
+      const list = (event.over.data.current as { list?: RowList } | undefined)?.list;
+      if (nesting) await nestTask(item, row.id);
+      else if (list?.order === 'day') await orderInList(item, row, list);
+      else if (list) await reorderTask(item, row);
+      return;
+    }
+
     const target = decodeTarget(String(event.over.id));
     if (!item || !target) return;
 
@@ -229,6 +291,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
 
     // Captured before the change so the undo can put every field back.
     const before = {
+      parent_id: item.parent_id,
       due: item.due,
       labels: item.labels,
       project_id: item.project_id,
@@ -243,24 +306,219 @@ export function DragProvider({ children }: { children: ReactNode }) {
     if (mutation.update) {
       await apply([updateItem(item.id, mutation.update)], patch(mutation.update));
     } else if (mutation.move) {
-      await apply([moveItem(item.id, moveArgs(mutation.move))], patch(mutation.move));
+      // A move to a project or a section lands at its top level.
+      await apply([moveItem(item.id, moveArgs(mutation.move))], patch({ ...mutation.move, parent_id: null }));
     }
 
     /* A move is undone by a move. `item_update` does not take a project or a
        section, so undoing a drop between columns used to put the card back on
        screen and leave it where it was dropped on the server. */
-    const undo = mutation.move
-      ? moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }))
-      : updateItem(item.id, { due: before.due, labels: before.labels });
+    const undo = !mutation.move
+      ? updateItem(item.id, { due: before.due, labels: before.labels })
+      : before.parent_id
+        ? moveItem(item.id, { parent_id: before.parent_id })
+        : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
     toast(item.content, () => {
       void apply([undo], patch(before));
+    });
+  }
+
+  /**
+   * Dropped into a list that several projects feed: a week, a tag, everything
+   * put off.
+   *
+   * Their order cannot be `child_order`, which Todoist counts inside a single
+   * project — five projects on one page would each be counting from one. It is
+   * `day_order`, the number Todoist keeps for exactly these lists, so the order
+   * is written to Todoist like everything else here rather than into a corner
+   * of this app that only this browser can see.
+   *
+   * The list is also a place. A task dragged into it from another group means
+   * both things at once — this day, and here in it — so what the group would
+   * have done to a task dropped on it plainly is done first.
+   */
+  async function orderInList(item: Item, row: Item, list: RowList) {
+    const ids = [...list.ids];
+    const onto = ids.indexOf(row.id);
+    if (onto < 0) return;
+    const at = ids.indexOf(item.id);
+    if (at >= 0) ids.splice(onto, 0, ...ids.splice(at, 1));
+    else ids.splice(onto, 0, item.id);
+
+    const before = Object.fromEntries(
+      ids.filter((id) => snapshot.items[id]).map((id) => [id, snapshot.items[id].day_order]),
+    );
+    const after = Object.fromEntries(ids.map((id, index) => [id, index + 1]));
+
+    const mutation = list.target ? dropMutation(item, list.target) : null;
+    const was = {
+      due: item.due, labels: item.labels,
+      project_id: item.project_id, section_id: item.section_id,
+    };
+
+    const place = (
+      orders: Record<string, number>,
+      fields: Record<string, unknown>,
+    ) => (snap: typeof snapshot) => {
+      const items = { ...snap.items };
+      for (const [id, day_order] of Object.entries(orders)) {
+        if (items[id]) items[id] = { ...items[id], day_order };
+      }
+      if (items[item.id]) items[item.id] = { ...items[item.id], ...fields } as Item;
+      return { ...snap, items };
+    };
+
+    await apply(
+      [
+        ...(mutation?.update ? [updateItem(item.id, mutation.update)] : []),
+        ...(mutation?.move ? [moveItem(item.id, moveArgs(mutation.move))] : []),
+        updateDayOrders(after),
+      ],
+      place(after, mutation?.update ?? (mutation?.move ? { ...mutation.move, parent_id: null } : {})),
+    );
+
+    /* Only a task that changed lists is worth a toast: an order put back is
+       put back by looking at it. */
+    if (!mutation) return;
+    const undo = mutation.move
+      ? moveItem(item.id, moveArgs({ project_id: was.project_id, section_id: was.section_id }))
+      : updateItem(item.id, { due: was.due, labels: was.labels });
+    toast(item.content, () => {
+      void apply([undo, updateDayOrders(before)], place(before, was));
+    });
+  }
+
+  /**
+   * Dropped straight onto another row: the task takes that row's place.
+   *
+   * The same splice the sidebar does with projects, so dragging down lands
+   * below the row you aimed at and dragging up lands above it. `child_order`
+   * is counted inside one container, so a task arriving from another section
+   * joins that container first, in the same batch — otherwise Todoist would
+   * renumber it among tasks it does not live with.
+   */
+  async function reorderTask(item: Item, row: Item) {
+    const container = {
+      project_id: row.project_id,
+      section_id: row.section_id,
+      parent_id: row.parent_id,
+    };
+    const joining = item.project_id !== container.project_id
+      || (item.section_id ?? null) !== (container.section_id ?? null)
+      || (item.parent_id ?? null) !== (container.parent_id ?? null);
+
+    const siblings = siblingTasks(snapshot.items, joining ? { ...item, ...container } : item);
+    const onto = siblings.indexOf(row.id);
+    if (onto < 0) return;
+    const next = [...siblings];
+    const at = next.indexOf(item.id);
+    if (at >= 0) next.splice(onto, 0, ...next.splice(at, 1));
+    else next.splice(onto, 0, item.id);
+
+    /* Every task whose number this changes, on both sides of the move, so the
+       undo can put the numbering back exactly as it was. */
+    const touched = new Set([...siblingTasks(snapshot.items, item), ...siblings, item.id]);
+    const before = [...touched]
+      .filter((id) => snapshot.items[id])
+      .map((id) => ({ id, child_order: snapshot.items[id].child_order }));
+    const after = next.map((id, index) => ({ id, child_order: index + 1 }));
+
+    const place = (
+      fields: Partial<Item>,
+      orders: Array<{ id: string; child_order: number }>,
+    ) => (snap: typeof snapshot) => {
+      const items = { ...snap.items, [item.id]: { ...snap.items[item.id], ...fields } };
+      for (const { id, child_order } of orders) {
+        if (items[id]) items[id] = { ...items[id], child_order };
+      }
+      return { ...snap, items };
+    };
+
+    const move = container.parent_id
+      ? moveItem(item.id, { parent_id: container.parent_id })
+      : moveItem(item.id, moveArgs({
+        project_id: container.project_id, section_id: container.section_id,
+      }));
+    await apply(
+      joining ? [move, reorderItems(after)] : [reorderItems(after)],
+      place(joining ? container : {}, after),
+    );
+
+    /* A task put back in line is undone by looking at it, so only a task that
+       also left its section is worth a toast. */
+    if (!joining) return;
+    const home = {
+      project_id: item.project_id, section_id: item.section_id, parent_id: item.parent_id,
+    };
+    const back = home.parent_id
+      ? moveItem(item.id, { parent_id: home.parent_id })
+      : moveItem(item.id, moveArgs({ project_id: home.project_id, section_id: home.section_id }));
+    toast(item.content, () => {
+      void apply([back, reorderItems(before)], place(home, before));
+    });
+  }
+
+  /* Dropped indented onto another row: the task becomes its subtask, and
+     follows it into its project and section, taking its own subtasks along. */
+  async function nestTask(item: Item, parentId: string) {
+    const parent = snapshot.items[parentId];
+    if (!parent || !canNest(snapshot.items, item.id, parent.id)) return;
+
+    const below = new Set<string>();
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const other of Object.values(snapshot.items)) {
+        if (other.parent_id && (other.parent_id === item.id || below.has(other.parent_id)) && !below.has(other.id)) {
+          below.add(other.id);
+          grew = true;
+        }
+      }
+    }
+
+    const place = (fields: Pick<Item, 'parent_id' | 'project_id' | 'section_id'>) =>
+      (snap: typeof snapshot) => {
+        const items = { ...snap.items, [item.id]: { ...snap.items[item.id], ...fields } };
+        for (const id of below) {
+          items[id] = { ...items[id], project_id: fields.project_id, section_id: fields.section_id };
+        }
+        return { ...snap, items };
+      };
+
+    const before = { parent_id: item.parent_id, project_id: item.project_id, section_id: item.section_id };
+    await apply(
+      [moveItem(item.id, { parent_id: parent.id })],
+      place({ parent_id: parent.id, project_id: parent.project_id, section_id: parent.section_id }),
+    );
+
+    // Moving to a project or a section puts a task back at its top level.
+    const undo = before.parent_id
+      ? moveItem(item.id, { parent_id: before.parent_id })
+      : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
+    toast(item.content, () => {
+      void apply([undo], place(before));
+    });
+  }
+
+  async function promoteTask(item: Item) {
+    const parentId = item.parent_id;
+    if (!parentId) return;
+    const patch = (parent_id: string | null) => (snap: typeof snapshot) => ({
+      ...snap,
+      items: { ...snap.items, [item.id]: { ...snap.items[item.id], parent_id } },
+    });
+    await apply(
+      [moveItem(item.id, moveArgs({ project_id: item.project_id, section_id: item.section_id }))],
+      patch(null),
+    );
+    toast(item.content, () => {
+      void apply([moveItem(item.id, { parent_id: parentId })], patch(parentId));
     });
   }
 
   const dragging = draggingId?.startsWith('subtask:')
     ? snapshot.items[draggingId.slice('subtask:'.length)]
     : draggingId && !draggingId.startsWith('section:')
-      ? snapshot.items[draggingId]
+      ? snapshot.items[taskIdOf(draggingId)]
       : null;
   const draggingSection = draggingId?.startsWith('section:')
     ? snapshot.sections[draggingId.slice('section:'.length)]
@@ -278,7 +536,9 @@ export function DragProvider({ children }: { children: ReactNode }) {
       {/* Without a modifier the preview stays at the row's original position
           instead of following the pointer. */}
       <DragOverlay dropAnimation={null} modifiers={[anchorLeftOfCursor]}>
-        {dragging && <div className="dragoverlay">{dragging.content}</div>}
+        {dragging && (
+          <div className={`dragoverlay${outdenting ? ' outdent' : ''}`}>{dragging.content}</div>
+        )}
         {draggingSection && (
           <div className="dragoverlay section">{draggingSection.name || '—'}</div>
         )}

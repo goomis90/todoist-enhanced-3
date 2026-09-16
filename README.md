@@ -189,7 +189,11 @@ possible intent, and nothing changes until you choose one.
 - List and board modes, with grouping, sorting and filtering behind a single
   Display control. A board with more columns than fit scrolls sideways.
 - Drag and drop, where each destination has one fixed meaning and every drop
-  can be undone.
+  can be undone. A task dropped onto another row takes its place; dragged a
+  little to the right, it goes inside it as a subtask; a subtask dragged out to
+  the left becomes a task of its own again.
+- "Add task" stands at the end of every section, list and board column, and
+  opens knowing where it was pressed.
 - Search (`⌘K`) across tasks, projects, tags and every view in the app, usable
   from the keyboard. Typing "settings" takes you to settings.
 - Undo on the keyboard (`⌘Z`): a move, a completion, a deletion, a drop. A

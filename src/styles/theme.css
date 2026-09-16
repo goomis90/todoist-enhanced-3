@@ -76,7 +76,7 @@
 .tdesc{color:var(--faint)}
 
 /* The drag handle lives in the left gutter so it never shifts the row. */
-.drag{left:-24px}
+.drag{left:-30px}
 
 /* ---------- Sidebar ---------- */
 .sidebar{border-right:1px solid var(--border)}
@@ -307,8 +307,12 @@
    undone here so a section's frame can wrap its rows without drifting. */
 .task{margin-left:0;width:100%;padding-left:0}
 .ghead,.sectionadd{padding-left:0}
-/* The drag handle is taken out of flow, so it costs the row no width. */
-.drag{position:absolute;left:-24px}
+/* The drag handle is taken out of flow, so it costs the row no width. It is
+   centred on the checkbox rather than on the row, so a row with a meta line or
+   a description keeps its handle level with the title, and it keeps a few
+   pixels clear of the checkbox. --task-pt mirrors the row's top padding. */
+.task{--task-pt:14px}
+.drag{position:absolute;left:-30px;top:calc(var(--task-pt) + 11px)}
 
 /* Collapsed sections need room between them to read as separate blocks. */
 .group{margin-top:34px}
@@ -339,18 +343,14 @@
 .subcaret{width:26px;height:26px;margin:0;vertical-align:0;color:var(--muted)}
 .subcaret:hover{color:var(--text);background:var(--hover)}
 
-/* "Add task" appears at the end of a section on hover. At rest it takes no
-   room either: a callout with an empty band under its last row looked as if
-   something had failed to load. It unfolds rather than jumping in. */
-.sectionadd{
-  max-height:0;margin-top:0;padding-block:0;opacity:0;overflow:hidden;
-  transition:max-height .2s ease-out,opacity .16s ease-out,
-    margin-top .2s ease-out,padding .2s ease-out;
-}
+/* "Add task" stands at the end of a section instead of unfolding when the
+   pointer comes near. A control you only meet by moving over the page is one
+   you forget is there, and this one used to open at the same moment as the
+   "add section" seam just below it, so the two took turns under one pointer.
+   Quiet at rest, it reads as the end of the section rather than a row in it. */
+.sectionadd{margin-top:var(--s2);padding-block:6px;color:var(--faint)}
 .group:hover .sectionadd,
-.group:focus-within .sectionadd{
-  max-height:40px;margin-top:var(--s2);padding-block:6px;opacity:1;
-}
+.group:focus-within .sectionadd{color:var(--muted)}
 
 /* On a narrow screen the handle has nowhere to hang, and touch has no hover. */
 @media (max-width:700px){
@@ -663,8 +663,19 @@
   max-width:1160px;
 }
 
-/* A board keeps the same measure as every other view. It wraps its columns
-   onto a second row rather than asking the page to grow around it. */
+/* A board is not read line by line, so it takes the whole page rather than the
+   reading measure. Only the board does: the title, the figures and the
+   controls above it are read, and they keep the measure and the centring they
+   have on every other page.
+
+   It is the whole page and not "from the title's left edge rightwards", which
+   is what this was first: on a laptop that bought about forty pixels, which is
+   no wider than before by the only measure that counts. */
+.page:has(> .mode > .board) > .mode{
+  max-width:none;
+  margin-left:0;
+  margin-right:0;
+}
 
 /* ---------- Behind schedule and Quick read as callouts ---------- */
 .group.accent-late,
@@ -735,8 +746,12 @@
   align-items:flex-start;
   scrollbar-width:thin;
 }
-/* Each column is wrapped by its drop zone, so the wrapper is the flex item. */
-.board > *{flex:0 0 min(272px,80vw);min-width:0;scroll-snap-align:start}
+/* Each column is wrapped by its drop zone, so the wrapper is the flex item.
+   A column takes its share of whatever width the board has, down to 272px and
+   no further — below that a title stops being readable, and past 420px a
+   column stops reading as a column. Grow, never shrink: seven days across a
+   laptop still scroll rather than being squeezed into slivers. */
+.board > *{flex:1 0 min(272px,80vw);max-width:420px;min-width:0;scroll-snap-align:start}
 .col{max-width:none;max-height:none}
 /* The arrows sit above the board on the right, and only when there is
    somewhere to go. */
@@ -1502,7 +1517,7 @@
 /* ---------- List rows ----------
    The row keeps its full 18px control and its whole meta line; what goes is
    the air above and below them. */
-[data-density="compact"] .task{padding-top:7px;padding-bottom:7px;min-height:0}
+[data-density="compact"] .task{padding-top:7px;padding-bottom:7px;min-height:0;--task-pt:7px}
 [data-density="compact"] .meta{margin-top:3px;gap:3px 8px}
 [data-density="compact"] .tdesc{margin-top:1px}
 [data-density="compact"] .subtasks{margin-top:0}
@@ -1928,6 +1943,11 @@
 .listbox .opt.active{background:var(--hover)}
 .listbox .opt[aria-selected="true"]{color:var(--accent-dark);font-weight:600}
 .listbox .opt[aria-selected="true"] > .ic{color:var(--accent);margin-left:auto}
+/* A section is listed under the project it belongs to, indented and quieter,
+   the way the row's move menu lists the same places. */
+.listbox .opt.sectionopt{padding-left:22px}
+.listbox .opt.sectionopt .listbox-label{color:var(--muted)}
+.listbox .opt.sectionopt .ic{color:var(--faint)}
 
 /* ---------- The calendar ---------- */
 .datefield{display:grid;gap:4px;min-width:0}
@@ -2139,3 +2159,32 @@
   .tour-card{left:12px!important;right:12px;width:auto!important;
     top:auto!important;bottom:12px}
 }
+
+/* The two things a row can mean while a task is over it, said the way the
+   sidebar says them about a project: one line, and where it starts is the
+   whole difference. Full width, the task lands in this row's place. Pushed in
+   to where a subtask begins, it goes inside this row — which is where the row
+   itself is about to move to. */
+.task.landing::after,
+.task.nesttarget::after{
+  content:"";position:absolute;right:0;bottom:-1px;height:2px;
+  border-radius:1px;background:var(--accent);pointer-events:none;
+}
+.task.landing::after{left:0}
+.task.nesttarget::after{left:30px}
+
+/* The thing being carried. It had no style of its own at all — a line of
+   16px text as wide as the page, with nothing behind it and nothing under it,
+   which is most of why the gesture was hard to read. It is a card now, the
+   size of a row's title. It carries no mark of its own: the row under it says
+   what the drop would do, and the only gesture with no row to say it is a
+   subtask pulled out to the left. */
+.dragoverlay{
+  display:inline-block;max-width:360px;padding:8px 12px;
+  border:1px solid var(--border-strong);border-radius:var(--r-md);
+  background:var(--surface);color:var(--text);
+  font-size:var(--fs-13);font-weight:600;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:var(--sh-lg);pointer-events:none;
+}
+.dragoverlay.outdent{box-shadow:inset 3px 0 0 var(--accent),var(--sh-lg)}

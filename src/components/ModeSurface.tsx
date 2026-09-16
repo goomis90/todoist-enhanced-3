@@ -10,7 +10,7 @@ import { formatRelativeDay } from '@/domain/dates';
 import { formatDuration } from '@/domain/estimates';
 import { summariseLoad } from '@/domain/load';
 import { Droppable } from './dnd/Droppable';
-import type { DropTarget } from '@/domain/dnd';
+import type { DropTarget, RowOrder } from '@/domain/dnd';
 import type { TranslationKey } from '@/i18n';
 
 interface ModeSurfaceProps {
@@ -21,12 +21,23 @@ interface ModeSurfaceProps {
   sort: SortKey;
   onOpen: (id: string) => void;
   showProject?: boolean;
+  /**
+   * What a column of the current grouping means as a place to add a task,
+   * where it means anything: a project column is a project, a tag column is a
+   * tag, a priority column is not a place and gets no line. The page decides,
+   * because only the page knows what it grouped.
+   */
+  addToGroup?: (groupKey: string) => (() => void) | undefined;
+  /** Which of Todoist's orders "manual" reads here; a week reads the other one. */
+  order?: RowOrder;
   /** Board columns come from sections when a project supplies them. */
   boardColumns?: Array<{
     id: string;
     title: string;
     items: Item[];
     dropTarget?: DropTarget;
+    /** Adds a task straight into this column, from the end of it. */
+    onAddTask?: () => void;
     /** A day column knows its capacity, and shows its load against it. */
     capacityMinutes?: number | null;
   }>;
@@ -48,10 +59,10 @@ export function ModeSurface(props: ModeSurfaceProps) {
 function useGrouped(props: ModeSurfaceProps) {
   const { t, locale } = useT();
   const snapshot = useStore((s) => s.snapshot);
-  const { items, group, sort, childrenOf } = props;
+  const { items, group, sort, childrenOf, order } = props;
 
   return useMemo(() => {
-    const sorted = sortItems(items, sort, childrenOf);
+    const sorted = sortItems(items, sort, childrenOf, order);
     return groupItems(sorted, group, snapshot, {
       none: t('common.none'),
       noProject: t('nav.inbox'),
@@ -61,7 +72,7 @@ function useGrouped(props: ModeSurfaceProps) {
       priority: (p) => t(`common.p${p}` as TranslationKey),
       day: (d) => (d ? formatRelativeDay(d, locale) : t('common.none')),
     });
-  }, [items, group, sort, childrenOf, snapshot, t, locale]);
+  }, [items, group, sort, childrenOf, order, snapshot, t, locale]);
 }
 
 function ListSurface(props: ModeSurfaceProps) {
@@ -82,6 +93,7 @@ function ListSurface(props: ModeSurfaceProps) {
           childrenOf={props.childrenOf}
           onOpen={props.onOpen}
           showProject={props.showProject}
+          onAddTask={props.addToGroup?.(group.key)}
         />
       ))}
     </div>
@@ -131,7 +143,8 @@ function BoardSurface(props: ModeSurfaceProps) {
   if (columns.length === 0) return <p className="empty">{t('task.noTasks')}</p>;
 
   return (
-    /* The same measure as the list: columns share the page's width and edges. */
+    /* A board runs past the reading measure, to the right; what is read
+       above it does not. */
     <div className="mode">
       {(reach.left || reach.right) && (
         <div className="boardnav">
@@ -191,6 +204,17 @@ function BoardSurface(props: ModeSurfaceProps) {
               />
             ))}
             {column.items.length === 0 && <p className="empty">{t('group.empty')}</p>}
+            {/* Not a card: a card is a task, and the thing that makes one is
+                the end of the column rather than something sitting in it. */}
+            {(column.onAddTask ?? props.addToGroup?.(column.id)) && (
+              <button
+                className="coladd"
+                onClick={column.onAddTask ?? props.addToGroup?.(column.id)}
+              >
+                <Icon name="plus" size="sm" />
+                {t('nav.addTaskHere')}
+              </button>
+            )}
             </section>
           );
 

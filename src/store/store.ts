@@ -247,9 +247,12 @@ interface AppState {
   /** Runs one particular entry, by id, and takes it off the stack. */
   consumeUndo: (id: string) => Promise<void>;
   setDragging: (id: string | null) => void;
-  /** True while a dragged sidebar project would nest rather than reorder. */
+  /** True while a dragged sidebar project or task would nest rather than reorder. */
   nesting: boolean;
   setNesting: (nesting: boolean) => void;
+  /** True while a dragged subtask has been pulled out far enough to leave its parent. */
+  outdenting: boolean;
+  setOutdenting: (outdenting: boolean) => void;
   /** The sidebar project in flight, so folders can offer themselves. */
   draggingProjectId: string | null;
   setDraggingProject: (id: string | null) => void;
@@ -315,6 +318,7 @@ export const useStore = create<AppState>((set, get) => ({
   draggingTaskId: null,
   draggingSectionId: null,
   nesting: false,
+  outdenting: false,
   draggingProjectId: null,
   selection: [],
   demo: false,
@@ -941,8 +945,22 @@ export const useStore = create<AppState>((set, get) => ({
     );
   },
 
+  /**
+   * Sends a task to one place.
+   *
+   * `item_move` takes a project or a section, never both, and the one it is
+   * given settles the other: a task sent to a project is no longer in any of
+   * its sections, and a task sent to a section is in that section's project.
+   * The command carries the destination alone, so the snapshot has to say the
+   * rest or the task keeps drawing where it used to be until the next sync
+   * quietly puts it back.
+   */
   async moveTask(id, target) {
-    await get().apply([moveItem(id, target)], (snapshot) => patchItem(snapshot, id, target));
+    const { sections } = get().snapshot;
+    const settled = target.section_id
+      ? { ...target, project_id: sections[target.section_id]?.project_id ?? target.project_id }
+      : { ...target, section_id: null };
+    await get().apply([moveItem(id, target)], (snapshot) => patchItem(snapshot, id, settled));
   },
 
   async setTaskLabels(id, labels) {
@@ -1418,6 +1436,10 @@ export const useStore = create<AppState>((set, get) => ({
 
   setNesting(nesting) {
     if (get().nesting !== nesting) set({ nesting });
+  },
+
+  setOutdenting(outdenting) {
+    if (get().outdenting !== outdenting) set({ outdenting });
   },
 
   setDraggingProject(id) {

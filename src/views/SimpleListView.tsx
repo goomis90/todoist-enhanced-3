@@ -9,11 +9,12 @@ import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
-import { applyFilters, rootItems } from '@/store/selectors';
+import { applyFilters, rootItems, sortItems } from '@/store/selectors';
 import { somedayItems, hasLabel } from '@/domain/views';
 import { summariseLoad } from '@/domain/load';
 import type { TranslationKey } from '@/i18n';
 import type { Item } from '@/domain/types';
+import type { DropTarget, RowOrder } from '@/domain/dnd';
 
 interface SimpleListViewProps {
   kind: 'someday' | 'inbox' | 'label';
@@ -21,7 +22,9 @@ interface SimpleListViewProps {
   onOpen: (id: string) => void;
   onInsights: () => void;
   onUnestimated: () => void;
-  onAddTaskTo: (placement: { projectId?: string; sectionId?: string; date?: string }) => void;
+  onAddTaskTo: (placement: {
+    projectId?: string; sectionId?: string; date?: string; labels?: string[];
+  }) => void;
 }
 
 /**
@@ -56,12 +59,53 @@ function SimpleListBody({
     return applyFilters(selection, current.filters, snapshot, childrenOf);
   }, [items, kind, labelName, current.filters, snapshot, childrenOf]);
 
+  /* The one flat list is drawn straight rather than through `ModeSurface`, and
+     `ModeSurface` is what used to do the sorting: the sort in the display menu
+     did nothing on these pages, and the order a task was put into could not
+     show itself. */
+  /* The Inbox is one project and is numbered like one. Un jour and a tag page
+     gather tasks from every project, so they read the order Todoist keeps for
+     lists like that. */
+  const order: RowOrder = kind === 'inbox' ? 'project' : 'day';
+
+  const ordered = useMemo(
+    () => sortItems(scoped, current.sort, childrenOf, order),
+    [scoped, current.sort, childrenOf, order],
+  );
+
   const load = useMemo(
     () => summariseLoad(scoped, childrenOf, null),
     [scoped, childrenOf],
   );
 
   const title = kind === 'label' ? (labelName ?? '') : t(`nav.${kind}` as TranslationKey);
+
+  /* What this page is, said twice: as the place a dropped task lands, and as
+     the head start the composer opens with. */
+  const inboxId = snapshot.user?.inbox_project_id;
+  const dropTarget: DropTarget | undefined = kind === 'someday'
+    ? { kind: 'someday' }
+    : kind === 'inbox'
+      ? (inboxId ? { kind: 'project', projectId: inboxId } : undefined)
+      : (labelName ? { kind: 'label', label: labelName } : undefined);
+  const addition = kind === 'someday'
+    ? {}
+    : kind === 'inbox'
+      ? { projectId: inboxId }
+      : { labels: labelName ? [labelName] : [] };
+
+  /* Grouped, in a list or on a board, a column is only somewhere to add a task
+     when the column is a place: a project, a tag. A priority or an estimate is
+     something a task has, not somewhere it goes, and a line offering to put one
+     there would be writing a promise the composer never keeps. */
+  const addToGroup = (key: string): (() => void) | undefined => {
+    if (current.group === 'none') return () => onAddTaskTo(addition);
+    if (current.group === 'project') return () => onAddTaskTo({ ...addition, projectId: key });
+    if (current.group === 'label' && key !== 'none') {
+      return () => onAddTaskTo({ ...addition, labels: [...(addition.labels ?? []), key] });
+    }
+    return undefined;
+  };
 
   return (
     <div className="page">
@@ -85,14 +129,20 @@ function SimpleListBody({
       />
 
 
-      {kind === 'someday' && current.mode === 'list' && current.group === 'none' ? (
+      {current.mode === 'list' && current.group === 'none' ? (
+        /* One flat list is one place, so it is a group of its own rather than
+           a grouping of one: somewhere to drop a task, and a standing line to
+           add one that already belongs here — in the Inbox, in the project;
+           on a tag page, with the tag on. */
         <div className="mode">
           <TaskGroup
-            items={scoped}
+            items={ordered}
             childrenOf={childrenOf}
             onOpen={onOpen}
-            dropTarget={{ kind: 'someday' }}
-            onAddTask={() => onAddTaskTo({})}
+            dropTarget={dropTarget}
+            onAddTask={() => onAddTaskTo(addition)}
+            keepWhenEmpty
+            reorderable={current.sort === 'manual' ? order : undefined}
           />
         </div>
       ) : (
@@ -103,6 +153,8 @@ function SimpleListBody({
           group={current.group}
           sort={current.sort}
           onOpen={onOpen}
+          order={order}
+          addToGroup={addToGroup}
         />
       )}
     </div>

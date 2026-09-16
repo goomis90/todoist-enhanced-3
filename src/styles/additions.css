@@ -136,7 +136,7 @@
   position:static;transform:none;
   opacity:1;pointer-events:auto;
   display:flex;align-items:center;gap:var(--s4);padding:10px var(--s4);
-  background:var(--text);color:#fff;border-radius:var(--r-md);
+  background:var(--text);color:var(--surface);border-radius:var(--r-md);
   font-size:var(--fs-13);line-height:1.45;box-shadow:var(--sh-lg);
   animation:toastIn .18s ease-out;
 }
@@ -144,7 +144,7 @@
 .toast button{flex:0 0 auto}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
-.toast button{color:#fff;font-weight:600;font-size:var(--fs-12);text-decoration:underline}
+.toast button{color:var(--surface);font-weight:600;font-size:var(--fs-12);text-decoration:underline}
 /* A phone puts the navigation bar where the toast was going to sit. */
 @media (max-width:720px){
   .toasts{bottom:calc(76px + env(safe-area-inset-bottom));width:auto;left:var(--s3);right:var(--s3);transform:none}
@@ -179,10 +179,14 @@
 
 /* ---------- Display menu ---------- */
 .displaywrap{position:relative}
+/* The count is the page's own colours turned over: the text colour behind it,
+   and the surface colour on top. It used to be white on `--text`, which is
+   near-white in the dark theme — a number you could only read by selecting
+   it. */
 .displaycount{
   min-width:16px;height:16px;padding:0 4px;margin-left:2px;
   display:inline-grid;place-items:center;border-radius:var(--r-full);
-  background:var(--text);color:#fff;font-size:10px;font-weight:700;
+  background:var(--text);color:var(--surface);font-size:10px;font-weight:700;
 }
 .displaypanel{
   top:38px;right:0;left:auto;width:320px;max-height:70vh;overflow-y:auto;
