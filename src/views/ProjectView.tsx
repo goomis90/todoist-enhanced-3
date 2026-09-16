@@ -151,8 +151,11 @@ function ProjectBody({
             sectionId: group.id === 'none' ? null : group.id,
             projectId,
           },
+          onAddTask: () => onAddTaskTo(
+            group.id === 'none' ? { projectId } : { projectId, sectionId: group.id },
+          ),
         })),
-    [sectionGroups, looseItems, projectId, t],
+    [sectionGroups, looseItems, projectId, t, onAddTaskTo],
   );
 
   if (!project) {
@@ -247,6 +250,9 @@ function ProjectBody({
             showProject={false}
             dropTarget={{ kind: 'section', sectionId: null, projectId }}
             onAddTask={() => onAddTaskTo({ projectId })}
+            /* A project with everything in sections still needs somewhere to
+               put a task that belongs in none of them. */
+            keepWhenEmpty
           />
           {sectionGroups.map((group, index) => (
             <Fragment key={group.id}>

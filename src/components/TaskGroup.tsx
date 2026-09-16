@@ -21,6 +21,8 @@ interface TaskGroupProps {
   defaultCollapsed?: boolean;
   /** Adds a task straight into this section. */
   onAddTask?: () => void;
+  /** Stays on the page with nothing in it, so the line that fills it is there. */
+  keepWhenEmpty?: boolean;
   /** An accent for the sections that carry meaning: late, and quick. */
   accent?: 'late' | 'quick';
   /** When set, the whole group accepts tasks dropped onto it. */
@@ -34,7 +36,7 @@ interface TaskGroupProps {
 export function TaskGroup({
   title, items, childrenOf, onOpen, tint, actions,
   showProject = true, defaultCollapsed = false, dropTarget, onAddTask, accent,
-  sectionId, onRename, onDelete,
+  sectionId, onRename, onDelete, keepWhenEmpty = false,
 }: TaskGroupProps) {
   const { t, locale } = useT();
   const dragging = useStore((s) => s.draggingTaskId !== null);
@@ -42,8 +44,9 @@ export function TaskGroup({
 
   // An empty derived grouping is noise. A real section is not: it is somewhere
   // you chose to make, and a section you just created has to be visible before
-  // it can be named or filled.
-  if (items.length === 0 && !sectionId && !(dropTarget && dragging)) return null;
+  // it can be named or filled. Nor is the project's own block above its first
+  // section: empty, it is still the only way to add a task outside them.
+  if (items.length === 0 && !sectionId && !keepWhenEmpty && !(dropTarget && dragging)) return null;
 
   const totalMinutes = items.reduce(
     (acc, item) => acc + (effectiveEstimate(item, childrenOf).minutes ?? 0),
@@ -124,7 +127,11 @@ export function TaskGroup({
           />
         ))}
 
-      {!collapsed && items.length === 0 && <p className="empty">{t('group.empty')}</p>}
+      {/* A block with no heading has nothing to say it is empty about: the
+          add line under it is the whole point of it being there. */}
+      {!collapsed && items.length === 0 && (title || sectionId) && (
+        <p className="empty">{t('group.empty')}</p>
+      )}
 
       {!collapsed && onAddTask && (
         <button className="addline sectionadd" onClick={onAddTask}>
