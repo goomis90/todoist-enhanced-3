@@ -2161,28 +2161,25 @@
     top:auto!important;bottom:12px}
 }
 
-/* The two things a row can mean while a task is over it, and they are not
-   allowed to look alike — a line under a row used to mean "inside this one",
-   which is exactly how every list in the world says "between these two".
-
-   Between: the line, at the seam, full width, as the sidebar draws it.
-   Inside: the row itself, lit and marked down its left edge, as a container
-   rather than a gap. */
-.task.landing::after{
-  content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+/* The two things a row can mean while a task is over it, said the way the
+   sidebar says them about a project: one line, and where it starts is the
+   whole difference. Full width, the task lands in this row's place. Pushed in
+   to where a subtask begins, it goes inside this row — which is where the row
+   itself is about to move to. */
+.task.landing::after,
+.task.nesttarget::after{
+  content:"";position:absolute;right:0;bottom:-1px;height:2px;
   border-radius:1px;background:var(--accent);pointer-events:none;
 }
-.task.nesttarget{
-  background:var(--accent-wash);
-  box-shadow:inset 3px 0 0 var(--accent);
-}
+.task.landing::after{left:0}
+.task.nesttarget::after{left:30px}
 
 /* The thing being carried. It had no style of its own at all — a line of
    16px text as wide as the page, with nothing behind it and nothing under it,
    which is most of why the gesture was hard to read. It is a card now, the
-   size of a row's title, and it says which of the two things it is about to
-   do: an arrow into the row it would go inside, a bar on the side it is being
-   pulled out of. */
+   size of a row's title. It carries no mark of its own: the row under it says
+   what the drop would do, and the only gesture with no row to say it is a
+   subtask pulled out to the left. */
 .dragoverlay{
   display:inline-block;max-width:360px;padding:8px 12px;
   border:1px solid var(--border-strong);border-radius:var(--r-md);
@@ -2192,5 +2189,3 @@
   box-shadow:var(--sh-lg);pointer-events:none;
 }
 .dragoverlay.outdent{box-shadow:inset 3px 0 0 var(--accent),var(--sh-lg)}
-.dragoverlay.indent{box-shadow:inset -3px 0 0 var(--accent),var(--sh-lg)}
-.indentmark{margin-right:6px;color:var(--accent);font-weight:700}
