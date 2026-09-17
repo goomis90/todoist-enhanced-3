@@ -1083,11 +1083,41 @@
   .propkey{display:none}
 }
 
-/* ---------- A section heading that takes a drop ---------- */
-/* Favourites is the one heading you can drop on, and it says so the way every
-   other destination in the sidebar does. */
-.side-head.dropping{
+/* ---------- A section that takes a drop ---------- */
+/* Favourites is the one section you can drop into, and the whole box says so:
+   "put this in there" is aimed at the box, and a one-line target at the top
+   of it is something you would have to be told about. */
+.side-group.dropping{
+  border-radius:var(--r-md);
   background:var(--accent-tint);
-  border-radius:var(--r-sm);
-  box-shadow:inset 0 0 0 1px var(--accent);
+  box-shadow:0 0 0 1px var(--accent);
 }
+/* Empty, it is still somewhere to aim at. */
+.side-group.dropping .side-head{min-height:32px}
+
+/* ---------- The Display panel on a phone ---------- */
+/*
+ * 320px hung from the right edge of its button is 320px going left, and the
+ * button sits wherever the page's title leaves it — so on a phone the panel
+ * ran off the left of the screen and half of it could not be read.
+ *
+ * It comes up from the bottom edge instead, the way every other popover in
+ * the app already does at this width: measured against the window rather than
+ * against a button, and clear of the navigation bar.
+ */
+@media (max-width:720px){
+  .displaypanel{
+    position:fixed;
+    top:auto;left:var(--s3);right:var(--s3);
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    width:auto;max-height:64vh;
+  }
+}
+
+/* A project and a tag, carried under the pointer like a task. */
+.dragoverlay.project,.dragoverlay.tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:var(--fs-13);font-weight:600;
+}
+.dragoverlay.project .hash{width:18px;height:18px;font-size:var(--fs-12);flex:0 0 auto}
+.dragoverlay.tag .ic{color:var(--muted);flex:0 0 auto}
