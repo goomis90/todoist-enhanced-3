@@ -68,6 +68,7 @@ export function Sidebar({
   const weekLayout = useStore((s) => s.prefs.weekLayout);
   const disconnect = useStore((s) => s.disconnect);
   const draggingProjectId = useStore((s) => s.draggingProjectId);
+  const draggingTag = useStore((s) => s.draggingTag);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
@@ -212,7 +213,16 @@ export function Sidebar({
   };
 
   const tagItem = (name: string, color: string, count?: number) => (
-    <Droppable target={{ kind: 'label', label: name }} scope="nav" key={`tag-${name}`}>
+    <Droppable
+      target={{ kind: 'label', label: name }}
+      scope="nav"
+      key={`tag-${name}`}
+      /* A tag takes tasks and nothing else. While a project or another tag is
+         in flight this row lit up as though it would accept one, which is an
+         offer the drop cannot keep: there is no such thing as a project
+         inside a tag. */
+      disabled={draggingProjectId !== null || draggingTag !== null}
+    >
       {({ isOver }) => (
         <DraggableTag name={name}>
         <button
@@ -460,11 +470,9 @@ export function Sidebar({
             title={t('nav.favourites')}
             open={openGroups.favourites ?? true}
             onToggle={() => toggleGroup('favourites')}
-            /* A project or a tag dropped on the heading becomes one. The
-               sidebar teaches dragging all day — a project is reordered by it
-               and nested by it — so dragging one into the section it plainly
-               belongs in was the first thing to try and the one thing that
-               did nothing. */
+            /* The whole section, not its heading: "put this in there" is
+               aimed at the box, and asking for the one line of text at the
+               top of it is a target you have to be told about. */
             dropTarget={{ kind: 'favourites' }}
           >
             {favourites.projects.map((p) =>
@@ -568,8 +576,8 @@ function SideGroup({
   dropTarget?: DropTarget;
   children: React.ReactNode;
 }) {
-  const head = (isOver: boolean) => (
-    <div className={`side-head${isOver ? ' dropping' : ''}`}>
+  const head = () => (
+    <div className="side-head">
         <button className="side-headbtn" aria-expanded={open} onClick={onToggle}>
           <span>{title}</span>
         </button>
@@ -596,16 +604,17 @@ function SideGroup({
     </div>
   );
 
-  return (
-    <section className="side-group">
-      {dropTarget
-        ? (
-          <Droppable target={dropTarget} scope="side-group">
-            {({ isOver }) => head(isOver)}
-          </Droppable>
-        )
-        : head(false)}
+  const body = (isOver: boolean) => (
+    <section className={`side-group${isOver ? ' dropping' : ''}`}>
+      {head()}
       {open && children}
     </section>
+  );
+
+  if (!dropTarget) return body(false);
+  return (
+    <Droppable target={dropTarget} scope="side-group">
+      {({ isOver }) => body(isOver)}
+    </Droppable>
   );
 }

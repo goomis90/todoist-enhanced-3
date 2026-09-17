@@ -16,6 +16,8 @@ import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
 import { TAG_DRAG_PREFIX, TAG_DROP_PREFIX, tagOrderFor } from '@/components/dnd/DraggableTag';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
+import { markerStyle } from '@/domain/colors';
+import { Icon } from '@/components/Icon';
 import type { RowList } from './RowList';
 import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import { PRESS_HOLD_EVENT, projectRowAttr } from './ProjectRowSortable';
@@ -189,6 +191,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const reorderLabels = useStore((s) => s.reorderLabels);
   const setNesting = useStore((s) => s.setNesting);
   const setDraggingProject = useStore((s) => s.setDraggingProject);
+  const setDraggingTag = useStore((s) => s.setDraggingTag);
   /** A subtask pulled out to the left: on release it becomes a task of its own. */
   const outdenting = useStore((s) => s.outdenting);
   const setOutdenting = useStore((s) => s.setOutdenting);
@@ -273,6 +276,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     setDragging(isSection || isProject || isSubtask ? null : taskIdOf(id));
     setDraggingSection(isSection ? id.slice('section:'.length) : null);
     setDraggingProject(isProject ? id.slice('project-row:'.length) : null);
+    setDraggingTag(id.startsWith(TAG_DRAG_PREFIX) ? id.slice(TAG_DRAG_PREFIX.length) : null);
   }
 
   /* The indent has to be visible while it is being made, not discovered on
@@ -294,6 +298,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     setNesting(false);
     setOutdenting(false);
     setDraggingProject(null);
+    setDraggingTag(null);
 
     /* Pulled out to the left, a subtask leaves its parent and stays where it
        is otherwise: same project, same section, now at the top level. The
@@ -712,6 +717,12 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const draggingSection = draggingId?.startsWith('section:')
     ? snapshot.sections[draggingId.slice('section:'.length)]
     : null;
+  const draggingProjectRow = draggingId?.startsWith('project-row:')
+    ? snapshot.projects[draggingId.slice('project-row:'.length)]
+    : null;
+  const draggingTagName = draggingId?.startsWith(TAG_DRAG_PREFIX)
+    ? draggingId.slice(TAG_DRAG_PREFIX.length)
+    : null;
 
   return (
     <DndContext
@@ -730,6 +741,21 @@ export function DragProvider({ children }: { children: ReactNode }) {
         )}
         {draggingSection && (
           <div className="dragoverlay section">{draggingSection.name || '—'}</div>
+        )}
+        {/* A project and a tag are carried the same way a task is. Without a
+            preview the pointer held nothing and the only sign anything was
+            happening was the row going faint behind it. */}
+        {draggingProjectRow && (
+          <div className="dragoverlay project">
+            <span className="hash" style={markerStyle(draggingProjectRow.color)}>#</span>
+            {draggingProjectRow.name}
+          </div>
+        )}
+        {draggingTagName && (
+          <div className="dragoverlay tag">
+            <Icon name="tag" size="sm" />
+            {draggingTagName}
+          </div>
         )}
       </DragOverlay>
     </DndContext>

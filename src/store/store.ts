@@ -256,6 +256,9 @@ interface AppState {
   /** The sidebar project in flight, so folders can offer themselves. */
   draggingProjectId: string | null;
   setDraggingProject: (id: string | null) => void;
+  /** The tag being carried, by name, or null. */
+  draggingTag: string | null;
+  setDraggingTag: (name: string | null) => void;
 
   /**
    * The tasks picked out for a change made to all of them at once.
@@ -320,6 +323,7 @@ export const useStore = create<AppState>((set, get) => ({
   nesting: false,
   outdenting: false,
   draggingProjectId: null,
+  draggingTag: null,
   selection: [],
   demo: false,
 
@@ -1433,6 +1437,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setDraggingSection(id) { set({ draggingSectionId: id }); },
+  setDraggingTag(name) { set({ draggingTag: name }); },
 
   setNesting(nesting) {
     if (get().nesting !== nesting) set({ nesting });
