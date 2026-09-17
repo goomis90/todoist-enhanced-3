@@ -14,7 +14,9 @@ affiliated with, or supported by Todoist.**
 [Report a bug or an idea](https://tally.so/r/WOLkVN) ·
 [Support me](https://buymeacoffee.com/julesbertolino)
 
-![Enhanced for Todoist, My week view](docs/screenshot-my-week.png)
+[![Enhanced for Todoist, My week view](docs/screenshot-my-week.png)](https://github.com/julesvbertolino/todoist-enhancements/raw/main/docs/tour.mp4)
+
+**[Watch the tour](https://github.com/julesvbertolino/todoist-enhancements/raw/main/docs/tour.mp4)** · two and a half minutes, no sign-in
 
 </div>
 
