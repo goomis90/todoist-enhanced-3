@@ -950,14 +950,13 @@
 
   .trow-actions{
     position:absolute;left:100%;top:0;bottom:0;
-    width:152px;
+    width:200px;
     display:flex;align-items:center;justify-content:space-evenly;
     visibility:visible;
     gap:0;
   }
-  /* Two of the five are the task panel by another route, and the panel is one
-     tap away here. The tray holds the three the panel is the long way round
-     for. */
+  /* Tapping the row opens the task, so the button that opens the task is the
+     one the tray does without. */
   .trow-actions .rowact-wide{display:none}
   .trow-actions button{
     width:44px;height:44px;border-radius:var(--r-full);
@@ -993,3 +992,17 @@
   text-transform:uppercase;color:var(--faint);
 }
 .rowsheet .estimatesheet .estfield{width:100%}
+/* The durations an estimate usually is, as targets a thumb can hit without a
+   keyboard coming up over half the screen. */
+.estquick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--s3)}
+.estchip{
+  min-height:40px;padding:0 14px;border-radius:var(--r-full);
+  border:1px solid var(--border-strong);background:var(--surface);
+  font-size:var(--fs-13);font-weight:600;color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+.estchip.on{border-color:var(--accent);background:var(--accent-tint);color:var(--accent-dark)}
+.estchip.clear{
+  display:inline-flex;align-items:center;gap:6px;
+  border-style:dashed;color:var(--muted);font-weight:500;
+}

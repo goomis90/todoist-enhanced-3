@@ -43,10 +43,10 @@ export const PRESS_SLOP_PX = 10;
 /**
  * How far the row slides to show its buttons.
  *
- * Three targets at 44px with the gaps between them: the width the tray needs,
+ * Four targets at 44px with the gaps between them: the width the tray needs,
  * rather than a round number the tray is then made to fit.
  */
-export const SWIPE_TRAY_PX = 152;
+export const SWIPE_TRAY_PX = 200;
 
 /**
  * How much of the tray has to be pulled out before letting go opens it rather

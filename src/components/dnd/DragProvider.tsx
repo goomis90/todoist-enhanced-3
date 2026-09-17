@@ -126,11 +126,13 @@ export const dragClock = {
 /**
  * How long a finger has to stay still before a row lifts.
  *
- * Long enough that scrolling never trips it, short enough that holding a row
- * on purpose does not feel like waiting. It is also the press that opens a
- * project's menu, so both gestures are measured by the one duration.
+ * Long enough that scrolling never trips it — a scroll has moved well past the
+ * slop by then, and moving is what calls the hold off — and short enough that
+ * picking a project up does not feel like waiting for permission. It is also
+ * the press that opens a project's menu, so both are measured by the one
+ * duration.
  */
-export const HOLD_MS = 320;
+export const HOLD_MS = 240;
 
 /**
  * How far a finger may stray during that hold and still be holding.

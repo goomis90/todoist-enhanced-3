@@ -549,15 +549,17 @@ function AppShell({
             <Icon name="upcoming" size="lg" />
             {t('nav.upcoming')}
           </button>
-          {/* The fifth slot is everything a phone has no room for: the profile
-              and its menu, search, tags, favourites, projects, Someday. The
-              four destinations beside it are the ones opened every day. */}
+          {/* Browse was here and in the bar at the top of every page, which is
+              one destination taking two of the five places a phone has. It
+              stays at the top, where a burger menu is on every phone, and the
+              slot it gives up goes to a destination: Someday, which was
+              otherwise two taps away behind that same menu. */}
           <button
-            aria-expanded={browseOpen}
-            onClick={() => setBrowseOpen(true)}
+            aria-current={route.view === 'someday' ? 'page' : undefined}
+            onClick={() => navigate('someday')}
           >
-            <Icon name="menu" size="lg" />
-            {t('nav.browse')}
+            <Icon name="someday" size="lg" />
+            {t('nav.someday')}
           </button>
         </nav>
       </main>

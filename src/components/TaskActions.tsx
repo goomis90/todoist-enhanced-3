@@ -7,7 +7,7 @@ import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import { ROW_PRESS_EVENT, type RowMenu } from '@/domain/gestures';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
-import { withEstimate, effectiveEstimate } from '@/domain/estimates';
+import { withEstimate, effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { EstimateField } from './EstimateField';
 import { DateField } from './DateField';
 import { formatDay, formatDayOrName, toApiDate } from '@/domain/dates';
@@ -43,6 +43,16 @@ interface Destination {
   colour?: string;
   current: boolean;
 }
+
+/**
+ * The durations an estimate usually is.
+ *
+ * Fifteen minutes to two hours, which is the whole of what a task on a week's
+ * plan realistically takes — anything longer is a project, and the app says so
+ * elsewhere. Offered as buttons because typing "45" on a phone means opening a
+ * keyboard over half the screen to press two keys.
+ */
+const QUICK_ESTIMATES = [5, 15, 30, 45, 60, 90, 120];
 
 interface TaskActionsProps {
   item: Item;
@@ -343,17 +353,40 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   /* Setting an estimate is a field, not a menu, and on a phone it belongs in
      the same sheet as everything else rather than squeezed into a tray 152px
      wide. */
+  const setEstimate = (value: number | null) => {
+    setMenu('none');
+    void updateTask(item.id, { labels: withEstimate(item.labels, value) });
+  };
+
   const estimateSheet = (
     <div className="popover rowmenu asSheet estimatesheet" role="menu">
       <h5>{t('task.setEstimate')}</h5>
+      {/* Most estimates are one of these, and on a phone typing "45" means
+          opening a keyboard over half the screen to press two keys. The field
+          stays underneath for the ones that are not. */}
+      <div className="estquick">
+        {QUICK_ESTIMATES.map((quick) => (
+          <button
+            key={quick}
+            className={`estchip${minutes === quick && !computed ? ' on' : ''}`}
+            onClick={() => setEstimate(quick)}
+          >
+            {formatDuration(quick, locale)}
+          </button>
+        ))}
+        {minutes !== null && !computed && (
+          <button className="estchip clear" onClick={() => setEstimate(null)}>
+            <Icon name="close" size="sm" />
+            {t('date.clear')}
+          </button>
+        )}
+      </div>
       <EstimateField
         autoFocus
         minutes={computed ? null : minutes}
+        placeholder={t('task.estimatePlaceholder')}
         onCancel={() => setMenu('none')}
-        onCommit={(value) => {
-          setMenu('none');
-          void updateTask(item.id, { labels: withEstimate(item.labels, value) });
-        }}
+        onCommit={setEstimate}
       />
     </div>
   );
@@ -634,10 +667,10 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
         />
       ) : (
         <>
-          {/* Both of these are the task panel by another route, and the panel
-              is one tap away on a phone — tapping the row. The tray a swipe
-              opens holds the three things the panel is the long way round
-              for. */}
+          {/* Opening the task is what tapping the row already does, so on a
+              phone that button is the one the tray leaves out. An estimate is
+              not: it is the number this whole app is built on, and asking for
+              it should be a swipe rather than a trip through the panel. */}
           <button
             className="rowact-wide"
             aria-label={t('detail.title')}
@@ -647,7 +680,6 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
             <Icon name="edit" size="sm" />
           </button>
           <button
-            className="rowact-wide"
             aria-label={t('task.setEstimate')}
             title={t('task.setEstimate')}
             onClick={() => setMenu('estimate')}
