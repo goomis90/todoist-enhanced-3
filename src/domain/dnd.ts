@@ -54,6 +54,50 @@ const withWeek = (labels: string[]): string[] =>
  */
 const dueOn = (item: Item, date: Date) => dueForDate(item.due, toApiDate(date));
 
+/**
+ * Where a task typed into a group should land, from what the group means.
+ *
+ * A section's "Add task" line and a task dropped onto that same section are
+ * the same intention said two ways, and they used to disagree: dropping into
+ * Anytime this week put the week label on, and adding there opened an empty
+ * composer, so the task went to Someday — out of the section it was added
+ * from and out of the week. Both readings come from one table now, so a group
+ * cannot mean one thing to a drop and another to a line.
+ */
+export interface TaskPlacement {
+  projectId?: string;
+  sectionId?: string;
+  date?: string;
+  labels?: string[];
+}
+
+export function placementFor(target: DropTarget, now = new Date()): TaskPlacement {
+  switch (target.kind) {
+    case 'today':
+      return { date: toApiDate(now) };
+    case 'quick':
+      return { date: toApiDate(now), labels: [SYSTEM_LABELS.quick] };
+    case 'day':
+      return { date: toApiDate(target.date) };
+    case 'anytime':
+      return { labels: [weekLabel()] };
+    // Nothing to carry: Someday is what a task with no date and no week label
+    // already is.
+    case 'someday':
+      return {};
+    case 'project':
+      return { projectId: target.projectId };
+    case 'section':
+      return target.sectionId
+        ? { projectId: target.projectId, sectionId: target.sectionId }
+        : { projectId: target.projectId };
+    case 'label':
+      return { labels: [target.label] };
+    default:
+      return {};
+  }
+}
+
 export function dropMutation(item: Item, target: DropTarget): DropMutation | null {
   switch (target.kind) {
     case 'today':

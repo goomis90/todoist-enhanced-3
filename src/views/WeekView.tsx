@@ -16,6 +16,7 @@ import { summariseLoad, weeklyCapacity } from '@/domain/load';
 import { toApiDate } from '@/domain/dates';
 import { dueForDate } from '@/domain/recurrence';
 import { weekLabel } from '@/domain/types';
+import { placementFor, type TaskPlacement } from '@/domain/dnd';
 
 /**
  * How much of the week this page is showing.
@@ -31,7 +32,7 @@ interface WeekViewProps {
   onOpen: (id: string) => void;
   onInsights: () => void;
   onUnestimated: () => void;
-  onAddTaskTo: (placement: { projectId?: string; sectionId?: string; date?: string }) => void;
+  onAddTaskTo: (placement: TaskPlacement) => void;
   scope?: WeekScope;
 }
 
@@ -187,7 +188,9 @@ function WeekBody({
             reorderable={byHand}
             viewKey={viewKey}
             accent="late"
-            onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
+            /* Behind schedule takes no drop of its own — nothing is filed as
+               late on purpose — but a task added here is a task for today. */
+            onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
             actions={
               <button
                 className="btn sm linklike"
@@ -209,7 +212,7 @@ function WeekBody({
               viewKey={viewKey}
               accent="quick"
               dropTarget={{ kind: 'quick' }}
-              onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
+              onAddTask={() => onAddTaskTo(placementFor({ kind: 'quick' }))}
             />
           )}
 
@@ -221,7 +224,7 @@ function WeekBody({
             reorderable={byHand}
             viewKey={viewKey}
             dropTarget={{ kind: 'today' }}
-            onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
+            onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
           />
 
           <TaskGroup
@@ -229,7 +232,7 @@ function WeekBody({
             items={groups.timed}
             childrenOf={childrenOf}
             onOpen={onOpen}
-            onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
+            onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
           />
           </>
           )}
@@ -243,7 +246,7 @@ function WeekBody({
               reorderable={byHand}
               viewKey={viewKey}
               dropTarget={{ kind: 'anytime' }}
-              onAddTask={() => onAddTaskTo({})}
+              onAddTask={() => onAddTaskTo(placementFor({ kind: 'anytime' }))}
             />
           )}
 
