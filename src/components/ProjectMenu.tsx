@@ -5,6 +5,7 @@ import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
 import { navigate } from '@/hooks/useRoute';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import type { Project } from '@/domain/types';
 
 export interface ProjectMenuProps {
@@ -43,6 +44,7 @@ export function ProjectMenu({
   const duplicateProject = useStore((s) => s.duplicateProject);
   const nestProject = useStore((s) => s.nestProject);
   const ref = useRef<HTMLDivElement>(null);
+  const phone = usePhoneBehaviour();
 
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
@@ -51,7 +53,12 @@ export function ProjectMenu({
      the document instead and placed against the button it belongs to, flipping
      above it when there is no room below. */
   useLayoutEffect(() => {
-    if (!anchor) return;
+    /* On a phone it is a sheet along the bottom edge, placed by the stylesheet
+       against the screen rather than against a row. A row is not a useful
+       anchor there: the menu is most of the height of the list it would hang
+       from, and the row it belongs to is as likely to be at the bottom of the
+       screen as anywhere — which put the menu off the top of it. */
+    if (phone || !anchor) return;
     const menu = ref.current;
     const button = anchor.getBoundingClientRect();
     const height = menu?.offsetHeight ?? 320;
@@ -70,7 +77,7 @@ export function ProjectMenu({
     );
 
     setPosition({ top, left });
-  }, [anchor, align]);
+  }, [anchor, align, phone]);
 
   /* Anywhere else, Escape, and any scroll underneath it, put it away: a menu
      placed against a button has to go when that button moves. */
@@ -127,11 +134,11 @@ export function ProjectMenu({
 
   const menu = (
     <div
-      className="popover projectmenu"
+      className={`popover projectmenu${phone ? ' asSheet' : ''}`}
       role="menu"
       aria-label={t('project.actions')}
       ref={ref}
-      style={{
+      style={phone ? undefined : {
         top: position?.top ?? -9999,
         left: position?.left ?? -9999,
         visibility: position ? undefined : 'hidden',

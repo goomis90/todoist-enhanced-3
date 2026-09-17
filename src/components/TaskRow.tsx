@@ -4,6 +4,8 @@ import { Icon } from './Icon';
 import { useRowTarget } from './dnd/useRowTarget';
 import { TaskActions } from './TaskActions';
 import { useT } from '@/hooks/useT';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
+import { useRowGesture } from '@/hooks/useRowGesture';
 import { useStore } from '@/store/store';
 import { toDisplayPriority, type Item } from '@/domain/types';
 import { effectiveEstimate, formatDuration } from '@/domain/estimates';
@@ -68,6 +70,11 @@ export function TaskRow({
   const toggleSelection = useStore((s) => s.toggleSelection);
   const showSubtasks = useContext(ShowSubtasks);
 
+  const phone = usePhoneBehaviour();
+  /* The two gestures a phone has in place of a pointer hovering over the row:
+     pull it aside for its buttons, hold it down for their names. */
+  const gesture = useRowGesture(phone);
+
   const [expanded, setExpanded] = useState(true);
   /** Ticked here, not yet ticked at Todoist: the pause between the two. */
   const [settling, setSettling] = useState(false);
@@ -111,12 +118,13 @@ export function TaskRow({
     <>
       <div
         ref={(node) => { setRowRef(node); dragRef?.(node); }}
-        className={`task${settling ? ' done settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}`}
+        className={`task${settling ? ' done settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}${gesture.className}`}
         role="button"
         tabIndex={0}
         /* The row the keyboard is on is the row that has focus, so the walk
            needs nothing but a way to recognise a task row in the document. */
         data-task-id={item.id}
+        {...gesture.handlers}
         /* The tour lights up a parent together with the children under it,
            because the two being one thing is the point being made. They are
            siblings rather than nested — a wrapper here would have to fight the
@@ -127,7 +135,10 @@ export function TaskRow({
           showSubtasks && expanded && openChildren.length > 0 ? 'siblings' : undefined
         }
         data-depth={depth > 0 ? depth : undefined}
-        style={depth > 0 ? ({ '--depth': depth } as React.CSSProperties) : undefined}
+        style={{
+          ...(depth > 0 ? ({ '--depth': depth } as React.CSSProperties) : {}),
+          ...gesture.style,
+        }}
         aria-selected={picked || undefined}
         /* Cmd (or Ctrl) and a click picks the row out instead of opening it:
            the same gesture every file list has used for thirty years, and the
@@ -138,6 +149,10 @@ export function TaskRow({
             toggleSelection(item.id);
             return;
           }
+          /* A row that has just been pulled aside, or held down, has already
+             answered the press. The click the browser sends afterwards is not
+             a second instruction to open the task. */
+          if (gesture.justGestured()) return;
           onOpen(item.id);
         }}
         onKeyDown={(e) => {

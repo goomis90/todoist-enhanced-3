@@ -4,6 +4,7 @@ import { AccentChoice, DensityChoice, ThemeChoice } from '../Choosers';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { markOnboarded } from '@/domain/onboarding';
+import { useIsPhone } from '@/hooks/useTouchLayout';
 
 /**
  * The first run, once, per account.
@@ -28,6 +29,14 @@ import { markOnboarded } from '@/domain/onboarding';
  * The settings are written immediately; the *record of having been asked* is
  * written by Start or by Skip. Closing the window means being asked again
  * rather than silently never being asked.
+ *
+ * On a phone it is one choice, not three. Three grids of cards on a 375px
+ * screen is a page and a half of scrolling before anyone has seen a task —
+ * which is a form standing between somebody and their work, the one thing
+ * this was written not to be. Light or dark is worth asking because it is the
+ * choice a phone gets wrong most often and the one nobody thinks to go
+ * looking for; the accent and the density are a pleasure to find later, in
+ * Settings, where both still are.
  */
 
 export function Walkthrough({
@@ -37,6 +46,7 @@ export function Walkthrough({
   const prefs = useStore((s) => s.prefs);
   const setPrefs = useStore((s) => s.setPrefs);
   const user = useStore((s) => s.snapshot.user);
+  const phone = useIsPhone();
 
   /* Finishing records the account and hands over to the tour. Skipping records
      it too and stops there: somebody who skipped the setup did not ask to be
@@ -63,7 +73,7 @@ export function Walkthrough({
           </span>
           <div>
             <h2>{t('walkthrough.welcome')}</h2>
-            <p>{t('walkthrough.welcomeBody')}</p>
+            <p>{t(phone ? 'walkthrough.welcomeBodyPhone' : 'walkthrough.welcomeBody')}</p>
           </div>
           <button className="wt-skip" onClick={() => finish(false)}>
             {t('walkthrough.skip')}
@@ -79,23 +89,30 @@ export function Walkthrough({
             />
           </section>
 
-          <section>
-            <h3>{t('settings.accent')}</h3>
-            <AccentChoice
-              value={prefs.accent}
-              custom={prefs.accentCustom}
-              onChange={(value) => setPrefs({ accent: value })}
-              onCustom={(value) => setPrefs({ accent: 'custom', accentCustom: value })}
-            />
-          </section>
+          {!phone && (
+            <>
+              <section>
+                <h3>{t('settings.accent')}</h3>
+                <AccentChoice
+                  value={prefs.accent}
+                  custom={prefs.accentCustom}
+                  onChange={(value) => setPrefs({ accent: value })}
+                  onCustom={(value) => setPrefs({ accent: 'custom', accentCustom: value })}
+                />
+              </section>
 
-          <section>
-            <h3>{t('settings.density')}</h3>
-            <DensityChoice
-              value={prefs.density}
-              onChange={(value) => setPrefs({ density: value })}
-            />
-          </section>
+              <section>
+                <h3>{t('settings.density')}</h3>
+                <DensityChoice
+                  value={prefs.density}
+                  onChange={(value) => setPrefs({ density: value })}
+                />
+              </section>
+            </>
+          )}
+
+          {/* Said once, where the two that were dropped can be found. */}
+          {phone && <p className="wt-rest">{t('walkthrough.restInSettings')}</p>}
         </div>
 
         <div className="wt-foot">

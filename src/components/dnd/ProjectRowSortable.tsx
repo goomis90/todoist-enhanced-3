@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useStore } from '@/store/store';
 
@@ -14,11 +14,31 @@ interface ProjectRowSortableProps {
    * there is the tree's order.
    */
   sortable?: boolean;
+  /**
+   * Pressed and held without moving — a finger asking the row what it can do.
+   * On a phone this is the project menu; a mouse has the three-dot button.
+   * The row hands over its own element, because on a phone it is what the
+   * menu has to be placed against: the button it usually hangs from is not
+   * on the page.
+   */
+  onPressHold?: (row: HTMLElement) => void;
   children: ReactNode;
 }
 
 /** The id a sidebar project row registers under, in both roles. */
 export const projectRowId = (projectId: string): string => `project-row:${projectId}`;
+
+/**
+ * How a row is found in the document, and what it is told.
+ *
+ * The press that opens a project's menu is recognised where every other drag
+ * is read — at the end of the drag, by the provider — and the row it belongs
+ * to is a DOM node long before it is a component. Telling it directly is one
+ * message to one row; a context would tell forty rows that one of them had
+ * been pressed.
+ */
+export const projectRowAttr = 'data-project-row';
+export const PRESS_HOLD_EVENT = 'enhanced:presshold';
 
 /**
  * A sidebar project row that can be picked up and put down on another.
@@ -33,9 +53,20 @@ export const projectRowId = (projectId: string): string => `project-row:${projec
  * project and a project is never reordered by accident.
  */
 export function ProjectRowSortable({
-  projectId, className = '', sortable = true, children,
+  projectId, className = '', sortable = true, onPressHold, children,
 }: ProjectRowSortableProps) {
   const id = projectRowId(projectId);
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  const hold = useRef(onPressHold);
+  hold.current = onPressHold;
+
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const fire = () => hold.current?.(row);
+    row.addEventListener(PRESS_HOLD_EVENT, fire);
+    return () => row.removeEventListener(PRESS_HOLD_EVENT, fire);
+  }, []);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, disabled: !sortable });
   /* A task in flight is not looking for a position in this list, it is looking
      for a project to live in — and that destination is the droppable wrapped
@@ -54,7 +85,8 @@ export function ProjectRowSortable({
 
   return (
     <div
-      ref={(node) => { setNodeRef(node); setDropRef(node); }}
+      ref={(node) => { setNodeRef(node); setDropRef(node); rowRef.current = node; }}
+      {...{ [projectRowAttr]: projectId }}
       className={`navrow sortable${isDragging ? ' lifting' : ''}${landing ? (nesting ? ' nesting' : ' landing') : ''}${className}`}
       {...attributes}
       {...listeners}

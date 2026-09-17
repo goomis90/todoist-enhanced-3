@@ -16,6 +16,8 @@ import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
 import type { RowList } from './RowList';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
+import { PRESS_HOLD_EVENT, projectRowAttr } from './ProjectRowSortable';
 
 /**
  * Puts the preview under the pointer by its left edge rather than its centre.
@@ -46,6 +48,16 @@ const anchorLeftOfCursor: Modifier = ({
  * region of the page behind a dialog can win a drop aimed at a row inside it.
  * Each drag is therefore only offered what it could possibly mean.
  */
+/**
+ * A drag that was a press held still: it never became a pull.
+ *
+ * Only reachable where the drag waits for the press to be held, which is the
+ * phone rule — under the desktop rule a drag cannot start without movement, so
+ * this can never be true there.
+ */
+const pressedAndHeld = (event: DragEndEvent): boolean =>
+  Math.abs(event.delta.x) < HOLD_SLOP_PX && Math.abs(event.delta.y) < HOLD_SLOP_PX;
+
 const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'task' =>
   (id.startsWith('subtask:') ? 'subtask'
     : id.startsWith('section:') ? 'section'
@@ -115,6 +127,25 @@ export const dragClock = {
 };
 
 /**
+ * How long a finger has to stay still before a row lifts.
+ *
+ * Long enough that scrolling never trips it — a scroll has moved well past the
+ * slop by then, and moving is what calls the hold off — and short enough that
+ * picking a project up does not feel like waiting for permission. It is also
+ * the press that opens a project's menu, so both are measured by the one
+ * duration.
+ */
+export const HOLD_MS = 240;
+
+/**
+ * How far a finger may stray during that hold and still be holding.
+ *
+ * Past it the press was a scroll, and the drag is called off rather than
+ * started.
+ */
+const HOLD_SLOP_PX = 8;
+
+/**
  * How far right a sidebar project, or a task row, has to be dragged before the
  * drop nests it rather than reordering or moving it.
  *
@@ -154,9 +185,28 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const setOutdenting = useStore((s) => s.setOutdenting);
   const setViewPrefs = useStore((s) => s.setViewPrefs);
 
-  // A short distance threshold keeps a plain click on a task from starting a drag.
+  /**
+   * A drag starts on distance on a desktop and on time on a phone.
+   *
+   * One rule served both and began a drag as soon as anything moved six
+   * pixels. On a desktop that is right: a press and a pull has nothing else it
+   * could mean. On a phone a press and a pull is how you scroll, so every
+   * attempt to scroll the sidebar picked a project up and carried it off —
+   * the list moving under the thumb was a project being filed somewhere
+   * rather than the list scrolling.
+   *
+   * So on a phone the press has to be held. Move before it is and it was a
+   * scroll; hold still and the row lifts, which is the gesture every phone
+   * already uses to mean "this one" — and letting go of it without moving is
+   * how the project's menu opens.
+   */
+  const phone = usePhoneBehaviour();
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: phone
+        ? { delay: HOLD_MS, tolerance: HOLD_SLOP_PX }
+        : { distance: 6 },
+    }),
   );
 
   /**
@@ -246,6 +296,20 @@ export function DragProvider({ children }: { children: ReactNode }) {
         return;
       }
     }
+    /* Pressed and held on a sidebar project and let go without moving. On a
+       phone that is the gesture for "tell me about this one", and it is the
+       same press that would have carried the row off had the finger gone on
+       to move — held, lifted, put back: a question rather than a move. The
+       three-dot button it replaces was a hover control with nothing to hover
+       it, kept visible on touch only because there was no other way in. */
+    if (activeId.startsWith('project-row:') && pressedAndHeld(event)) {
+      const id = activeId.slice('project-row:'.length);
+      document
+        .querySelector<HTMLElement>(`[${projectRowAttr}="${id}"]`)
+        ?.dispatchEvent(new CustomEvent(PRESS_HOLD_EVENT));
+      return;
+    }
+
     if (!event.over) return;
 
     /* A section is dragged whole, into a slot between two others. It is not a
