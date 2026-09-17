@@ -1,17 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
-import {
-  DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext, arrayMove, useSortable, verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { CSS } from '@dnd-kit/utilities';
 import { Icon } from '@/components/Icon';
 import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { navigate } from '@/hooks/useRoute';
+import { useTagDrag } from '@/components/dnd/DraggableTag';
 import { rootItems } from '@/store/selectors';
 import { hasLabel } from '@/domain/views';
 import { markerStyle } from '@/domain/colors';
@@ -31,7 +24,6 @@ export function LabelsView() {
   const createLabel = useStore((s) => s.createLabel);
   const [draft, setDraft] = useState('');
   const draftRef = useRef<HTMLInputElement>(null);
-  const reorderLabels = useStore((s) => s.reorderLabels);
 
   const roots = useMemo(() => rootItems(items), [items]);
 
@@ -43,18 +35,16 @@ export function LabelsView() {
     [snapshot.labels],
   );
 
-  /* This list has its own drag context: the one around the app moves tasks
-     between destinations, and a tag being reordered is neither. */
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  /* This list used to open a drag context of its own, on the grounds that a
+     tag being reordered is not a task being filed. True, but the cost was
+     that a tag could only ever be dropped inside this page: a nested context
+     owns the pointer outright, so dragging a tag to the sidebar's Favourites
+     reached nothing. It registers in the app's one context now, like the
+     sidebar's projects and a project's sections already do, and the drop is
+     read in `DragProvider` with every other drop.
 
-  const onDragEnd = ({ active, over }: DragEndEvent) => {
-    if (!over || active.id === over.id) return;
-    const from = labels.findIndex((l) => l.id === active.id);
-    const to = labels.findIndex((l) => l.id === over.id);
-    if (from < 0 || to < 0) return;
-    void reorderLabels(arrayMove(labels, from, to).map((l) => l.id));
-  };
-
+     The order the rows are drawn in is handed over with them, because the
+     provider reorders by position in a list and this is the list. */
   return (
     <div className="page">
       <div className="phead">
@@ -100,55 +90,44 @@ export function LabelsView() {
       {labels.length === 0 ? (
         <p className="empty">{t('labels.none')}</p>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis]}
-          onDragEnd={onDragEnd}
-        >
-          <SortableContext items={labels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-            <div className="mode taglist">
-              {labels.map((label) => (
-                <TagRow
-                  key={label.id}
-                  label={label}
-                  count={roots.filter((i) => hasLabel(i, label.name)).length}
-                  onToggleFavourite={() => void updateLabelFavourite(label.id, !label.is_favorite)}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <div className="mode taglist">
+          {labels.map((label) => (
+            <TagRow
+              key={label.id}
+              label={label}
+              order={labels.map((l) => l.name)}
+              count={roots.filter((i) => hasLabel(i, label.name)).length}
+              onToggleFavourite={() => void updateLabelFavourite(label.id, !label.is_favorite)}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
 function TagRow({
-  label, count, onToggleFavourite,
+  label, count, order, onToggleFavourite,
 }: {
   label: Label;
   count: number;
+  /** The names of every row on the page, in the order they are drawn. */
+  order: string[];
   onToggleFavourite: () => void;
 }) {
   const { t } = useT();
-  const {
-    attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging,
-  } = useSortable({ id: label.id });
+  const { grip, row, isDragging, isOver } = useTagDrag(label.name, order);
 
   return (
     <div
-      ref={setNodeRef}
-      className={`tagcard${isDragging ? ' dragging' : ''}`}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
+      ref={row}
+      className={`tagcard${isDragging ? ' dragging' : ''}${isOver ? ' landing' : ''}`}
     >
       <button
-        ref={setActivatorNodeRef}
         className="tagcard-grip"
         aria-label={t('labels.reorder')}
         title={t('labels.reorder')}
-        {...attributes}
-        {...listeners}
+        {...grip}
       >
         <Icon name="drag" size="sm" />
       </button>

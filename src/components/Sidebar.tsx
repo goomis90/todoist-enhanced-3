@@ -17,6 +17,7 @@ import { Droppable } from './dnd/Droppable';
 import { ProjectDropRow, ProjectRowSortable } from './dnd/ProjectRowSortable';
 import { COFFEE_URL, FEEDBACK_URL } from '@/app-info';
 import { ProjectMenu } from './ProjectMenu';
+import { DraggableTag } from './dnd/DraggableTag';
 import { dragClock } from './dnd/DragProvider';
 import type { ProjectSheetTarget } from './overlays/ProjectSheet';
 
@@ -213,6 +214,7 @@ export function Sidebar({
   const tagItem = (name: string, color: string, count?: number) => (
     <Droppable target={{ kind: 'label', label: name }} scope="nav" key={`tag-${name}`}>
       {({ isOver }) => (
+        <DraggableTag name={name}>
         <button
           className={`navitem${isOver ? ' dropping' : ''}`}
           aria-current={route.view === 'label' && route.id === name ? 'page' : undefined}
@@ -222,6 +224,7 @@ export function Sidebar({
           <span className="label">{name}</span>
           {count !== undefined && count > 0 && <span className="count">{count}</span>}
         </button>
+        </DraggableTag>
       )}
     </Droppable>
   );
@@ -457,6 +460,12 @@ export function Sidebar({
             title={t('nav.favourites')}
             open={openGroups.favourites ?? true}
             onToggle={() => toggleGroup('favourites')}
+            /* A project or a tag dropped on the heading becomes one. The
+               sidebar teaches dragging all day — a project is reordered by it
+               and nested by it — so dragging one into the section it plainly
+               belongs in was the first thing to try and the one thing that
+               did nothing. */
+            dropTarget={{ kind: 'favourites' }}
           >
             {favourites.projects.map((p) =>
               projectNode({ project: p, children: [] }, 'fav-'))}
@@ -548,18 +557,19 @@ export function Sidebar({
  * resting sidebar stays quiet.
  */
 function SideGroup({
-  title, open, onToggle, onAdd, addLabel, children,
+  title, open, onToggle, onAdd, addLabel, dropTarget, children,
 }: {
   title: string;
   open: boolean;
   onToggle: () => void;
   onAdd?: () => void;
   addLabel?: string;
+  /** When set, the heading itself takes a drop. */
+  dropTarget?: DropTarget;
   children: React.ReactNode;
 }) {
-  return (
-    <section className="side-group">
-      <div className="side-head">
+  const head = (isOver: boolean) => (
+    <div className={`side-head${isOver ? ' dropping' : ''}`}>
         <button className="side-headbtn" aria-expanded={open} onClick={onToggle}>
           <span>{title}</span>
         </button>
@@ -583,7 +593,18 @@ function SideGroup({
         >
           <Icon name={open ? 'caret-up' : 'caret'} size="sm" />
         </button>
-      </div>
+    </div>
+  );
+
+  return (
+    <section className="side-group">
+      {dropTarget
+        ? (
+          <Droppable target={dropTarget} scope="side-group">
+            {({ isOver }) => head(isOver)}
+          </Droppable>
+        )
+        : head(false)}
       {open && children}
     </section>
   );

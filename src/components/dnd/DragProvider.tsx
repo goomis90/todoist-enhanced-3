@@ -13,6 +13,7 @@ import { formatDayOrName } from '@/domain/dates';
 import { useT } from '@/hooks/useT';
 import { siblingOrder } from '@/store/selectors';
 import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
+import { TAG_DRAG_PREFIX, TAG_DROP_PREFIX, tagOrderFor } from '@/components/dnd/DraggableTag';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
 import type { RowList } from './RowList';
@@ -58,15 +59,17 @@ const anchorLeftOfCursor: Modifier = ({
 const pressedAndHeld = (event: DragEndEvent): boolean =>
   Math.abs(event.delta.x) < HOLD_SLOP_PX && Math.abs(event.delta.y) < HOLD_SLOP_PX;
 
-const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'task' =>
+const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'tag' | 'task' =>
   (id.startsWith('subtask:') ? 'subtask'
     : id.startsWith('section:') ? 'section'
-      : id.startsWith('project-row:') ? 'project' : 'task');
+      : id.startsWith('project-row:') ? 'project'
+        : id.startsWith(TAG_DRAG_PREFIX) ? 'tag' : 'task');
 
-const dropKind = (id: string): 'subtask' | 'slot' | 'project' | 'target' =>
+const dropKind = (id: string): 'subtask' | 'slot' | 'project' | 'tag' | 'target' =>
   (id.startsWith('subtask:') ? 'subtask'
     : id.startsWith('slot:') ? 'slot'
-      : id.startsWith('project-row:') ? 'project' : 'target');
+      : id.startsWith('project-row:') ? 'project'
+        : id.startsWith(TAG_DROP_PREFIX) ? 'tag' : 'target');
 
 const ACCEPTS: Record<ReturnType<typeof dragKind>, Array<ReturnType<typeof dropKind>>> = {
   subtask: ['subtask'],
@@ -74,6 +77,9 @@ const ACCEPTS: Record<ReturnType<typeof dragKind>, Array<ReturnType<typeof dropK
   /* A sidebar row is both a position in the list and a project destination,
      and a project dragged onto either means the same landing. */
   project: ['project', 'target'],
+  /* A tag is not a position in any list and not a destination for anything.
+     The one place it can go is Favourites. */
+  tag: ['target', 'tag'],
   task: ['target'],
 };
 
@@ -178,6 +184,9 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const reorderSubtasks = useStore((s) => s.reorderSubtasks);
   const setDraggingSection = useStore((s) => s.setDraggingSection);
   const nestProject = useStore((s) => s.nestProject);
+  const updateProjectFields = useStore((s) => s.updateProjectFields);
+  const setLabelFavourite = useStore((s) => s.setLabelFavourite);
+  const reorderLabels = useStore((s) => s.reorderLabels);
   const setNesting = useStore((s) => s.setNesting);
   const setDraggingProject = useStore((s) => s.setDraggingProject);
   /** A subtask pulled out to the left: on release it becomes a task of its own. */
@@ -347,11 +356,58 @@ export function DragProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    /* A tag goes two places: onto Favourites, which makes it one, and onto
+       another tag, which puts it in that one's place. Both used to be out of
+       reach — the first because a tag could not be picked up at all, the
+       second because the Tags page held its own drag context and nothing
+       dragged inside it could ever leave. */
+    if (activeId.startsWith(TAG_DRAG_PREFIX)) {
+      const name = activeId.slice(TAG_DRAG_PREFIX.length);
+      const label = Object.values(snapshot.labels).find((l) => l.name === name);
+      if (!label) return;
+      const overId = String(event.over.id);
+
+      if (decodeTarget(overId)?.kind === 'favourites') {
+        if (!label.is_favorite) await setLabelFavourite(label.id, true);
+        return;
+      }
+
+      if (!overId.startsWith(TAG_DROP_PREFIX)) return;
+      const onto = overId.slice(TAG_DROP_PREFIX.length);
+      if (onto === name) return;
+
+      /* Spliced by the order on the page, then turned back into the ids the
+         store reorders by. */
+      const names = [...tagOrderFor(name)];
+      const at = names.indexOf(name);
+      const to = names.indexOf(onto);
+      if (at < 0 || to < 0) return;
+      names.splice(to, 0, ...names.splice(at, 1));
+      const byName = new Map(
+        Object.values(snapshot.labels).map((l) => [l.name, l.id] as const),
+      );
+      await reorderLabels(names.map((n) => byName.get(n)).filter((id): id is string => !!id));
+      return;
+    }
+
     /* A project dragged in the sidebar is reordered among its own siblings.
        It is not a destination for anything and it does not move between
        workspaces: the ids come from one list and go back as that list. */
     if (activeId.startsWith('project-row:')) {
       const overId = String(event.over.id);
+      const from = activeId.slice('project-row:'.length);
+
+      /* Dropped on the Favourites heading: a third thing a sidebar drop can
+         mean, beside reordering and nesting. Taking one back out is the
+         project's own menu, where it already was. */
+      if (decodeTarget(overId)?.kind === 'favourites') {
+        const project = snapshot.projects[from];
+        if (project && !project.is_favorite) {
+          await updateProjectFields(from, { is_favorite: true });
+        }
+        return;
+      }
+
       /* A sidebar row is two things at once: somewhere to file a task, and a
          position in a list. While a project is in flight only the second
          reading applies, so a landing on either id means the same place. */
@@ -360,9 +416,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
         : decodeTarget(overId)?.kind === 'project'
           ? (decodeTarget(overId) as { kind: 'project'; projectId: string }).projectId
           : null;
-      if (!over) return;
-      const from = activeId.slice('project-row:'.length);
-      if (from === over) return;
+      if (!over || from === over) return;
 
       /* Dragged out to the right: the row it landed on becomes its parent.
          A folder needs no such gesture — putting projects inside it is the

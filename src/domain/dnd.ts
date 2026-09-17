@@ -19,7 +19,15 @@ export type DropTarget =
   | { kind: 'day'; date: Date }
   | { kind: 'project'; projectId: string }
   | { kind: 'section'; sectionId: string | null; projectId: string }
-  | { kind: 'label'; label: string };
+  | { kind: 'label'; label: string }
+  /**
+   * The Favourites heading in the sidebar.
+   *
+   * A place for a project or a tag to be dropped, and for nothing else: a
+   * task has no business being a favourite, so `dropMutation` reads this as
+   * no mutation at all and the heading stands down while a task is in flight.
+   */
+  | { kind: 'favourites' };
 
 export interface DropMutation {
   /** Fields for an `item_update` command, when the drop changes the task itself. */
@@ -281,7 +289,8 @@ function encodeKind(target: DropTarget): string {
 
 export function decodeTarget(encoded: string): DropTarget | null {
   const id = encoded.includes('|') ? encoded.slice(encoded.indexOf('|') + 1) : encoded;
-  if (id === 'today' || id === 'quick' || id === 'anytime' || id === 'someday') return { kind: id };
+  if (id === 'today' || id === 'quick' || id === 'anytime' || id === 'someday'
+    || id === 'favourites') return { kind: id };
 
   const [kind, ...rest] = id.split(':');
   if (kind === 'day') {
