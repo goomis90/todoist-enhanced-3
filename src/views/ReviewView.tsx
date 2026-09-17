@@ -385,12 +385,17 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
     const current = chosen[item.id] ?? settled;
 
     return (
-      <div className="reviewrow">
+      /* A ticked row keeps its place and says so, the same way the Done step
+         says it: the tick fills, the words stay. The honest answer to "this is
+         late" is often "I did it on Friday and forgot to tick it", and a row
+         that looked untouched after being ticked made that answer unsayable. */
+      <div className={`reviewrow${item.checked ? ' done' : ''}`}>
         {/* Sometimes the answer is that it is already done. */}
         <button
           className={`check p${toDisplayPriority(item.priority)}`}
-          aria-label={t('task.complete')}
-          title={t('task.complete')}
+          aria-checked={item.checked}
+          aria-label={item.checked ? t('task.reopen') : t('task.complete')}
+          title={item.checked ? t('task.reopen') : t('task.complete')}
           onClick={() => void toggleTask(item.id)}
         >
           <Icon name="check" />
@@ -461,6 +466,7 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
    */
   function Load({ step: s, capacity: against }: { step: ReviewStep; capacity: number }) {
     const load = summariseLoad(s.items, childrenOf, against);
+    const rows = rowsFor(s);
     const level = load.level === 'over' ? 'over' : load.level === 'tight' ? 'warn' : 'ok';
 
     return (
@@ -480,11 +486,16 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
           )}
         </div>
 
-        {s.items.length === 0 ? (
+        {/* The figures above are the load, which only open tasks weigh on;
+            the list below is the step, which holds every row it has shown.
+            Rendering the bucket straight made a task ticked off here vanish
+            from under the pointer — the one disappearing act the other steps
+            were deliberately built to avoid. */}
+        {rows.length === 0 ? (
           <Settled />
         ) : (
           <div className="reviewlist scrolls">
-            {s.items.map((item) => <Row key={item.id} item={item} step={s} />)}
+            {rows.map((item) => <Row key={item.id} item={item} step={s} />)}
           </div>
         )}
       </>

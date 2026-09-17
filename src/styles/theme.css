@@ -1823,6 +1823,11 @@
 .reviewrow.done .check.p2{border-color:var(--p2);background:var(--p2)}
 .reviewrow.done .check.p3{border-color:var(--p3);background:var(--p3)}
 .reviewrow.done .ttitle{color:var(--text);text-decoration:none}
+/* The question the step was asking has been answered by finishing the
+   task, so its buttons step back — without going away, because the
+   answer is still one click from being taken back. */
+.reviewrow.done .reviewactions{opacity:.45}
+.reviewrow.done:hover .reviewactions,.reviewrow.done:focus-within .reviewactions{opacity:1}
 .pflag{
   flex:0 0 auto;padding:1px 6px;border-radius:var(--r-xs);
   font-size:var(--fs-11);font-weight:700;
