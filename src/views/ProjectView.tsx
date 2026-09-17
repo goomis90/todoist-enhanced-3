@@ -252,10 +252,12 @@ function ProjectBody({
             showProject={false}
             dropTarget={{ kind: 'section', sectionId: null, projectId }}
             onAddTask={() => onAddTaskTo({ projectId })}
-            /* Only where the list is in the order you gave it: under any other
-               sort a row dropped into another's place would be put straight
-               back by the sort, which is a lie told with an animation. */
-            reorderable={current.sort === 'manual' ? 'project' : undefined}
+            /* A row dropped into another's place under a sort that would put
+               it straight back used to be refused the drop. It is taken now,
+               and the sort gives way instead: putting a task somewhere by
+               hand is the whole of what "arranged by hand" means. */
+            reorderable="project"
+            viewKey={viewKey}
             /* A project with everything in sections still needs somewhere to
                put a task that belongs in none of them. */
             keepWhenEmpty
@@ -278,7 +280,8 @@ function ProjectBody({
               showProject={false}
               dropTarget={{ kind: 'section', sectionId: group.id, projectId }}
               onAddTask={() => onAddTaskTo({ projectId, sectionId: group.id })}
-              reorderable={current.sort === 'manual' ? 'project' : undefined}
+              reorderable="project"
+              viewKey={viewKey}
             />
             </Fragment>
           ))}

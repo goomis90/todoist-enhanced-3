@@ -83,11 +83,24 @@ export function Select({
       if (buttonRef.current?.contains(event.target as Node)) return;
       setOpen(false);
     };
+    /* Escape closes the list wherever the caret happens to be, and goes no
+       further: opened from inside a dialog, the list is in front of it, and
+       one Escape should put away one thing. The handler on the button below
+       only fires while the button itself has focus, which it does not once
+       the list has taken it. */
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
     document.addEventListener('mousedown', dismiss);
+    document.addEventListener('keydown', onKey);
     window.addEventListener('resize', () => setOpen(false));
     window.addEventListener('scroll', () => setOpen(false), true);
     return () => {
       document.removeEventListener('mousedown', dismiss);
+      document.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', () => setOpen(false));
       window.removeEventListener('scroll', () => setOpen(false), true);
     };

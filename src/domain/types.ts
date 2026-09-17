@@ -300,9 +300,35 @@ export interface ViewPrefs {
   filters: ViewFilters;
 }
 
-export const defaultViewPrefs = (): ViewPrefs => ({
+/**
+ * What a page groups by before anyone has chosen anything.
+ *
+ * `none` is not "flat": in a project it is that project's own sections, which
+ * is the grouping a project already has and the one it should open in. The
+ * pages that draw from every project have no such structure of their own, and
+ * on those the project is the thing a reader is actually looking for — which
+ * of my projects is this backlog, this tag, about.
+ */
+const defaultGroup = (viewKey?: string): GroupKey => {
+  if (!viewKey) return 'none';
+  if (viewKey === 'someday' || viewKey.startsWith('label:')) return 'project';
+  return 'none';
+};
+
+/**
+ * What a view opens as.
+ *
+ * Not manual order. Manual is Todoist's `child_order`, and on a list nobody
+ * has deliberately arranged that is not an order at all — it is whatever order
+ * things were added in, which puts a p1 below three p4s on a page opened to
+ * decide what to do next. A view opens by priority; a sort set by hand on a
+ * view stays set, and so does the manual order of a page that has been
+ * arranged by hand, because dropping a task into a place is itself the act of
+ * asking for one.
+ */
+export const defaultViewPrefs = (viewKey?: string): ViewPrefs => ({
   mode: 'list',
-  group: 'none',
-  sort: 'manual',
+  group: defaultGroup(viewKey),
+  sort: 'priority',
   filters: defaultFilters(),
 });

@@ -155,9 +155,14 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
   quietAfterDays: 14,
 });
 
-/** Reads the preferences for one view, falling back to the defaults. */
+/**
+ * Reads the preferences for one view, falling back to the defaults.
+ *
+ * The defaults are the view's own: what a page opens grouped by depends on
+ * what the page is, so the key goes with the question.
+ */
 export const viewPrefs = (prefs: Preferences, viewKey: string): ViewPrefs =>
-  prefs.views[viewKey] ?? defaultViewPrefs();
+  prefs.views[viewKey] ?? defaultViewPrefs(viewKey);
 
 /**
  * Merges stored preferences over the defaults so a version that adds a new

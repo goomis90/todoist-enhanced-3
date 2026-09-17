@@ -3,6 +3,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Overlay } from './Overlay';
 import { Icon } from '../Icon';
 import { useT } from '@/hooks/useT';
+import { useMenuKeys } from '@/hooks/useMenuKeys';
 import { useData } from '@/hooks/useData';
 import { navigate } from '@/hooks/useRoute';
 import { useStore } from '@/store/store';
@@ -139,6 +140,46 @@ function SubtaskRow({ id, children }: { id: string; children: React.ReactNode })
  * the right-hand column. Destructive actions are behind the overflow menu,
  * never next to Close.
  */
+/**
+ * Which property each letter opens, inside an opened task.
+ *
+ * Todoist's letters where Todoist has one for the same thing, and the first
+ * letter of the property's own name where it does not. `t` is the date, as it
+ * is on a row; `d` is the deadline, which is the other date and needs telling
+ * apart from it.
+ */
+const PANEL_KEYS: Record<string, string> = {
+  p: 'project',
+  t: 'start',
+  d: 'deadline',
+  e: 'estimate',
+  y: 'priority',
+  l: 'tags',
+};
+
+/** The same table read the other way, for the letter a property shows. */
+const KEY_FOR_PROP: Record<string, string> = Object.fromEntries(
+  Object.entries(PANEL_KEYS).map(([key, prop]) => [prop, key.toUpperCase()]),
+);
+
+/**
+ * A property's name, with the key that opens it.
+ *
+ * Small and faint, and beside the name rather than in place of anything: a
+ * shortcut nobody can see is a shortcut nobody has, and the way these are
+ * learnt is by noticing them while doing the thing the slow way. On a phone
+ * there is no keyboard to tell about, so there is nothing to say.
+ */
+function PropLabel({ name, prop }: { name: string; prop: string }) {
+  const key = KEY_FOR_PROP[prop];
+  return (
+    <span className="proplabel">
+      {name}
+      {key && <kbd className="propkey" aria-hidden="true">{key}</kbd>}
+    </span>
+  );
+}
+
 export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const { t, locale } = useT();
   const { snapshot, childrenOf } = useData();
@@ -163,6 +204,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const menuRef = useMenuKeys(menuOpen, () => setMenuOpen(false));
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const titleRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
   /**
@@ -175,6 +218,76 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
    * clicking "add subtask" right after pasting one in. Edited and rendered are
    * the same height now, and nothing moves on the way between them.
    */
+  /** Asked for, then done. The one action in here that cannot be taken back. */
+  const askThenDelete = useCallback(() => {
+    if (!item) return;
+    setMenuOpen(false);
+    const { id, content } = item;
+    void confirm({
+      title: t('task.deleteTitle'),
+      body: t('task.deleteConfirm', { name: content }),
+      confirmLabel: t('task.delete'),
+      destructive: true,
+    }).then((ok) => {
+      if (!ok) return;
+      void removeTask(id);
+      onClose();
+    });
+  }, [confirm, item, onClose, removeTask, t]);
+
+  /**
+   * The panel's own keys.
+   *
+   * A task opened is a page of its own, and until now the only thing the
+   * keyboard could do to it was close it. Each property answers to the letter
+   * it starts with — Todoist's letter where Todoist has one — and the key
+   * opens the field rather than editing it, because the fields are pickers
+   * that already know how to be driven from a keyboard once they are open.
+   *
+   * Only while the caret is not in a field. Every one of these letters is also
+   * a letter, and the title and the description are both places somebody is
+   * typing words that contain them.
+   */
+  useEffect(() => {
+    if (!item) return;
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
+        || target?.isContentEditable) return;
+      // A picker already open is driving the keyboard itself.
+      if (document.querySelector('.datepanel, .fselect-list, .popover.rowmenu')) return;
+
+      if ((event.metaKey || event.ctrlKey)
+        && (event.key === 'Backspace' || event.key === 'Delete')) {
+        event.preventDefault();
+        askThenDelete();
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (event.key === '.') {
+        event.preventDefault();
+        setMenuOpen((open) => !open);
+        return;
+      }
+
+      const prop = PANEL_KEYS[event.key.toLowerCase()];
+      if (!prop) return;
+      const row = panelRef.current?.querySelector<HTMLElement>(`[data-prop="${prop}"]`);
+      const control = row?.querySelector<HTMLElement>('button, input, textarea');
+      if (!control) return;
+      event.preventDefault();
+      control.scrollIntoView({ block: 'nearest' });
+      /* A button here is a picker's face, and opening it is the whole point of
+         the key; a field is somewhere to type, and is simply given the caret. */
+      if (control.tagName === 'BUTTON') control.click();
+      else control.focus();
+    };
+
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [askThenDelete, item]);
+
   const fitDescription = useCallback(() => {
     const el = descriptionRef.current;
     if (!el) return;
@@ -376,8 +489,14 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               </button>
             </span>
           ))}
-          <span className="crumb-sep">/</span>
-          <span className="crumbhere" aria-current="page">{item.content}</span>
+          {/* The task's own name ends the trail. On a phone it is dropped:
+              the headline two lines below says it already, and said twice in
+              a column 375px wide it is the whole top of the panel spent on
+              one sentence. */}
+          <span className="crumbstep crumbself">
+            <span className="crumb-sep">/</span>
+            <span className="crumbhere" aria-current="page">{item.content}</span>
+          </span>
         </nav>
 
         <div className="detail-tools">
@@ -392,7 +511,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               <Icon name="more" />
             </button>
             {menuOpen && (
-              <div className="popover rowmenu" role="menu">
+              <div className="popover rowmenu" role="menu" ref={menuRef}>
                 <button
                   className="opt"
                   onClick={() => {
@@ -403,22 +522,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                   <span><Icon name="external" size="sm" /> {t('task.openInTodoist')}</span>
                 </button>
                 <hr />
-                <button
-                  className="opt danger"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    void confirm({
-                      title: t('task.deleteTitle'),
-                      body: t('task.deleteConfirm', { name: item.content }),
-                      confirmLabel: t('task.delete'),
-                      destructive: true,
-                    }).then((ok) => {
-                      if (!ok) return;
-                      void removeTask(item.id);
-                      onClose();
-                    });
-                  }}
-                >
+                <button className="opt danger" onClick={askThenDelete}>
                   <span><Icon name="close" size="sm" /> {t('task.delete')}</span>
                 </button>
               </div>
@@ -431,7 +535,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
         </div>
       </header>
 
-      <div className="detail-body">
+      <div className="detail-body" ref={panelRef}>
         <div className="detail-main">
           <div className="detail-headline">
             <span
@@ -511,9 +615,18 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                   onChange={(e) => setDescription(e.target.value)}
                   onBlur={commitDescription}
                   onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setDescription(item.description);
-                      setEditingDescription(false);
+                    /* Escape leaves the field, and leaving the field saves —
+                       the same thing clicking away from it does. It used to
+                       throw the edit away and take the whole panel with it,
+                       which is two surprises for one key. Nothing typed here
+                       is ever discarded, so Escape and clicking away agree.
+                       Cmd+Enter is the same act, said deliberately. */
+                    if (e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      commitDescription();
+                      // The panel keeps the keyboard; only the field gives it up.
+                      descriptionRef.current?.blur();
                     }
                   }}
                 />
@@ -614,8 +727,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               where it lives was the one property it could read but not change.
               A move, not an update — `item_update` takes neither a project nor
               a section, so the field used to move the task on screen only. */}
-          <div className="prop">
-            <span>{t('detail.project')}</span>
+          <div className="prop" data-prop="project">
+            <PropLabel name={t('detail.project')} prop="project" />
             <PlacementField
               ariaLabel={t('detail.project')}
               value={{ projectId: item.project_id, sectionId: item.section_id }}
@@ -628,8 +741,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
             />
           </div>
 
-          <div className="prop">
-            <span>{t('detail.startDate')}</span>
+          <div className="prop" data-prop="start">
+            <PropLabel name={t('detail.startDate')} prop="start" />
             <DateField
               value={due ? toApiDate(due) : ''}
               label={t('detail.startDate')}
@@ -645,8 +758,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
             />
           </div>
 
-          <div className="prop">
-            <span>{t('detail.deadline')}</span>
+          <div className="prop" data-prop="deadline">
+            <PropLabel name={t('detail.deadline')} prop="deadline" />
             <DateField
               value={deadline ? toApiDate(deadline) : ''}
               label={t('detail.deadline')}
@@ -656,8 +769,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
             />
           </div>
 
-          <div className="prop">
-            <span>{t('detail.estimate')}</span>
+          <div className="prop" data-prop="estimate">
+            <PropLabel name={t('detail.estimate')} prop="estimate" />
             {/* The same field as everywhere else, so the unit is always beside
                 the number instead of being left to the reader to infer. */}
             <EstimateField
@@ -672,8 +785,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
             />
           </div>
 
-          <div className="prop">
-            <span>{t('detail.priority')}</span>
+          <div className="prop" data-prop="priority">
+            <PropLabel name={t('detail.priority')} prop="priority" />
             <Select
               value={String(priority)}
               ariaLabel={t('detail.priority')}
@@ -687,9 +800,9 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
             />
           </div>
 
-          <div className="prop">
+          <div className="prop" data-prop="tags">
             <span className="prophead">
-              {t('detail.labels')}
+              <PropLabel name={t('detail.labels')} prop="tags" />
               <button
                 className="propadd"
                 aria-label={t('composer.labels')}

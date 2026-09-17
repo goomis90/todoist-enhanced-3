@@ -380,6 +380,12 @@ export function TaskNameField({
         },
         onKeyUp: (e: KeyboardEvent<HTMLInputElement>) => track(e.currentTarget),
         onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => {
+          /* Cmd+Enter is the sheet's, not the field's: it saves the whole
+             thing. Answering it here as well as there submitted the task
+             twice — two handlers for one keystroke, and the task arrived in
+             Todoist in duplicate. */
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') return;
+
           if (options.length > 0) {
             if (e.key === 'ArrowDown') {
               e.preventDefault();

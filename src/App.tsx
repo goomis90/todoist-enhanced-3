@@ -8,6 +8,7 @@ import { Composer } from './components/overlays/Composer';
 import { TaskDetail } from './components/overlays/TaskDetail';
 import { Issues } from './components/overlays/Issues';
 import { Search } from './components/overlays/Search';
+import { Shortcuts } from './components/overlays/Shortcuts';
 import { InsightsPanel } from './components/overlays/InsightsPanel';
 import { ProjectSheet, type ProjectSheetTarget } from './components/overlays/ProjectSheet';
 import { Unestimated } from './components/overlays/Unestimated';
@@ -29,6 +30,7 @@ import { useStore } from './store/store';
 import type { Accent, Theme } from './store/prefs';
 import { ACCENT_TOKENS, accentFamily, hexToHsl } from './domain/accent';
 import { useT } from './hooks/useT';
+import { useKeyboard } from './hooks/useKeyboard';
 import { useData } from './hooks/useData';
 import { navigate, useRoute, type Route } from './hooks/useRoute';
 import { rootItems } from './store/selectors';
@@ -60,6 +62,9 @@ export function App() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  /** What was typed on the page before the search took it. */
+  const [searchSeed, setSearchSeed] = useState('');
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
   /* Not a boolean: what the sheet was opened to do — create one here, or edit
@@ -103,47 +108,6 @@ export function App() {
     window.setTimeout(() => setTourOpen(true), 60);
   };
 
-  // Search and quick add are reached constantly, so both have a shortcut.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const typing =
-        target?.tagName === 'INPUT' ||
-        target?.tagName === 'TEXTAREA' ||
-        target?.isContentEditable;
-
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setSearchOpen(true);
-        return;
-      }
-      /* Undo. Not while typing: inside a field the browser's own undo is the
-         right one, and taking it away to reverse a task change instead would
-         be startling. Shift+Cmd+Z is left alone — there is no redo here, and
-         silently treating it as another undo would be worse than nothing. */
-      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
-        if (typing) return;
-        e.preventDefault();
-        void useStore.getState().undo();
-        return;
-      }
-      /* Escape gives the selection back. A dialog and an open menu both
-         listen on `document` and stop the event there, so this only ever
-         fires when the selection is the outermost thing that could be
-         dismissed — which is exactly when it is what Escape means. */
-      if (e.key === 'Escape' && useStore.getState().selection.length > 0) {
-        e.preventDefault();
-        useStore.getState().clearSelection();
-        return;
-      }
-      if (!typing && e.key === 'q') {
-        e.preventDefault();
-        setComposerOpen(true);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   if (!ready) {
     return (
@@ -176,6 +140,10 @@ export function App() {
             setComposerOpen={setComposerOpen}
             searchOpen={searchOpen}
             setSearchOpen={setSearchOpen}
+            searchSeed={searchSeed}
+            openSearch={(seed) => { setSearchSeed(seed); setSearchOpen(true); }}
+            shortcutsOpen={shortcutsOpen}
+            setShortcutsOpen={setShortcutsOpen}
             issuesOpen={issuesOpen}
             setIssuesOpen={setIssuesOpen}
             insightsOpen={insightsOpen}
@@ -227,6 +195,11 @@ interface ShellProps {
   setComposerOpen: (open: boolean) => void;
   searchOpen: boolean;
   setSearchOpen: (open: boolean) => void;
+  /** What had already been typed when the search was opened by typing. */
+  searchSeed: string;
+  openSearch: (seed: string) => void;
+  shortcutsOpen: boolean;
+  setShortcutsOpen: (open: boolean) => void;
   issuesOpen: boolean;
   setIssuesOpen: (open: boolean) => void;
   insightsOpen: boolean;
@@ -336,7 +309,8 @@ function paintBrowserChrome(): void {
 
 function AppShell({
   route, openTaskId, setOpenTaskId, composerOpen, setComposerOpen,
-  searchOpen, setSearchOpen, issuesOpen, setIssuesOpen,
+  searchOpen, setSearchOpen, searchSeed, openSearch, shortcutsOpen, setShortcutsOpen,
+  issuesOpen, setIssuesOpen,
   insightsOpen, setInsightsOpen, projectSheet, setProjectSheet,
   unestimatedOpen, setUnestimatedOpen, browseOpen, setBrowseOpen,
   placement, setPlacement,
@@ -420,11 +394,43 @@ function AppShell({
      one would leave a bar offering to delete tasks that are no longer shown. */
   useEffect(() => clearSelection(), [route.view, route.id, clearSelection]);
 
+  /**
+   * Whether the page's own heading has scrolled out of sight.
+   *
+   * Watched rather than measured on every scroll: the question is only ever
+   * "is that element still on the screen", which is the one question an
+   * intersection observer answers without running anything while nothing is
+   * happening.
+   */
+  const [titleShown, setTitleShown] = useState(false);
+  useEffect(() => {
+    const screen = document.querySelector('.screen.active');
+    const heading = screen?.querySelector('.ptitle');
+    if (!screen || !heading) { setTitleShown(false); return; }
+    const watch = new IntersectionObserver(
+      ([entry]) => setTitleShown(!entry.isIntersecting),
+      { root: screen, threshold: 0 },
+    );
+    watch.observe(heading);
+    return () => watch.disconnect();
+    // A new page brings a new heading to watch.
+  }, [route.view, route.id]);
+
   const openTask = (id: string) => setOpenTaskId(id);
   const addTask = () => {
     setPlacement(route.view === 'project' && route.id ? { projectId: route.id } : {});
     setComposerOpen(true);
   };
+
+  /* Every key the app answers, in one listener. It is called here rather than
+     in `App` because deleting a task asks for confirmation, and the dialog
+     that asks lives inside this shell. */
+  useKeyboard({
+    openTask,
+    openSearch,
+    openComposer: addTask,
+    openShortcuts: () => setShortcutsOpen(true),
+  });
   const addTaskTo = (next: ComposerPlacement) => {
     setPlacement(next);
     setComposerOpen(true);
@@ -470,7 +476,12 @@ function AppShell({
           >
             <Icon name="menu" />
           </button>
-          <strong>{contextLabel}</strong>
+          {/* The page names itself twice on a phone — once in this bar and once
+              as the heading under it — which costs a row of a short screen to
+              say nothing. The bar holds the name back until the heading has
+              scrolled away, which is the same title arriving where it is
+              needed rather than a second one standing beside it. */}
+          <strong className={titleShown ? ' shown' : ''}>{contextLabel}</strong>
           <button className="iconbtn" aria-label={t('nav.search')} onClick={() => setSearchOpen(true)}>
             <Icon name="search" />
           </button>
@@ -522,15 +533,17 @@ function AppShell({
             <Icon name="upcoming" size="lg" />
             {t('nav.upcoming')}
           </button>
-          {/* The fifth slot is everything a phone has no room for: the profile
-              and its menu, search, tags, favourites, projects, Someday. The
-              four destinations beside it are the ones opened every day. */}
+          {/* Browse was here and in the bar at the top of every page, which is
+              one destination taking two of the five places a phone has. It
+              stays at the top, where a burger menu is on every phone, and the
+              slot it gives up goes to a destination: Someday, which was
+              otherwise two taps away behind that same menu. */}
           <button
-            aria-expanded={browseOpen}
-            onClick={() => setBrowseOpen(true)}
+            aria-current={route.view === 'someday' ? 'page' : undefined}
+            onClick={() => navigate('someday')}
           >
-            <Icon name="menu" size="lg" />
-            {t('nav.browse')}
+            <Icon name="someday" size="lg" />
+            {t('nav.someday')}
           </button>
         </nav>
       </main>
@@ -549,7 +562,13 @@ function AppShell({
         onOpen={openTask}
       />
       <Issues open={issuesOpen} onClose={() => setIssuesOpen(false)} onOpen={openTask} />
-      <Search open={searchOpen} onClose={() => setSearchOpen(false)} onOpen={openTask} />
+      <Search
+        open={searchOpen}
+        seed={searchSeed}
+        onClose={() => setSearchOpen(false)}
+        onOpen={openTask}
+      />
+      <Shortcuts open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <ProjectSheet target={projectSheet} onClose={() => setProjectSheet(null)} />
 
       {/* The same sidebar, as a page. One list of destinations, not two that

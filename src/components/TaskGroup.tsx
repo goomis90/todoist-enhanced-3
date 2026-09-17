@@ -27,6 +27,8 @@ interface TaskGroupProps {
    * into a place in it. Left out, the rows take no drop of their own.
    */
   reorderable?: RowOrder;
+  /** The page this group is on, so a drop can make its order the view's own. */
+  viewKey?: string;
   /** Stays on the page with nothing in it, so the line that fills it is there. */
   keepWhenEmpty?: boolean;
   /** An accent for the sections that carry meaning: late, and quick. */
@@ -42,7 +44,7 @@ interface TaskGroupProps {
 export function TaskGroup({
   title, items, childrenOf, onOpen, tint, actions,
   showProject = true, defaultCollapsed = false, dropTarget, onAddTask, accent,
-  sectionId, onRename, onDelete, reorderable, keepWhenEmpty = false,
+  sectionId, onRename, onDelete, reorderable, viewKey, keepWhenEmpty = false,
 }: TaskGroupProps) {
   const { t, locale } = useT();
   const dragging = useStore((s) => s.draggingTaskId !== null);
@@ -152,7 +154,7 @@ export function TaskGroup({
      is in it, and what the list itself means for a task arriving from
      somewhere else. */
   const list = reorderable
-    ? { order: reorderable, ids: items.map((item) => item.id), target: dropTarget }
+    ? { order: reorderable, ids: items.map((item) => item.id), target: dropTarget, viewKey }
     : null;
   const wrapped = (isOver: boolean) => (
     <RowListContext.Provider value={list}>{body(isOver)}</RowListContext.Provider>

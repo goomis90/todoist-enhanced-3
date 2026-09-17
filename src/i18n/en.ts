@@ -691,6 +691,38 @@ export const en = {
   /* 1.1.1 — third pass */
   'search.goTo': 'Go to',
   'review.mail.default': 'Default app',
+  /* What a drop did. The toast is the only account of it, and it is read in
+     the second before it is either used or ignored, so each one is the action
+     and nothing else — the task's own title is the part that never varies. */
+  'drop.toDay': 'Moved to {day}',
+  'drop.quick': 'Today, and quick',
+  'drop.anytime': 'Moved to anytime this week',
+  'drop.someday': 'Moved to Someday',
+  'drop.toProject': 'Moved to #{name}',
+  'drop.toSection': 'Moved to {name}',
+  'drop.tagged': 'Tagged @{label}',
+  'drop.nested': 'Became a subtask of {name}',
+  'drop.promoted': 'Became a task',
+  /* The keyboard. Todoist's own keys, wherever Todoist has one. */
+  'keys.or': 'or',
+  'keys.title': 'Keyboard shortcuts',
+  'keys.typingHint': 'With no task under the cursor, a letter starts a search — projects, tags and views included.',
+  'keys.anywhere': 'Anywhere',
+  'keys.moving': 'Moving through a list',
+  'keys.onATask': 'On the task under the cursor',
+  'keys.thisList': 'This list',
+  'keys.moveCursor': 'Previous and next task',
+  'keys.moveCursorAlt': 'The same, without leaving the home row',
+  'keys.dropCursor': 'Leave the list',
+  'keys.openTask': 'Open the task',
+  'keys.setPriority': 'Priority 1 to 4',
+  'keys.select': 'Add to the selection',
+  'keys.goTo': 'Go to',
+  'keys.saveTask': 'Save the task being written',
+  'keys.inAnOpenTask': 'In an open task',
+  'walkthrough.restInSettings': 'The accent colour and how much room a list gives each task are in Settings, whenever you want them.',
+  'walkthrough.welcomeBodyPhone': 'Your tasks are already here — this is a different way of looking at them, built around planning a week rather than a day. One choice before you start: light or dark. It changes the page behind this one as you make it.',
+  'keys.then': 'then',
 };
 
 export type TranslationKey = keyof typeof en;

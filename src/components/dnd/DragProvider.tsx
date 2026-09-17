@@ -7,12 +7,17 @@ import type { Modifier } from '@dnd-kit/core';
 import { useStore } from '@/store/store';
 import {
   canNest, decodeRowTarget, decodeTarget, dropMutation, moveArgs, siblingTasks,
+  type DropTarget,
 } from '@/domain/dnd';
+import { formatDayOrName } from '@/domain/dates';
+import { useT } from '@/hooks/useT';
 import { siblingOrder } from '@/store/selectors';
 import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
 import type { RowList } from './RowList';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
+import { PRESS_HOLD_EVENT, projectRowAttr } from './ProjectRowSortable';
 
 /**
  * Puts the preview under the pointer by its left edge rather than its centre.
@@ -43,6 +48,16 @@ const anchorLeftOfCursor: Modifier = ({
  * region of the page behind a dialog can win a drop aimed at a row inside it.
  * Each drag is therefore only offered what it could possibly mean.
  */
+/**
+ * A drag that was a press held still: it never became a pull.
+ *
+ * Only reachable where the drag waits for the press to be held, which is the
+ * phone rule — under the desktop rule a drag cannot start without movement, so
+ * this can never be true there.
+ */
+const pressedAndHeld = (event: DragEndEvent): boolean =>
+  Math.abs(event.delta.x) < HOLD_SLOP_PX && Math.abs(event.delta.y) < HOLD_SLOP_PX;
+
 const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'task' =>
   (id.startsWith('subtask:') ? 'subtask'
     : id.startsWith('section:') ? 'section'
@@ -112,6 +127,25 @@ export const dragClock = {
 };
 
 /**
+ * How long a finger has to stay still before a row lifts.
+ *
+ * Long enough that scrolling never trips it — a scroll has moved well past the
+ * slop by then, and moving is what calls the hold off — and short enough that
+ * picking a project up does not feel like waiting for permission. It is also
+ * the press that opens a project's menu, so both are measured by the one
+ * duration.
+ */
+export const HOLD_MS = 240;
+
+/**
+ * How far a finger may stray during that hold and still be holding.
+ *
+ * Past it the press was a scroll, and the drag is called off rather than
+ * started.
+ */
+const HOLD_SLOP_PX = 8;
+
+/**
  * How far right a sidebar project, or a task row, has to be dragged before the
  * drop nests it rather than reordering or moving it.
  *
@@ -132,7 +166,9 @@ const taskIdOf = (activeId: string): string =>
  * and offered back as an undo, because dragging is easy to do by accident.
  */
 export function DragProvider({ children }: { children: ReactNode }) {
+  const { t, locale } = useT();
   const snapshot = useStore((s) => s.snapshot);
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
   const apply = useStore((s) => s.apply);
   const toast = useStore((s) => s.toast);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -147,11 +183,74 @@ export function DragProvider({ children }: { children: ReactNode }) {
   /** A subtask pulled out to the left: on release it becomes a task of its own. */
   const outdenting = useStore((s) => s.outdenting);
   const setOutdenting = useStore((s) => s.setOutdenting);
+  const setViewPrefs = useStore((s) => s.setViewPrefs);
 
-  // A short distance threshold keeps a plain click on a task from starting a drag.
+  /**
+   * A drag starts on distance on a desktop and on time on a phone.
+   *
+   * One rule served both and began a drag as soon as anything moved six
+   * pixels. On a desktop that is right: a press and a pull has nothing else it
+   * could mean. On a phone a press and a pull is how you scroll, so every
+   * attempt to scroll the sidebar picked a project up and carried it off —
+   * the list moving under the thumb was a project being filed somewhere
+   * rather than the list scrolling.
+   *
+   * So on a phone the press has to be held. Move before it is and it was a
+   * scroll; hold still and the row lifts, which is the gesture every phone
+   * already uses to mean "this one" — and letting go of it without moving is
+   * how the project's menu opens.
+   */
+  const phone = usePhoneBehaviour();
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: phone
+        ? { delay: HOLD_MS, tolerance: HOLD_SLOP_PX }
+        : { distance: 6 },
+    }),
   );
+
+  /**
+   * What the drop did, in the fewest words that still tell it from the others.
+   *
+   * The toast is the only account of a drop, and a drop landing a few pixels
+   * off does something different from what was meant — so the one thing it has
+   * to carry is which of the things it could have done it actually did. The
+   * task's own title is no help there: every drop of the same task reads the
+   * same.
+   */
+  function whatHappened(target: DropTarget): string | null {
+    switch (target.kind) {
+      case 'today':
+        return t('drop.toDay', { day: t('common.today') });
+      case 'day':
+        return t('drop.toDay', { day: formatDayOrName(target.date, locale, dateFormat) });
+      case 'quick':
+        return t('drop.quick');
+      case 'anytime':
+        return t('drop.anytime');
+      case 'someday':
+        return t('drop.someday');
+      case 'project':
+        return t('drop.toProject', { name: snapshot.projects[target.projectId]?.name ?? '' });
+      /* A section drop names the section; a drop above the first one is a drop
+         on the project, and says so. */
+      case 'section':
+        return target.sectionId
+          ? t('drop.toSection', { name: snapshot.sections[target.sectionId]?.name ?? '' })
+          : t('drop.toProject', { name: snapshot.projects[target.projectId]?.name ?? '' });
+      case 'label':
+        return t('drop.tagged', { label: target.label });
+      default:
+        return null;
+    }
+  }
+
+  /** Where a task landed when it followed a row into another list. */
+  function whereItLanded(container: { project_id: string; section_id: string | null }): string {
+    return container.section_id
+      ? t('drop.toSection', { name: snapshot.sections[container.section_id]?.name ?? '' })
+      : t('drop.toProject', { name: snapshot.projects[container.project_id]?.name ?? '' });
+  }
 
   function onDragStart(event: DragStartEvent) {
     const id = String(event.active.id);
@@ -197,6 +296,20 @@ export function DragProvider({ children }: { children: ReactNode }) {
         return;
       }
     }
+    /* Pressed and held on a sidebar project and let go without moving. On a
+       phone that is the gesture for "tell me about this one", and it is the
+       same press that would have carried the row off had the finger gone on
+       to move — held, lifted, put back: a question rather than a move. The
+       three-dot button it replaces was a hover control with nothing to hover
+       it, kept visible on touch only because there was no other way in. */
+    if (activeId.startsWith('project-row:') && pressedAndHeld(event)) {
+      const id = activeId.slice('project-row:'.length);
+      document
+        .querySelector<HTMLElement>(`[${projectRowAttr}="${id}"]`)
+        ?.dispatchEvent(new CustomEvent(PRESS_HOLD_EVENT));
+      return;
+    }
+
     if (!event.over) return;
 
     /* A section is dragged whole, into a slot between two others. It is not a
@@ -277,9 +390,16 @@ export function DragProvider({ children }: { children: ReactNode }) {
       const row = snapshot.items[onRow];
       if (!row) return;
       const list = (event.over.data.current as { list?: RowList } | undefined)?.list;
-      if (nesting) await nestTask(item, row.id);
-      else if (list?.order === 'day') await orderInList(item, row, list);
-      else if (list) await reorderTask(item, row);
+      if (nesting) { await nestTask(item, row.id); return; }
+      if (!list) return;
+      /* A task put into a place by hand is a view arranged by hand. Views open
+         sorted by priority, and a drop used to be refused rather than obeyed
+         on one; it is obeyed, and the sort gives way to it. The order written
+         below is the order that was on the screen, so the page the sort leaves
+         behind is the page you were looking at. */
+      if (list.viewKey) setViewPrefs(list.viewKey, { sort: 'manual' });
+      if (list.order === 'day') await orderInList(item, row, list);
+      else await reorderTask(item, row, list);
       return;
     }
 
@@ -318,7 +438,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       : before.parent_id
         ? moveItem(item.id, { parent_id: before.parent_id })
         : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
-    toast(item.content, () => {
+    toast(whatHappened(target) ?? item.content, () => {
       void apply([undo], patch(before));
     });
   }
@@ -383,9 +503,10 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const undo = mutation.move
       ? moveItem(item.id, moveArgs({ project_id: was.project_id, section_id: was.section_id }))
       : updateItem(item.id, { due: was.due, labels: was.labels });
-    toast(item.content, () => {
-      void apply([undo, updateDayOrders(before)], place(before, was));
-    });
+    toast(
+      (list.target ? whatHappened(list.target) : null) ?? item.content,
+      () => { void apply([undo, updateDayOrders(before)], place(before, was)); },
+    );
   }
 
   /**
@@ -397,7 +518,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
    * joins that container first, in the same batch — otherwise Todoist would
    * renumber it among tasks it does not live with.
    */
-  async function reorderTask(item: Item, row: Item) {
+  async function reorderTask(item: Item, row: Item, list: RowList) {
     const container = {
       project_id: row.project_id,
       section_id: row.section_id,
@@ -408,9 +529,23 @@ export function DragProvider({ children }: { children: ReactNode }) {
       || (item.parent_id ?? null) !== (container.parent_id ?? null);
 
     const siblings = siblingTasks(snapshot.items, joining ? { ...item, ...container } : item);
-    const onto = siblings.indexOf(row.id);
+
+    /* `child_order` is the order in the database and the list is in the order
+       on the screen, which are the same thing only under a manual sort. The
+       drop is about the one you are looking at, so the numbering is written
+       from the screen: the siblings the page is showing are laid back into
+       their own slots in screen order, and the ones a filter is hiding keep
+       the places they had between them. */
+    const shown = list.ids.filter((id) => siblings.includes(id));
+    const arranged = [...siblings];
+    const slots = siblings
+      .map((id, at) => (shown.includes(id) ? at : -1))
+      .filter((at) => at >= 0);
+    slots.forEach((at, index) => { arranged[at] = shown[index]; });
+
+    const onto = arranged.indexOf(row.id);
     if (onto < 0) return;
-    const next = [...siblings];
+    const next = [...arranged];
     const at = next.indexOf(item.id);
     if (at >= 0) next.splice(onto, 0, ...next.splice(at, 1));
     else next.splice(onto, 0, item.id);
@@ -453,7 +588,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const back = home.parent_id
       ? moveItem(item.id, { parent_id: home.parent_id })
       : moveItem(item.id, moveArgs({ project_id: home.project_id, section_id: home.section_id }));
-    toast(item.content, () => {
+    toast(whereItLanded(container), () => {
       void apply([back, reorderItems(before)], place(home, before));
     });
   }
@@ -494,7 +629,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const undo = before.parent_id
       ? moveItem(item.id, { parent_id: before.parent_id })
       : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
-    toast(item.content, () => {
+    toast(t('drop.nested', { name: parent.content }), () => {
       void apply([undo], place(before));
     });
   }
@@ -510,7 +645,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       [moveItem(item.id, moveArgs({ project_id: item.project_id, section_id: item.section_id }))],
       patch(null),
     );
-    toast(item.content, () => {
+    toast(t('drop.promoted'), () => {
       void apply([moveItem(item.id, { parent_id: parentId })], patch(parentId));
     });
   }

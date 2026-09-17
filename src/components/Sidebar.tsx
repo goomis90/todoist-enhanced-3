@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon, type IconName } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
@@ -16,6 +17,7 @@ import { Droppable } from './dnd/Droppable';
 import { ProjectDropRow, ProjectRowSortable } from './dnd/ProjectRowSortable';
 import { COFFEE_URL, FEEDBACK_URL } from '@/app-info';
 import { ProjectMenu } from './ProjectMenu';
+import { dragClock } from './dnd/DragProvider';
 import type { ProjectSheetTarget } from './overlays/ProjectSheet';
 
 interface SidebarProps {
@@ -35,6 +37,25 @@ interface SidebarProps {
   variant?: 'rail' | 'sheet';
 }
 
+/**
+ * The keys that reach each destination, for the hint a row shows when the
+ * pointer rests on it. Kept beside the rows rather than imported from the
+ * keyboard, because this is the label on a button and not the binding itself —
+ * and a label that has drifted from its key is worse than no label.
+ */
+const GO_KEYS: Partial<Record<ViewId, string>> = {
+  inbox: 'I',
+  today: 'T',
+  week: 'W',
+  upcoming: 'U',
+  someday: 'S',
+  review: 'R',
+  labels: 'L',
+};
+
+/** How long the pointer has to actually stay on a row before it is told. */
+const HINT_DELAY_MS = 550;
+
 export function Sidebar({
   route, onAddTask, onSearch, onIssues, onProjectSheet, issuesCount, variant = 'rail',
 }: SidebarProps) {
@@ -52,6 +73,37 @@ export function Sidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   /** The project row whose action menu is open, and the button it hangs from. */
   const [rowMenu, setRowMenu] = useState<{ key: string; anchor: HTMLElement } | null>(null);
+
+  /**
+   * The shortcut pill, drawn beside the row rather than inside it.
+   *
+   * Inside it, the only free space is the count's, and taking that away to
+   * show the key hid the number the row is mostly there for — under the
+   * pointer, which is where the pointer already was. It goes in the document,
+   * clear of the sidebar's own scrolling box, which clips anything hanging
+   * over its edge.
+   */
+  const [hint, setHint] = useState<{ top: number; left: number; key: string } | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hideHint = () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    hintTimer.current = null;
+    setHint(null);
+  };
+
+  const showHint = (row: HTMLElement, key?: string) => {
+    hideHint();
+    if (!key) return;
+    // No pointer to rest anywhere, and no room beside the row either.
+    if (!window.matchMedia('(hover: hover)').matches) return;
+    hintTimer.current = setTimeout(() => {
+      const box = row.getBoundingClientRect();
+      setHint({ top: Math.round(box.top + box.height / 2), left: Math.round(box.right + 8), key });
+    }, HINT_DELAY_MS);
+  };
+
+  useEffect(() => hideHint, []);
 
   const roots = useMemo(() => rootItems(items), [items]);
   const inboxId = snapshot.user?.inbox_project_id;
@@ -139,6 +191,14 @@ export function Sidebar({
         className={`navitem${isOver ? ' dropping' : ''}`}
         data-tour={view === 'review' ? 'review' : undefined}
         aria-current={route.view === view ? 'page' : undefined}
+        /* The key that gets here, once the pointer has actually rested on the
+           row. Nobody goes looking for a shortcuts sheet, and a hint that
+           appears the instant you pass over a row is a column of flashing
+           labels down the side of the page. */
+        onMouseEnter={(event) => showHint(event.currentTarget, GO_KEYS[view])}
+        onMouseLeave={hideHint}
+        onFocus={(event) => showHint(event.currentTarget, GO_KEYS[view])}
+        onBlur={hideHint}
         onClick={() => navigate(view)}
       >
         <Icon name={icon} />
@@ -218,12 +278,19 @@ export function Sidebar({
             projectId={project.id}
             sortable={keyPrefix === ''}
             className={menuOpen ? ' menuopen' : ''}
+            /* Held under a finger, the row itself is the anchor: the button
+               this menu usually hangs from is not on the page on a phone. */
+            onPressHold={(node) => setRowMenu(menuOpen ? null : { key: rowKey, anchor: node })}
           >
             <button
               className={`navitem${isOver ? ' dropping' : ''}`}
               style={depth > 0 ? { paddingLeft: `${8 + depth * 16}px` } : undefined}
               aria-current={route.view === 'project' && route.id === project.id ? 'page' : undefined}
-              onClick={() => navigate('project', project.id)}
+              /* A press that has just been held is a press that has just done
+                 something — opened this menu, or carried the row somewhere —
+                 and the click the browser sends afterwards is not a second
+                 instruction to go to the project. */
+              onClick={() => { if (!dragClock.justEnded()) navigate('project', project.id); }}
             >
               <span className="hash" style={markerStyle(project.color)}>#</span>
               <span className="label">{project.name}</span>
@@ -460,6 +527,15 @@ export function Sidebar({
           </div>
         </div>
       </div>
+
+      {hint && createPortal(
+        <span className="gohint" style={{ top: hint.top, left: hint.left }} role="presentation">
+          <kbd>G</kbd>
+          <small>{t('keys.then')}</small>
+          <kbd>{hint.key}</kbd>
+        </span>,
+        document.body,
+      )}
     </aside>
   );
 }
