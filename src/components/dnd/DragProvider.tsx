@@ -7,7 +7,10 @@ import type { Modifier } from '@dnd-kit/core';
 import { useStore } from '@/store/store';
 import {
   canNest, decodeRowTarget, decodeTarget, dropMutation, moveArgs, siblingTasks,
+  type DropTarget,
 } from '@/domain/dnd';
+import { formatDayOrName } from '@/domain/dates';
+import { useT } from '@/hooks/useT';
 import { siblingOrder } from '@/store/selectors';
 import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
@@ -132,7 +135,9 @@ const taskIdOf = (activeId: string): string =>
  * and offered back as an undo, because dragging is easy to do by accident.
  */
 export function DragProvider({ children }: { children: ReactNode }) {
+  const { t, locale } = useT();
   const snapshot = useStore((s) => s.snapshot);
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
   const apply = useStore((s) => s.apply);
   const toast = useStore((s) => s.toast);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -152,6 +157,49 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
+
+  /**
+   * What the drop did, in the fewest words that still tell it from the others.
+   *
+   * The toast is the only account of a drop, and a drop landing a few pixels
+   * off does something different from what was meant — so the one thing it has
+   * to carry is which of the things it could have done it actually did. The
+   * task's own title is no help there: every drop of the same task reads the
+   * same.
+   */
+  function whatHappened(target: DropTarget): string | null {
+    switch (target.kind) {
+      case 'today':
+        return t('drop.toDay', { day: t('common.today') });
+      case 'day':
+        return t('drop.toDay', { day: formatDayOrName(target.date, locale, dateFormat) });
+      case 'quick':
+        return t('drop.quick');
+      case 'anytime':
+        return t('drop.anytime');
+      case 'someday':
+        return t('drop.someday');
+      case 'project':
+        return t('drop.toProject', { name: snapshot.projects[target.projectId]?.name ?? '' });
+      /* A section drop names the section; a drop above the first one is a drop
+         on the project, and says so. */
+      case 'section':
+        return target.sectionId
+          ? t('drop.toSection', { name: snapshot.sections[target.sectionId]?.name ?? '' })
+          : t('drop.toProject', { name: snapshot.projects[target.projectId]?.name ?? '' });
+      case 'label':
+        return t('drop.tagged', { label: target.label });
+      default:
+        return null;
+    }
+  }
+
+  /** Where a task landed when it followed a row into another list. */
+  function whereItLanded(container: { project_id: string; section_id: string | null }): string {
+    return container.section_id
+      ? t('drop.toSection', { name: snapshot.sections[container.section_id]?.name ?? '' })
+      : t('drop.toProject', { name: snapshot.projects[container.project_id]?.name ?? '' });
+  }
 
   function onDragStart(event: DragStartEvent) {
     const id = String(event.active.id);
@@ -318,7 +366,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       : before.parent_id
         ? moveItem(item.id, { parent_id: before.parent_id })
         : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
-    toast(item.content, () => {
+    toast(whatHappened(target) ?? item.content, () => {
       void apply([undo], patch(before));
     });
   }
@@ -383,9 +431,10 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const undo = mutation.move
       ? moveItem(item.id, moveArgs({ project_id: was.project_id, section_id: was.section_id }))
       : updateItem(item.id, { due: was.due, labels: was.labels });
-    toast(item.content, () => {
-      void apply([undo, updateDayOrders(before)], place(before, was));
-    });
+    toast(
+      (list.target ? whatHappened(list.target) : null) ?? item.content,
+      () => { void apply([undo, updateDayOrders(before)], place(before, was)); },
+    );
   }
 
   /**
@@ -453,7 +502,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const back = home.parent_id
       ? moveItem(item.id, { parent_id: home.parent_id })
       : moveItem(item.id, moveArgs({ project_id: home.project_id, section_id: home.section_id }));
-    toast(item.content, () => {
+    toast(whereItLanded(container), () => {
       void apply([back, reorderItems(before)], place(home, before));
     });
   }
@@ -494,7 +543,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const undo = before.parent_id
       ? moveItem(item.id, { parent_id: before.parent_id })
       : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
-    toast(item.content, () => {
+    toast(t('drop.nested', { name: parent.content }), () => {
       void apply([undo], place(before));
     });
   }
@@ -510,7 +559,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       [moveItem(item.id, moveArgs({ project_id: item.project_id, section_id: item.section_id }))],
       patch(null),
     );
-    toast(item.content, () => {
+    toast(t('drop.promoted'), () => {
       void apply([moveItem(item.id, { parent_id: parentId })], patch(parentId));
     });
   }

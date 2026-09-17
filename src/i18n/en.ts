@@ -691,6 +691,18 @@ export const en = {
   /* 1.1.1 — third pass */
   'search.goTo': 'Go to',
   'review.mail.default': 'Default app',
+  /* What a drop did. The toast is the only account of it, and it is read in
+     the second before it is either used or ignored, so each one is the action
+     and nothing else — the task's own title is the part that never varies. */
+  'drop.toDay': 'Moved to {day}',
+  'drop.quick': 'Today, and quick',
+  'drop.anytime': 'Moved to anytime this week',
+  'drop.someday': 'Moved to Someday',
+  'drop.toProject': 'Moved to #{name}',
+  'drop.toSection': 'Moved to {name}',
+  'drop.tagged': 'Tagged @{label}',
+  'drop.nested': 'Became a subtask of {name}',
+  'drop.promoted': 'Became a task again',
 };
 
 export type TranslationKey = keyof typeof en;

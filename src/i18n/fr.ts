@@ -693,4 +693,14 @@ export const fr: Record<TranslationKey, string> = {
   /* 1.1.1 — troisième passe */
   'search.goTo': 'Aller à',
   'review.mail.default': 'App par défaut',
+  /* Ce qu’un glisser-déposer a fait. */
+  'drop.toDay': 'Déplacée vers {day}',
+  'drop.quick': 'Aujourd’hui, et rapide',
+  'drop.anytime': 'Déplacée dans cette semaine',
+  'drop.someday': 'Déplacée vers Un jour',
+  'drop.toProject': 'Déplacée vers #{name}',
+  'drop.toSection': 'Déplacée vers {name}',
+  'drop.tagged': 'Étiquetée @{label}',
+  'drop.nested': 'Devenue sous-tâche de {name}',
+  'drop.promoted': 'Redevenue une tâche',
 };
