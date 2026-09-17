@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon';
+import { COMPLETION_LINGER_MS } from '@/components/TaskRow';
 import { EstimateField } from '@/components/EstimateField';
 import { CoffeeLine } from '@/components/CoffeeLine';
 import { Select } from '@/components/Select';
@@ -191,6 +192,20 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
       .map((id) => snapshot.items[id])
       .filter((item): item is Item => !!item && !item.is_deleted);
   };
+
+  /**
+   * Takes a row out of the list the step is holding.
+   *
+   * A step keeps every row it has shown, because answering a question about a
+   * task should not make the task vanish before you have seen what you said.
+   * Finishing one is not an answer to the step's question, though — it is the
+   * task leaving — so a completed row is forgotten and goes, the same way it
+   * would in any other list.
+   */
+  const forget = (id: string) => {
+    shown.current.ids = shown.current.ids.filter((kept) => kept !== id);
+  };
+
   const atPresent = weekOffset >= 0;
 
   return (
@@ -374,6 +389,18 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
   /** One decision, one row. */
   function Row({ item, step: s }: { item: Item; step: ReviewStep }) {
     const project = snapshot.projects[item.project_id];
+    /* Ticked here, not yet gone: the same pause `TaskRow` takes, for the same
+       reason — a row that vanishes under the pointer leaves you asking which
+       one you just hit. */
+    const [settling, setSettling] = useState(false);
+    const complete = () => {
+      if (settling) return;
+      setSettling(true);
+      window.setTimeout(() => {
+        forget(item.id);
+        void toggleTask(item.id);
+      }, COMPLETION_LINGER_MS);
+    };
     const { minutes } = effectiveEstimate(item, childrenOf);
     const due = dueDate(item);
     /* The button naming the list you are looking at starts pressed, because it
@@ -385,21 +412,27 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
     const current = chosen[item.id] ?? settled;
 
     return (
-      /* A ticked row keeps its place and says so, the same way the Done step
-         says it: the tick fills, the words stay. The honest answer to "this is
-         late" is often "I did it on Friday and forgot to tick it", and a row
-         that looked untouched after being ticked made that answer unsayable. */
-      <div className={`reviewrow${item.checked ? ' done' : ''}`}>
+      /* Ticked off here exactly as it is ticked off anywhere else: the tick
+         lands, is legible for a beat, and the row leans out and goes. The
+         honest answer to "this is late" is often "I did it on Friday and
+         forgot to tick it", and that answer has to look the same in a review
+         as it does in a list. */
+      <div className={`reviewrow${settling ? ' done settling' : ''}`}>
         {/* Sometimes the answer is that it is already done. */}
-        <button
+        <span
           className={`check p${toDisplayPriority(item.priority)}`}
-          aria-checked={item.checked}
-          aria-label={item.checked ? t('task.reopen') : t('task.complete')}
-          title={item.checked ? t('task.reopen') : t('task.complete')}
-          onClick={() => void toggleTask(item.id)}
+          role="checkbox"
+          aria-checked={item.checked || settling}
+          aria-label={t('task.complete')}
+          title={t('task.complete')}
+          tabIndex={0}
+          onClick={complete}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); complete(); }
+          }}
         >
           <Icon name="check" />
-        </button>
+        </span>
 
         <button className="reviewname" onClick={() => onOpen(item.id)}>
           <span className="ttitle">{item.content}</span>

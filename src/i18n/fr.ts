@@ -702,5 +702,5 @@ export const fr: Record<TranslationKey, string> = {
   'drop.toSection': 'Déplacée vers {name}',
   'drop.tagged': 'Étiquetée @{label}',
   'drop.nested': 'Devenue sous-tâche de {name}',
-  'drop.promoted': 'Redevenue une tâche',
+  'drop.promoted': 'Devenue une tâche',
 };

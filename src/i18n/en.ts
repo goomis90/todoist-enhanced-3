@@ -702,7 +702,7 @@ export const en = {
   'drop.toSection': 'Moved to {name}',
   'drop.tagged': 'Tagged @{label}',
   'drop.nested': 'Became a subtask of {name}',
-  'drop.promoted': 'Became a task again',
+  'drop.promoted': 'Became a task',
 };
 
 export type TranslationKey = keyof typeof en;

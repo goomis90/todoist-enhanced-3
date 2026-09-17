@@ -535,6 +535,18 @@
   .task.settling{transition:none}
 }
 
+/* The same leaning-out, for a task ticked off inside the daily review. Two
+   places that finish a task should not look like two different acts. */
+.reviewrow.settling{
+  opacity:.6;
+  transition:opacity .38s ease;
+  pointer-events:none;
+}
+.reviewrow.settling .ttitle{color:var(--faint)}
+@media (prefers-reduced-motion: reduce){
+  .reviewrow.settling{transition:none}
+}
+
 /* Loud enough to be read at rest, quiet enough not to compete with Add task:
    the same wash the Behind schedule section uses, with no filled background
    and no border of its own. */

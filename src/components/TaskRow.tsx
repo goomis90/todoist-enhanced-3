@@ -27,7 +27,13 @@ import { renderInlineMarkdown } from '@/domain/markdown';
  * indistinguishable from a correct one: the row is simply gone and you are
  * left wondering which one you hit.
  */
-const COMPLETION_LINGER_MS = 420;
+/**
+ * How long a ticked row stays before it goes.
+ *
+ * Exported so the review ticks a task off with the same pause: two places that
+ * complete a task should not have two different ideas of how long that takes.
+ */
+export const COMPLETION_LINGER_MS = 420;
 
 const ShowSubtasks = createContext(true);
 
