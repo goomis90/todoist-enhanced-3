@@ -723,6 +723,7 @@ export const en = {
   'walkthrough.restInSettings': 'The accent colour and how much room a list gives each task are in Settings, whenever you want them.',
   'walkthrough.welcomeBodyPhone': 'Your tasks are already here — this is a different way of looking at them, built around planning a week rather than a day. One choice before you start: light or dark. It changes the page behind this one as you make it.',
   'keys.then': 'then',
+  'task.deleteTitleMany': 'Delete these tasks?',
 };
 
 export type TranslationKey = keyof typeof en;

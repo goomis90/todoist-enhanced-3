@@ -98,7 +98,9 @@ export function BulkBar() {
   const remove = async () => {
     const ids = selection;
     const ok = await confirm({
-      title: t('task.deleteTitle'),
+      /* Plural, because the body is: asking "delete this task?" over a list
+         of three is the dialog disagreeing with itself. */
+      title: t(ids.length > 1 ? 'task.deleteTitleMany' : 'task.deleteTitle'),
       body: t('bulk.deleteConfirm', { count: ids.length }),
       confirmLabel: t('task.delete'),
       destructive: true,

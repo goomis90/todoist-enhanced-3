@@ -265,18 +265,34 @@ export function useKeyboard(bridge: KeyboardBridge) {
 
         if ((e.metaKey || e.ctrlKey) && (e.key === 'Backspace' || e.key === 'Delete')) {
           e.preventDefault();
+          /* A selection is a deliberate answer to "which ones", and it wins
+             over the cursor, which is only ever where you last were. Deleting
+             the row under the cursor while three tasks sat picked in front of
+             you deleted one of them and left the other two.
+
+             Only when the cursor is inside the selection, though: arrowing
+             away from a selection and pressing this means the row you have
+             arrowed to. */
+          const picked = store.selection;
+          const many = picked.length > 1 && picked.includes(id);
+
           /* The confirmation stays. Deleting is the one thing that should
              never be one keystroke away from done, and a keystroke is a
              cheaper accident than a click. */
           void ask_({
-            title: say('task.deleteTitle'),
-            body: say('task.deleteConfirm', { name: item.content }),
+            title: say(many ? 'task.deleteTitleMany' : 'task.deleteTitle'),
+            body: many
+              ? say('bulk.deleteConfirm', { count: picked.length })
+              : say('task.deleteConfirm', { name: item.content }),
             confirmLabel: say('task.delete'),
             destructive: true,
           }).then((ok) => {
             if (!ok) return;
             const at = lastIndex;
-            void store.removeTask(id).then(() => {
+            const gone = many
+              ? (store.clearSelection(), store.removeTasks(picked))
+              : store.removeTask(id);
+            void gone.then(() => {
               // The place stays even though the row in it has gone.
               window.setTimeout(() => land(rows()[Math.min(at, rows().length - 1)]), 0);
             });
