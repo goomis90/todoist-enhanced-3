@@ -886,3 +886,92 @@
    with the one that commits carrying the weight. */
 .titleactions{display:flex;justify-content:flex-end;gap:var(--s2);margin:var(--s2) 0 0}
 .titleactions .btn{min-height:28px;padding:0 12px;font-size:var(--fs-13)}
+
+/* ---------- The keyboard cursor ---------- */
+/*
+ * The row the keyboard is on is the row that has focus, so the cursor is a
+ * focus style — but a deliberate one. The browser's own ring is drawn outside
+ * the row, and on a list whose rows are separated by hairlines it reads as a
+ * rectangle that has landed on the page rather than as a place in a list.
+ *
+ * It is a tint and nothing else: no bar down one edge. A border on a single
+ * side is a shape the eye has to finish for itself, and the tint has already
+ * said the whole of it.
+ *
+ * It reaches a little past both ends of the row, so the tick sitting hard
+ * against the left edge is inside the shape rather than on its corner. The
+ * reach is drawn rather than padded: padding would move the row's contents as
+ * the cursor arrived on it, and a list that shifts under the arrow keys is
+ * worse than one with no cursor at all.
+ */
+.task:focus-visible{
+  outline:none;
+  border-radius:var(--r-md);
+  background:var(--accent-tint);
+  /* The same tint, offset left and right, so the shape reaches past both ends
+     of the row without any padding to push the content around — and without a
+     pseudo-element behind it, which would have to be dug out of the stacking
+     order of every tinted group it sits in. */
+  box-shadow:-10px 0 0 0 var(--accent-tint), 10px 0 0 0 var(--accent-tint);
+}
+/* A row reached by Tab rather than by the arrows is the same place; the mouse
+   clicking one is not, and `:focus-visible` is exactly that distinction. */
+.task:focus-visible .ttitle{color:var(--text)}
+
+/* ---------- The shortcuts sheet ---------- */
+.keyssheet{padding:var(--s5)}
+.keyssheet h2{margin:0;font-size:var(--fs-18);font-weight:700}
+.keyshint{margin:6px 0 var(--s4);color:var(--muted);font-size:var(--fs-13);max-width:52ch}
+.keyscols{display:grid;gap:var(--s5)}
+.keyscols h5{
+  margin:0 0 6px;font-size:var(--fs-11);font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--faint);
+}
+.keysrow{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s4);
+  min-height:30px;font-size:var(--fs-13);border-bottom:1px solid var(--border);
+}
+.keysrow:last-child{border-bottom:0}
+.keys{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
+.keys .chord{display:inline-flex;align-items:center;gap:4px}
+.keys .chord small{color:var(--faint);font-size:var(--fs-11);margin-right:2px}
+.keys kbd{
+  min-width:22px;padding:2px 6px;border:1px solid var(--border-strong);
+  border-bottom-width:2px;border-radius:var(--r-xs);background:var(--surface);
+  font:inherit;font-size:var(--fs-12);font-weight:600;text-align:center;color:var(--text);
+}
+@media (min-width:720px){
+  .keyscols{grid-template-columns:1fr 1fr}
+  /* The task keys are the long column, and the one people come here for. */
+  .keyscols section:last-child{grid-row:span 2}
+}
+
+/* ---------- The key that gets here ---------- */
+/*
+ * Todoist shows a destination's shortcut when the pointer rests on it, and it
+ * is how anybody learns that the shortcuts exist at all — a sheet behind `?`
+ * is only found by people who already suspected.
+ *
+ * Late and quiet: half a second of the pointer actually staying on the row,
+ * so passing down the sidebar on the way somewhere else lights nothing up. The
+ * delay is on the way in only; leaving takes it away at once, which is what
+ * stops a trail of them following the pointer down the list.
+ */
+.navitem[data-shortcut]{position:relative}
+.navitem[data-shortcut]::after{
+  content:attr(data-shortcut);
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  padding:1px 6px;border-radius:var(--r-xs);
+  border:1px solid var(--border-strong);background:var(--surface);
+  font-size:var(--fs-11);font-weight:600;color:var(--faint);
+  opacity:0;pointer-events:none;
+  transition:opacity .12s ease;
+}
+.navitem[data-shortcut]:hover::after{opacity:1;transition-delay:.55s}
+/* The count is what the hint stands in front of, so it steps aside rather
+   than being read through it. */
+.navitem[data-shortcut]:hover .count{opacity:0;transition:opacity .12s ease .55s}
+/* Nothing to reveal without a pointer, and no room for it either. */
+@media (hover:none),(max-width:720px){
+  .navitem[data-shortcut]::after{content:none}
+}

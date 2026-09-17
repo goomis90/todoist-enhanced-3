@@ -703,6 +703,23 @@ export const en = {
   'drop.tagged': 'Tagged @{label}',
   'drop.nested': 'Became a subtask of {name}',
   'drop.promoted': 'Became a task',
+  /* The keyboard. Todoist's own keys, wherever Todoist has one. */
+  'keys.or': 'or',
+  'keys.title': 'Keyboard shortcuts',
+  'keys.typingHint': 'With no task under the cursor, a letter starts a search — projects, tags and views included.',
+  'keys.anywhere': 'Anywhere',
+  'keys.moving': 'Moving through a list',
+  'keys.onATask': 'On the task under the cursor',
+  'keys.thisList': 'This list',
+  'keys.moveCursor': 'Previous and next task',
+  'keys.moveCursorAlt': 'The same, without leaving the home row',
+  'keys.dropCursor': 'Leave the list',
+  'keys.openTask': 'Open the task',
+  'keys.setPriority': 'Priority 1 to 4',
+  'keys.select': 'Add to the selection',
+  'keys.goTo': 'Go to',
+  'keys.saveTask': 'Save the task being written',
+  'keys.inAnOpenTask': 'In an open task',
 };
 
 export type TranslationKey = keyof typeof en;

@@ -35,6 +35,22 @@ interface SidebarProps {
   variant?: 'rail' | 'sheet';
 }
 
+/**
+ * The keys that reach each destination, for the hint a row shows when the
+ * pointer rests on it. Kept beside the rows rather than imported from the
+ * keyboard, because this is the label on a button and not the binding itself —
+ * and a label that has drifted from its key is worse than no label.
+ */
+const GO_KEYS: Partial<Record<ViewId, string>> = {
+  inbox: 'G I',
+  today: 'G T',
+  week: 'G W',
+  upcoming: 'G U',
+  someday: 'G S',
+  review: 'G R',
+  labels: 'G L',
+};
+
 export function Sidebar({
   route, onAddTask, onSearch, onIssues, onProjectSheet, issuesCount, variant = 'rail',
 }: SidebarProps) {
@@ -138,6 +154,11 @@ export function Sidebar({
       <button
         className={`navitem${isOver ? ' dropping' : ''}`}
         data-tour={view === 'review' ? 'review' : undefined}
+        /* The key that gets here, shown after the pointer has rested on the
+           row for a moment. Nobody goes looking for a shortcuts sheet, and a
+           hint that appears the instant you pass over a row is a row of
+           flashing labels down the side of the page. */
+        data-shortcut={GO_KEYS[view]}
         aria-current={route.view === view ? 'page' : undefined}
         onClick={() => navigate(view)}
       >

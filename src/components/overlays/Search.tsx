@@ -10,6 +10,14 @@ interface SearchProps {
   open: boolean;
   onClose: () => void;
   onOpen: (id: string) => void;
+  /**
+   * What was already typed when the search opened.
+   *
+   * Typing on a page with no cursor on it opens this with the letter in it, so
+   * the first keystroke is not the one that gets eaten by the shortcut that
+   * opened the field.
+   */
+  seed?: string;
 }
 
 /** Accents set aside, so "reglages" finds "Réglages". */
@@ -34,7 +42,7 @@ interface Hit {
  * a cursor through the results and Enter opens the one under it. A palette you
  * have to reach for the mouse in the middle of is not a palette.
  */
-export function Search({ open, onClose, onOpen }: SearchProps) {
+export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
   const { t } = useT();
   const { snapshot, items } = useData();
   const [query, setQuery] = useState('');
@@ -42,7 +50,11 @@ export function Search({ open, onClose, onOpen }: SearchProps) {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) { setQuery(''); setCursor(0); }
+    if (open) { setQuery(seed); setCursor(0); }
+    /* `seed` deliberately left out: it is read at the moment of opening, and
+       nothing that changes it afterwards should retype the field under
+       somebody's hands. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   /**
