@@ -919,7 +919,8 @@
 .task:focus-visible .ttitle{color:var(--text)}
 
 /* ---------- The shortcuts sheet ---------- */
-.keyssheet{padding:var(--s5)}
+.keyssheet{padding:var(--s5);position:relative}
+.keysclose{position:absolute;top:var(--s3);right:var(--s3)}
 .keyssheet h2{margin:0;font-size:var(--fs-18);font-weight:700}
 .keyshint{margin:6px 0 var(--s4);color:var(--muted);font-size:var(--fs-13);max-width:52ch}
 .keyscols{display:grid;gap:var(--s5)}
@@ -949,47 +950,32 @@
 /* ---------- The key that gets here ---------- */
 /*
  * Todoist shows a destination's shortcut when the pointer rests on it, and it
- * is how anybody learns that the shortcuts exist at all — a sheet behind `?`
- * is only found by people who already suspected.
+ * is how anybody learns the shortcuts exist at all — a sheet behind `?` is
+ * only found by people who already suspected.
  *
- * Late and quiet: half a second of the pointer actually staying on the row,
- * so passing down the sidebar on the way somewhere else lights nothing up. The
- * delay is on the way in only; leaving takes it away at once, which is what
- * stops a trail of them following the pointer down the list.
+ * Beside the row, not inside it. The only free space inside is the count's,
+ * and borrowing that hid the number the row is mostly there for, underneath
+ * the pointer that had just arrived. Drawn into the document, because the
+ * sidebar is a scrolling box and clips whatever hangs over its edge.
  */
-.navitem[data-shortcut]{position:relative}
-.navitem[data-shortcut]::after{
-  content:attr(data-shortcut);
-  position:absolute;right:8px;top:50%;transform:translateY(-50%);
-  padding:1px 6px;border-radius:var(--r-xs);
-  border:1px solid var(--border-strong);background:var(--surface);
-  font-size:var(--fs-11);font-weight:600;color:var(--faint);
-  opacity:0;pointer-events:none;
-  transition:opacity .12s ease;
+.gohint{
+  position:fixed;z-index:80;
+  transform:translateY(-50%);
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 8px;border-radius:var(--r-sm);
+  border:1px solid var(--border);background:var(--surface);
+  box-shadow:var(--sh-md);
+  pointer-events:none;
+  animation:gohintin .12s ease both;
 }
-.navitem[data-shortcut]:hover::after{opacity:1;transition-delay:.55s}
-/* The count is what the hint stands in front of, so it steps aside rather
-   than being read through it. */
-.navitem[data-shortcut]:hover .count{opacity:0;transition:opacity .12s ease .55s}
-/* Nothing to reveal without a pointer, and no room for it either. */
-@media (hover:none),(max-width:720px){
-  .navitem[data-shortcut]::after{content:none}
-/* ---------- Fields on a phone ---------- */
-/*
- * Safari on iOS zooms the page in when a field smaller than 16px takes the
- * caret, and it does not zoom back out afterwards. Tapping Connect therefore
- * signed you in and left you on a page magnified to about 115%, to be pinched
- * back by hand — a bug whose cause is a font size two points too small and
- * whose symptom looks like a broken layout.
- *
- * 16px is the threshold, not a preference; below it the browser overrules the
- * design. Only where the pointer is a finger, so nothing changes on a desktop.
- */
-@media (hover:none) and (pointer:coarse),(max-width:720px){
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  textarea,
-  select{font-size:16px}
+.gohint kbd{
+  min-width:16px;padding:0 4px;border-radius:var(--r-xs);
+  border:1px solid var(--border-strong);background:var(--subtle);
+  font:inherit;font-size:var(--fs-11);font-weight:700;color:var(--text);text-align:center;
 }
+.gohint small{font-size:var(--fs-11);color:var(--faint)}
+@keyframes gohintin{from{opacity:0;transform:translateY(-50%) translateX(-4px)}}
+@media (prefers-reduced-motion:reduce){.gohint{animation:none}}
 
 /* The line that stands in for the two choices a phone does not ask. */
 .wt-rest{color:var(--muted);font-size:var(--fs-13);line-height:1.55}
@@ -1108,4 +1094,28 @@
 .estchip.clear{
   display:inline-flex;align-items:center;gap:6px;
   border-style:dashed;color:var(--muted);font-weight:500;
+}
+
+/* ---------- The key that opens a property ---------- */
+/* Beside the name, not in place of anything, and quiet enough to be ignored by
+   anyone reaching for the mouse. It is how these get learnt: by being noticed
+   while the slow way is being used. */
+/* The name at the left, the key at the right, lined up with the end of the
+   field below it — a column of keys down the edge of the panel that the eye
+   can ignore in one pass and find in one look. */
+.proplabel{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.prophead .proplabel{flex:1;min-width:0}
+.propkey{
+  flex:0 0 auto;min-width:17px;padding:0 4px;
+  border:1px solid var(--border-strong);border-radius:var(--r-xs);
+  background:var(--surface);
+  font:inherit;font-size:var(--fs-11);font-weight:700;line-height:1.5;
+  color:var(--muted);text-align:center;
+  opacity:.6;
+}
+/* Worth reading properly once somebody is looking for it. */
+.detail-side:hover .propkey,.prop:focus-within .propkey{opacity:1}
+/* No keyboard to tell anyone about. */
+@media (hover:none),(max-width:720px){
+  .propkey{display:none}
 }

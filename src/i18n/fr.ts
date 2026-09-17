@@ -722,4 +722,5 @@ export const fr: Record<TranslationKey, string> = {
   'keys.inAnOpenTask': 'Dans une tâche ouverte',
   'walkthrough.restInSettings': 'La couleur d’accent et la densité des listes sont dans les Réglages, quand vous voudrez.',
   'walkthrough.welcomeBodyPhone': 'Vos tâches sont déjà là — voici une autre façon de les regarder, pensée pour planifier une semaine plutôt qu’une journée. Un seul choix avant de commencer : clair ou sombre. Il s’applique à la page derrière celle-ci au fur et à mesure.',
+  'keys.then': 'puis',
 };

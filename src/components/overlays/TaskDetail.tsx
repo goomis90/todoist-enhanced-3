@@ -157,6 +157,29 @@ const PANEL_KEYS: Record<string, string> = {
   l: 'tags',
 };
 
+/** The same table read the other way, for the letter a property shows. */
+const KEY_FOR_PROP: Record<string, string> = Object.fromEntries(
+  Object.entries(PANEL_KEYS).map(([key, prop]) => [prop, key.toUpperCase()]),
+);
+
+/**
+ * A property's name, with the key that opens it.
+ *
+ * Small and faint, and beside the name rather than in place of anything: a
+ * shortcut nobody can see is a shortcut nobody has, and the way these are
+ * learnt is by noticing them while doing the thing the slow way. On a phone
+ * there is no keyboard to tell about, so there is nothing to say.
+ */
+function PropLabel({ name, prop }: { name: string; prop: string }) {
+  const key = KEY_FOR_PROP[prop];
+  return (
+    <span className="proplabel">
+      {name}
+      {key && <kbd className="propkey" aria-hidden="true">{key}</kbd>}
+    </span>
+  );
+}
+
 export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const { t, locale } = useT();
   const { snapshot, childrenOf } = useData();
@@ -696,7 +719,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               A move, not an update — `item_update` takes neither a project nor
               a section, so the field used to move the task on screen only. */}
           <div className="prop" data-prop="project">
-            <span>{t('detail.project')}</span>
+            <PropLabel name={t('detail.project')} prop="project" />
             <PlacementField
               ariaLabel={t('detail.project')}
               value={{ projectId: item.project_id, sectionId: item.section_id }}
@@ -710,7 +733,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
           </div>
 
           <div className="prop" data-prop="start">
-            <span>{t('detail.startDate')}</span>
+            <PropLabel name={t('detail.startDate')} prop="start" />
             <DateField
               value={due ? toApiDate(due) : ''}
               label={t('detail.startDate')}
@@ -727,7 +750,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
           </div>
 
           <div className="prop" data-prop="deadline">
-            <span>{t('detail.deadline')}</span>
+            <PropLabel name={t('detail.deadline')} prop="deadline" />
             <DateField
               value={deadline ? toApiDate(deadline) : ''}
               label={t('detail.deadline')}
@@ -738,7 +761,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
           </div>
 
           <div className="prop" data-prop="estimate">
-            <span>{t('detail.estimate')}</span>
+            <PropLabel name={t('detail.estimate')} prop="estimate" />
             {/* The same field as everywhere else, so the unit is always beside
                 the number instead of being left to the reader to infer. */}
             <EstimateField
@@ -754,7 +777,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
           </div>
 
           <div className="prop" data-prop="priority">
-            <span>{t('detail.priority')}</span>
+            <PropLabel name={t('detail.priority')} prop="priority" />
             <Select
               value={String(priority)}
               ariaLabel={t('detail.priority')}
@@ -770,7 +793,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
           <div className="prop" data-prop="tags">
             <span className="prophead">
-              {t('detail.labels')}
+              <PropLabel name={t('detail.labels')} prop="tags" />
               <button
                 className="propadd"
                 aria-label={t('composer.labels')}

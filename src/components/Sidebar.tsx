@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon, type IconName } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
@@ -43,14 +44,17 @@ interface SidebarProps {
  * and a label that has drifted from its key is worse than no label.
  */
 const GO_KEYS: Partial<Record<ViewId, string>> = {
-  inbox: 'G I',
-  today: 'G T',
-  week: 'G W',
-  upcoming: 'G U',
-  someday: 'G S',
-  review: 'G R',
-  labels: 'G L',
+  inbox: 'I',
+  today: 'T',
+  week: 'W',
+  upcoming: 'U',
+  someday: 'S',
+  review: 'R',
+  labels: 'L',
 };
+
+/** How long the pointer has to actually stay on a row before it is told. */
+const HINT_DELAY_MS = 550;
 
 export function Sidebar({
   route, onAddTask, onSearch, onIssues, onProjectSheet, issuesCount, variant = 'rail',
@@ -69,6 +73,37 @@ export function Sidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   /** The project row whose action menu is open, and the button it hangs from. */
   const [rowMenu, setRowMenu] = useState<{ key: string; anchor: HTMLElement } | null>(null);
+
+  /**
+   * The shortcut pill, drawn beside the row rather than inside it.
+   *
+   * Inside it, the only free space is the count's, and taking that away to
+   * show the key hid the number the row is mostly there for — under the
+   * pointer, which is where the pointer already was. It goes in the document,
+   * clear of the sidebar's own scrolling box, which clips anything hanging
+   * over its edge.
+   */
+  const [hint, setHint] = useState<{ top: number; left: number; key: string } | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hideHint = () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    hintTimer.current = null;
+    setHint(null);
+  };
+
+  const showHint = (row: HTMLElement, key?: string) => {
+    hideHint();
+    if (!key) return;
+    // No pointer to rest anywhere, and no room beside the row either.
+    if (!window.matchMedia('(hover: hover)').matches) return;
+    hintTimer.current = setTimeout(() => {
+      const box = row.getBoundingClientRect();
+      setHint({ top: Math.round(box.top + box.height / 2), left: Math.round(box.right + 8), key });
+    }, HINT_DELAY_MS);
+  };
+
+  useEffect(() => hideHint, []);
 
   const roots = useMemo(() => rootItems(items), [items]);
   const inboxId = snapshot.user?.inbox_project_id;
@@ -155,12 +190,15 @@ export function Sidebar({
       <button
         className={`navitem${isOver ? ' dropping' : ''}`}
         data-tour={view === 'review' ? 'review' : undefined}
-        /* The key that gets here, shown after the pointer has rested on the
-           row for a moment. Nobody goes looking for a shortcuts sheet, and a
-           hint that appears the instant you pass over a row is a row of
-           flashing labels down the side of the page. */
-        data-shortcut={GO_KEYS[view]}
         aria-current={route.view === view ? 'page' : undefined}
+        /* The key that gets here, once the pointer has actually rested on the
+           row. Nobody goes looking for a shortcuts sheet, and a hint that
+           appears the instant you pass over a row is a column of flashing
+           labels down the side of the page. */
+        onMouseEnter={(event) => showHint(event.currentTarget, GO_KEYS[view])}
+        onMouseLeave={hideHint}
+        onFocus={(event) => showHint(event.currentTarget, GO_KEYS[view])}
+        onBlur={hideHint}
         onClick={() => navigate(view)}
       >
         <Icon name={icon} />
@@ -489,6 +527,15 @@ export function Sidebar({
           </div>
         </div>
       </div>
+
+      {hint && createPortal(
+        <span className="gohint" style={{ top: hint.top, left: hint.left }} role="presentation">
+          <kbd>G</kbd>
+          <small>{t('keys.then')}</small>
+          <kbd>{hint.key}</kbd>
+        </span>,
+        document.body,
+      )}
     </aside>
   );
 }

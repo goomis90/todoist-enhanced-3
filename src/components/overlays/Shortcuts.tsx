@@ -1,4 +1,5 @@
 import { Overlay } from './Overlay';
+import { Icon } from '../Icon';
 import { useT } from '@/hooks/useT';
 import type { TranslationKey } from '@/i18n';
 
@@ -15,11 +16,11 @@ interface ShortcutsProps {
  * doing the same thing, and gets the word for it rather than a gap the reader
  * has to interpret.
  */
-const Keys = ({ groups, or }: { groups: string[][]; or: string }) => (
+const Keys = ({ groups, join }: { groups: string[][]; join: string }) => (
   <span className="keys">
     {groups.map((chord, at) => (
       <span className="chord" key={chord.join('')}>
-        {at > 0 && <small>{or}</small>}
+        {at > 0 && <small>{join}</small>}
         {chord.map((key) => <kbd key={key}>{key}</kbd>)}
       </span>
     ))}
@@ -31,7 +32,16 @@ const Keys = ({ groups, or }: { groups: string[][]; or: string }) => (
    nothing; the only ones invented are the ones Todoist has no equivalent for. */
 type Row = [groups: string[][], label: TranslationKey];
 
-const SECTIONS: Array<{ title: TranslationKey; rows: Row[] }> = [
+/**
+ * What the word between two groups of keys means in a section.
+ *
+ * "or" for two ways of doing one thing; "then" for one key after another,
+ * which is what the go-to shortcuts are — `G` is a prefix, not something held
+ * down, and two keys side by side would say the opposite.
+ */
+type Join = 'keys.or' | 'keys.then';
+
+const SECTIONS: Array<{ title: TranslationKey; join?: Join; rows: Row[] }> = [
   {
     title: 'keys.anywhere',
     rows: [
@@ -44,16 +54,17 @@ const SECTIONS: Array<{ title: TranslationKey; rows: Row[] }> = [
   },
   {
     title: 'keys.goTo',
+    join: 'keys.then',
     rows: [
-      [[['G', 'W']], 'nav.week'],
-      [[['G', 'T']], 'nav.today'],
-      [[['G', 'U']], 'nav.upcoming'],
-      [[['G', 'S']], 'nav.someday'],
-      [[['G', 'I']], 'nav.inbox'],
-      [[['G', 'R']], 'nav.review'],
-      [[['G', 'L']], 'nav.labels'],
-      [[['G', 'A']], 'nav.insights'],
-      [[['G', ',']], 'nav.settings'],
+      [[['G'], ['W']], 'nav.week'],
+      [[['G'], ['T']], 'nav.today'],
+      [[['G'], ['U']], 'nav.upcoming'],
+      [[['G'], ['S']], 'nav.someday'],
+      [[['G'], ['I']], 'nav.inbox'],
+      [[['G'], ['R']], 'nav.review'],
+      [[['G'], ['L']], 'nav.labels'],
+      [[['G'], ['A']], 'nav.insights'],
+      [[['G'], [',']], 'nav.settings'],
     ],
   },
   {
@@ -106,6 +117,17 @@ export function Shortcuts({ open, onClose }: ShortcutsProps) {
   return (
     <Overlay open={open} onClose={onClose} label={t('keys.title')} size="md">
       <div className="keyssheet">
+        {/* On a phone this sheet fills the screen, so there is no scrim left
+            to tap and the key that opened it is on a keyboard that is not
+            there. A way out that is not a keystroke. */}
+        <button
+          className="iconbtn keysclose"
+          aria-label={t('detail.close')}
+          title={t('detail.close')}
+          onClick={onClose}
+        >
+          <Icon name="close" />
+        </button>
         <h2>{t('keys.title')}</h2>
         <p className="keyshint">{t('keys.typingHint')}</p>
 
@@ -116,7 +138,7 @@ export function Shortcuts({ open, onClose }: ShortcutsProps) {
               {section.rows.map(([groups, label]) => (
                 <div className="keysrow" key={label + groups.flat().join('')}>
                   <span>{t(label)}</span>
-                  <Keys groups={groups} or={t('keys.or')} />
+                  <Keys groups={groups} join={t(section.join ?? 'keys.or')} />
                 </div>
               ))}
             </section>
