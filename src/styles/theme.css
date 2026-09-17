@@ -92,10 +92,12 @@
  * Two strengths of it were still two colours to anybody looking at them side
  * by side, which is what they had been before.
  *
- * What tells them apart is a ring, not a hue: the cursor carries one, because
- * a ring is what focus looks like everywhere and the cursor is focus. A row
- * that is both picked and under the cursor is the fill and the ring together,
- * which needs no rule of its own.
+ * They are not told apart at all, and that is the answer rather than a gap in
+ * it. A ring on the cursor was tried and read as a dark red outline drawn on
+ * the row — a third mark competing with the two it was meant to separate.
+ * There is one way of saying "this row" and both of them say it: what tells
+ * you which is which is everything around it, the bulk bar standing up for a
+ * selection and the arrow keys having just moved for a cursor.
  *
  * All of them paint past the ends of the row with offset shadows rather than
  * padding. Padding moves the row's contents as the state arrives, and a list
@@ -110,8 +112,7 @@
   outline:none;
   border-radius:var(--r-md);
   background:var(--row-marked);
-  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked),
-             inset 0 0 0 1px var(--accent);
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
 }
 /* A row reached by Tab rather than by the arrows is the same place; the mouse
    clicking one is not, and `:focus-visible` is exactly that distinction. */
@@ -125,13 +126,6 @@
   box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
 }
 
-/* Picked and under the cursor: the fill once, and the ring the cursor always
-   carries. Written out because `box-shadow` replaces rather than adds, so the
-   rule above would otherwise take the ring off again. */
-.task.picked:focus-visible{
-  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked),
-             inset 0 0 0 1px var(--accent);
-}
 .task:last-child{border-bottom:0}
 .ttitle{font-size:var(--fs-14);font-weight:400;color:var(--text)}
 .tdesc{color:var(--faint)}
