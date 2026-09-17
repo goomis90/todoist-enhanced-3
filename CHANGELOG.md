@@ -6,6 +6,54 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.7.1
+
+A pass over what 1.7.0 got wrong, and the small things it made obvious.
+
+🆕 **Drag a project or a tag into Favourites.** Drop either on the section and
+it becomes one. The sidebar teaches dragging all day — a project is reordered
+by it and nested by it — so dragging one into the section it plainly belongs
+in was the first thing to try and the one thing that did nothing. A project
+and a tag are also carried under the pointer now, the way a task always was.
+
+🆕 **Add a task from a column that knows something about it.** A project
+grouped by priority had no way to add a task at all, on the one page where
+both halves of the answer are known. A column offers the line when its own
+heading fixes something the composer can be opened with, and fills in exactly
+that: a P2 column in a project fills the project and the priority, a P2 column
+in My week fills the priority and nothing else.
+
+🎨 **The row under the keyboard cursor and a row you have picked look the
+same.** They were a grey and an accent tint — two ideas rather than two ways
+of saying one. There is one mark for "this row" now, mixed from whichever
+accent is set.
+
+🎨 **On a phone, Display and Insights are in the same place on every page.**
+They used to sit beside the title when the title was short enough to allow it
+and wrap to their own line when it was not, so their position depended on
+which page you were on.
+
+🐛 **The cursor no longer turns white under the mouse pointer.** Hover and the
+cursor were written in different files at the same weight, so the one you saw
+depended on the order the stylesheets happened to load in.
+
+🐛 **A delete can be confirmed from the keyboard.** The confirming button asked
+for the focus and did not get it, so Enter pressed Cancel — every time, with
+no way through the dialog at all. Cmd+Enter now confirms wherever the focus
+is, and Cmd+Backspace over a selection deletes the selection rather than the
+one row under the cursor.
+
+🐛 **"Add task" in Anytime this week makes a task that is in the week.** It
+opened an empty composer, so the task went to Someday — out of the section it
+was added from. Quick had the same gap and forgot the tag it is defined by.
+
+🐛 **The Display menu fits on a phone.** 320px hung from the right edge of its
+button is 320px going left, and half of it was off the screen.
+
+🐛 **A destination no longer offers to take something it cannot.** A tag
+carried over a project row lit up as though it would file itself there, and
+there is no such thing as a tag on a project.
+
 ## 1.7.0
 
 Every list opens in the order that answers "what now", the keyboard reaches

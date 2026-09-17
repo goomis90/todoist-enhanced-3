@@ -39,6 +39,18 @@
         "--strictPort"
       ],
       "port": 5190
+    },
+    {
+      "name": "issues 20-24",
+      "runtimeExecutable": "/Users/julesbertolino/.nvm/versions/node/v22.23.1/bin/npx",
+      "runtimeArgs": [
+        "vite",
+        "../todoist-enhancements-all",
+        "--port",
+        "5180",
+        "--strictPort"
+      ],
+      "port": 5180
     }
   ]
 }
