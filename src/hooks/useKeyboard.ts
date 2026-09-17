@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useStore } from '@/store/store';
 import { useConfirm } from '@/components/overlays/Confirm';
 import { useT } from './useT';
+import { navigate } from './useRoute';
+import type { ViewId } from '@/domain/types';
 
 /**
  * The whole of the keyboard, in one place.
@@ -38,6 +40,14 @@ import { useT } from './useT';
  * alone rather than invented: `l` labels a task and `c` comments on one, and
  * neither exists here. Bound to nothing they are still useful — they start a
  * search, like every other letter.
+ *
+ * ## Going somewhere is `g` and a letter
+ *
+ * Todoist's arrangement, kept for the reason it exists: a bare letter per
+ * destination would take `w`, `u`, `s` and `i` away from typing, and typing is
+ * how you reach a project. A prefix costs one key and leaves the alphabet
+ * alone — which is also why `/` can stay as a second way into the search
+ * without ever being mistaken for a word.
  */
 
 /**
@@ -48,6 +58,32 @@ const TICK_SETTLES_MS = 480;
 
 /** The keys that act on the row under the cursor, and are never typed into search. */
 const ROW_KEYS = new Set(['e', 't', 'v', 'x', '1', '2', '3', '4', '.']);
+
+/**
+ * Where `g` then a letter goes.
+ *
+ * Todoist's own arrangement, and the reason for it is the one that matters
+ * here: a bare letter for each destination would take `w`, `u`, `s` and `i`
+ * away from typing, and typing is how you reach a project. A prefix costs one
+ * key — `g` — and leaves the alphabet alone.
+ *
+ * The letters are Todoist's where Todoist has the view, and the first letter
+ * of the view's own name where it does not.
+ */
+const GO_TO: Record<string, ViewId> = {
+  i: 'inbox',
+  t: 'today',
+  w: 'week',
+  u: 'upcoming',
+  s: 'someday',
+  r: 'review',
+  l: 'labels',
+  a: 'insights',
+  ',': 'settings',
+};
+
+/** How long `g` waits for the letter that follows it. */
+const PREFIX_MS = 1500;
 
 /** The tasks on the page in front, in the order they are drawn. */
 function rows(): HTMLElement[] {
@@ -100,6 +136,13 @@ export function useKeyboard(bridge: KeyboardBridge) {
   useEffect(() => {
     /** Where the cursor was, so a row that finishes hands the place on. */
     let lastIndex = 0;
+    /** `g` has been pressed and the app is waiting to hear where to go. */
+    let goingTo = false;
+    let goingTimer: ReturnType<typeof setTimeout> | undefined;
+    const stopGoing = () => {
+      goingTo = false;
+      if (goingTimer) clearTimeout(goingTimer);
+    };
 
     const ask = (row: HTMLElement, menu: RowMenu) => {
       row.dispatchEvent(new CustomEvent(ROW_MENU_EVENT, { detail: menu }));
@@ -171,6 +214,23 @@ export function useKeyboard(bridge: KeyboardBridge) {
           : Math.min(list.length - 1, Math.max(0, at + step));
         lastIndex = next;
         land(list[next]);
+        return;
+      }
+
+      /* `g`, then where to. A prefix rather than a letter each, so that the
+         letters themselves stay available for typing — which is the other
+         half of how this app is navigated. */
+      if (goingTo) {
+        e.preventDefault();
+        const to = GO_TO[e.key.toLowerCase()];
+        stopGoing();
+        if (to) navigate(to);
+        return;
+      }
+      if (e.key === 'g' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        goingTo = true;
+        goingTimer = setTimeout(() => { goingTo = false; }, PREFIX_MS);
         return;
       }
 
@@ -262,6 +322,9 @@ export function useKeyboard(bridge: KeyboardBridge) {
     };
 
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      stopGoing();
+    };
   }, []);
 }

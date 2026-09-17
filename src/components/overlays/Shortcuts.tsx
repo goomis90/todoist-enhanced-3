@@ -38,7 +38,22 @@ const SECTIONS: Array<{ title: TranslationKey; rows: Row[] }> = [
       [[['Q']], 'nav.addTask'],
       [[['/'], ['⌘', 'K']], 'nav.search'],
       [[['⌘', 'Z']], 'common.undo'],
+      [[['⌘', '↵']], 'keys.saveTask'],
       [[['?']], 'keys.thisList'],
+    ],
+  },
+  {
+    title: 'keys.goTo',
+    rows: [
+      [[['G', 'W']], 'nav.week'],
+      [[['G', 'T']], 'nav.today'],
+      [[['G', 'U']], 'nav.upcoming'],
+      [[['G', 'S']], 'nav.someday'],
+      [[['G', 'I']], 'nav.inbox'],
+      [[['G', 'R']], 'nav.review'],
+      [[['G', 'L']], 'nav.labels'],
+      [[['G', 'A']], 'nav.insights'],
+      [[['G', ',']], 'nav.settings'],
     ],
   },
   {

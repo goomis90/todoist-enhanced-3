@@ -705,6 +705,8 @@ export const en = {
   'keys.openTask': 'Open the task',
   'keys.setPriority': 'Priority 1 to 4',
   'keys.select': 'Add to the selection',
+  'keys.goTo': 'Go to',
+  'keys.saveTask': 'Save the task being written',
 };
 
 export type TranslationKey = keyof typeof en;

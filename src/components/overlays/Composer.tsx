@@ -200,7 +200,21 @@ export function Composer({
 
   return (
     <Overlay open={open} onClose={onClose} label={t('nav.addTask')} size="sm">
-      <div className="composerbox">
+      <div
+        className="composerbox"
+        /* Cmd+Enter saves, from any field in the sheet — Todoist's own key for
+           it, and the one anybody writing in the description or filling in
+           subtasks reaches for rather than aiming at the button. Plain Enter
+           still belongs to the field it is pressed in: it commits a name, and
+           it adds a subtask and asks for the next. */
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey)) return;
+          if (!name.trim()) return;
+          e.preventDefault();
+          e.stopPropagation();
+          void submit();
+        }}
+      >
         <TaskNameField
           value={name}
           onChange={setName}

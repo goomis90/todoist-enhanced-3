@@ -707,4 +707,6 @@ export const fr: Record<TranslationKey, string> = {
   'keys.openTask': 'Ouvrir la tâche',
   'keys.setPriority': 'Priorité 1 à 4',
   'keys.select': 'Ajouter à la sélection',
+  'keys.goTo': 'Aller à',
+  'keys.saveTask': 'Enregistrer la tâche en cours',
 };
