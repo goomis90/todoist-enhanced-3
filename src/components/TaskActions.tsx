@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { addDays, nextMonday } from 'date-fns';
 import { Icon } from './Icon';
 import { useT } from '@/hooks/useT';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
+import { ROW_PRESS_EVENT, type RowMenu } from '@/domain/gestures';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
 import { withEstimate, effectiveEstimate } from '@/domain/estimates';
@@ -73,16 +76,34 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   const [dest, setDest] = useState('');
   const [destPick, setDestPick] = useState(-1);
   const ref = useRef<HTMLSpanElement>(null);
+  /* The sheet is drawn into the document rather than into the row, so a click
+     inside it is not inside `ref` and has to be recognised separately. */
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const phone = usePhoneBehaviour();
 
   // A menu that opens holding the last thing typed into it is a menu lying
   // about what it will do if you press Enter.
   useEffect(() => { if (menu !== 'schedule') { setTyped(''); setPick(-1); } }, [menu]);
   useEffect(() => { if (menu !== 'move') { setDest(''); setDestPick(-1); } }, [menu]);
 
+  /* Held down on the row itself. On a phone there is no hover to reveal the
+     row's controls with, so holding it opens what hovering would have shown —
+     the same actions, as a sheet with their names on. */
+  useEffect(() => {
+    const row = ref.current?.closest<HTMLElement>('.task');
+    if (!row) return;
+    const open = (event: Event) => setMenu((event as CustomEvent<RowMenu>).detail);
+    row.addEventListener(ROW_PRESS_EVENT, open);
+    return () => row.removeEventListener(ROW_PRESS_EVENT, open);
+  }, []);
+
   useEffect(() => {
     if (menu === 'none') return;
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setMenu('none');
+      const target = e.target as Node;
+      if (ref.current?.contains(target)) return;
+      if (sheetRef.current?.contains(target)) return;
+      setMenu('none');
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu('none'); };
     document.addEventListener('mousedown', onDown);
@@ -319,9 +340,289 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
     });
   }
 
+  /* Setting an estimate is a field, not a menu, and on a phone it belongs in
+     the same sheet as everything else rather than squeezed into a tray 152px
+     wide. */
+  const estimateSheet = (
+    <div className="popover rowmenu asSheet estimatesheet" role="menu">
+      <h5>{t('task.setEstimate')}</h5>
+      <EstimateField
+        autoFocus
+        minutes={computed ? null : minutes}
+        onCancel={() => setMenu('none')}
+        onCommit={(value) => {
+          setMenu('none');
+          void updateTask(item.id, { labels: withEstimate(item.labels, value) });
+        }}
+      />
+    </div>
+  );
+
+  const menus = (
+    <>
+      {phone && menu === 'estimate' && estimateSheet}
+        {menu === 'schedule' && (
+          <div className={`popover rowmenu schedulemenu${phone ? " asSheet" : ""}`} role="menu">
+            {/* Typing is the fastest way to say "next sunday", so it is the
+                first thing here and it already has the caret. */}
+            <input
+              className="schedulefield"
+              autoFocus
+              value={typed}
+              placeholder={t('task.typeDate')}
+              aria-label={t('task.schedule')}
+              onChange={(e) => { setTyped(e.target.value); setPick(-1); }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'ArrowDown' && suggestions.length > 0) {
+                  e.preventDefault();
+                  setPick((at) => (at + 1) % suggestions.length);
+                  return;
+                }
+                if (e.key === 'ArrowUp' && suggestions.length > 0) {
+                  e.preventDefault();
+                  setPick((at) => (at <= 0 ? suggestions.length - 1 : at - 1));
+                  return;
+                }
+                if (e.key === 'Enter') { e.preventDefault(); commitTyped(); }
+                if (e.key === 'Escape') setMenu('none');
+              }}
+            />
+
+            {/* A short list under the field, at most three long, each line
+                saying what it would do. A word shows the day it resolves to; a
+                bare day of the month shows the date and the weekday, which is
+                the part you actually want to know before choosing between three
+                fifteenths. */}
+            {typed.trim() !== '' && (
+              suggestions.length > 0 ? (
+                <div className="schedulesuggest" role="listbox">
+                  {suggestions.map((option, at) => {
+                    const day = new Date(`${option.date.slice(0, 10)}T00:00:00`);
+                    const named = formatDayOrName(day, locale, dateFormat);
+                    const label = option.word ?? formatDay(day, locale, dateFormat);
+                    const hint = option.word
+                      ? (sameWord(named, option.word) ? null : named)
+                      : weekdayName(day, locale);
+                    return (
+                      <button
+                        key={option.date + (option.word ?? '')}
+                        role="option"
+                        aria-selected={at === pick}
+                        className={`scheduleoption${at === pick ? ' on' : ''}`}
+                        onMouseDown={(e) => { e.preventDefault(); commitTyped(option); }}
+                        onMouseEnter={() => setPick(at)}
+                      >
+                        <span>{label}</span>
+                        {hint && <small>{hint}</small>}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className={`schedulepreview${reading ? '' : ' none'}`}>
+                  {reading
+                    ? formatDayOrName(new Date(reading.date.slice(0, 10)), locale, dateFormat)
+                    : t('task.dateNotRead')}
+                </p>
+              )
+            )}
+
+            <button
+              className="opt"
+              onClick={() => void moveTo({ kind: 'today' }, t('common.today'))}
+            >
+              <span><Icon name="week" size="sm" /> {t('common.today')}</span>
+            </button>
+            <button
+              className="opt"
+              onClick={() =>
+                void moveTo({ kind: 'day', date: addDays(new Date(), 1) }, t('common.tomorrow'))}
+            >
+              <span><Icon name="arrow-right" size="sm" /> {t('common.tomorrow')}</span>
+            </button>
+            <button
+              className="opt"
+              onClick={() =>
+                void moveTo({ kind: 'day', date: nextMonday(new Date()) }, t('task.nextWeek'))}
+            >
+              <span><Icon name="upcoming" size="sm" /> {t('task.nextWeek')}</span>
+            </button>
+
+            {/* And a calendar, for a date it is easier to point at than to
+                name. The same one the composer uses, so picking a date from a
+                row and picking one while writing the task are the same control
+                rather than two that drifted apart. */}
+            <div className="rowmenu-date">
+              <DateField
+                value={item.due?.date.slice(0, 10) ?? ''}
+                label={t('task.schedule')}
+                placeholder={t('task.pickDate')}
+                onChange={(next) => {
+                  if (!next) { schedule(null); return; }
+                  const day = new Date(`${next}T00:00:00`);
+                  void moveTo({ kind: 'day', date: day }, formatDayOrName(day, locale, dateFormat));
+                }}
+              />
+            </div>
+
+            {item.due?.is_recurring && (
+              <>
+                <hr />
+                <button
+                  className="opt"
+                  onClick={() => { setMenu('none'); void skipOccurrence(item.id); }}
+                >
+                  <span><Icon name="repeat" size="sm" /> {t('task.nextOccurrence')}</span>
+                </button>
+                <p className="menuhint">{t('task.nextOccurrenceHint')}</p>
+              </>
+            )}
+
+            {item.due && (
+              <>
+                <hr />
+                <button className="opt" onClick={() => schedule(null)}>
+                  <span><Icon name="close" size="sm" /> {t('task.removeDate')}</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {menu === 'move' && (
+          <div className={`popover rowmenu movemenu${phone ? " asSheet" : ""}`} role="menu">
+            {/* Typing is how you find one project among forty, so the field is
+                the first thing here and it already has the caret — the same
+                gesture the schedule menu asks for. The heading goes: the field's
+                placeholder says what the menu is for. */}
+            <input
+              className="schedulefield"
+              autoFocus
+              value={dest}
+              placeholder={t('task.typeDestination')}
+              aria-label={t('task.moveToProject')}
+              onChange={(e) => { setDest(e.target.value); setDestPick(-1); }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'ArrowDown' && matches.length > 0) {
+                  e.preventDefault();
+                  setDestPick((at) => (at + 1) % matches.length);
+                  return;
+                }
+                if (e.key === 'ArrowUp' && matches.length > 0) {
+                  e.preventDefault();
+                  setDestPick((at) => (at <= 0 ? matches.length - 1 : at - 1));
+                  return;
+                }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  /* Nothing is highlighted until you arrow onto it, so Enter on
+                     an untouched list would move the task somewhere you never
+                     looked at. It commits the first match only once you have
+                     typed enough to make "the first match" mean something. */
+                  const chosenDest = destPick >= 0
+                    ? matches[destPick]
+                    : dest.trim() ? matches[0] : undefined;
+                  if (chosenDest) void moveTo(chosenDest.target, chosenDest.label);
+                  return;
+                }
+                if (e.key === 'Escape') setMenu('none');
+              }}
+            />
+
+            <div className="movelist" role="listbox">
+              {matches.map((destination, at) => (
+                <button
+                  key={destination.key}
+                  role="option"
+                  aria-selected={at === destPick}
+                  aria-checked={destination.current}
+                  className={`opt${destination.hint ? ' sectionopt' : ''}${at === destPick ? ' on' : ''}`}
+                  onMouseEnter={() => setDestPick(at)}
+                  onClick={() => void moveTo(destination.target, destination.label)}
+                >
+                  <span>
+                    {destination.hint ? (
+                      <Icon name="section" size="sm" />
+                    ) : (
+                      <span className="hash" style={markerStyle(destination.colour)}>#</span>
+                    )}
+                    {destination.label}
+                  </span>
+                  {/* Only while filtering: in the full list the section sits
+                      under its project and saying so twice is noise. */}
+                  {destination.hint && dest.trim() !== '' && <small>{destination.hint}</small>}
+                </button>
+              ))}
+              {matches.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
+            </div>
+          </div>
+        )}
+
+        {menu === 'more' && (
+          <div className={`popover rowmenu${phone ? " asSheet" : ""}`} role="menu">
+            <button className="opt" onClick={() => { setMenu('none'); onOpen(item.id); }}>
+              <span><Icon name="edit" size="sm" /> {t('detail.title')}</span>
+            </button>
+            {/* On a phone this sheet is what holding the row opens, and it has
+                to be the whole of what hovering one would have shown — the
+                swipe tray is the shortcut to the three most-used of these, not
+                the only way to reach them. */}
+            {phone && (
+              <>
+                <button className="opt" onClick={() => setMenu('schedule')}>
+                  <span><Icon name="calendar" size="sm" /> {t('task.schedule')}</span>
+                </button>
+                <button className="opt" onClick={() => setMenu('move')}>
+                  <span><Icon name="project" size="sm" /> {t('task.moveToProject')}</span>
+                </button>
+                <button className="opt" onClick={() => setMenu('estimate')}>
+                  <span><Icon name="clock" size="sm" /> {t('task.setEstimate')}</span>
+                </button>
+                <hr />
+              </>
+            )}
+            {/* Dragging a subtask out to the left does this too, but a gesture
+                nobody has been told about is not a way out of anything. */}
+            {item.parent_id && (
+              <button className="opt" onClick={() => { setMenu('none'); void unnest(); }}>
+                <span><Icon name="subtask" size="sm" /> {t('task.unnest')}</span>
+              </button>
+            )}
+            <button
+              className="opt"
+              onClick={() => {
+                setMenu('none');
+                window.open(`https://app.todoist.com/app/task/${item.id}`, '_blank', 'noopener');
+              }}
+            >
+              <span><Icon name="external" size="sm" /> {t('task.openInTodoist')}</span>
+            </button>
+            <hr />
+            <button
+              className="opt danger"
+              onClick={() => {
+                setMenu('none');
+                // Deleting is irreversible here, so it is always confirmed.
+                void confirm({
+                  title: t('task.deleteTitle'),
+                  body: t('task.deleteConfirm', { name: item.content }),
+                  confirmLabel: t('task.delete'),
+                  destructive: true,
+                }).then((ok) => { if (ok) void removeTask(item.id); });
+              }}
+            >
+              <span><Icon name="close" size="sm" /> {t('task.delete')}</span>
+            </button>
+          </div>
+        )}
+    </>
+  );
+
   return (
     <span className="trow-actions" ref={ref} onClick={(e) => e.stopPropagation()}>
-      {menu === 'estimate' ? (
+      {menu === 'estimate' && !phone ? (
         <EstimateField
           autoFocus
           minutes={computed ? null : minutes}
@@ -333,7 +634,12 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
         />
       ) : (
         <>
+          {/* Both of these are the task panel by another route, and the panel
+              is one tap away on a phone — tapping the row. The tray a swipe
+              opens holds the three things the panel is the long way round
+              for. */}
           <button
+            className="rowact-wide"
             aria-label={t('detail.title')}
             title={t('detail.title')}
             onClick={() => onOpen(item.id)}
@@ -341,6 +647,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
             <Icon name="edit" size="sm" />
           </button>
           <button
+            className="rowact-wide"
             aria-label={t('task.setEstimate')}
             title={t('task.setEstimate')}
             onClick={() => setMenu('estimate')}
@@ -377,244 +684,19 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
         <Icon name="more" size="sm" />
       </button>
 
-      {menu === 'schedule' && (
-        <div className="popover rowmenu schedulemenu" role="menu">
-          {/* Typing is the fastest way to say "next sunday", so it is the
-              first thing here and it already has the caret. */}
-          <input
-            className="schedulefield"
-            autoFocus
-            value={typed}
-            placeholder={t('task.typeDate')}
-            aria-label={t('task.schedule')}
-            onChange={(e) => { setTyped(e.target.value); setPick(-1); }}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === 'ArrowDown' && suggestions.length > 0) {
-                e.preventDefault();
-                setPick((at) => (at + 1) % suggestions.length);
-                return;
-              }
-              if (e.key === 'ArrowUp' && suggestions.length > 0) {
-                e.preventDefault();
-                setPick((at) => (at <= 0 ? suggestions.length - 1 : at - 1));
-                return;
-              }
-              if (e.key === 'Enter') { e.preventDefault(); commitTyped(); }
-              if (e.key === 'Escape') setMenu('none');
-            }}
-          />
-
-          {/* A short list under the field, at most three long, each line
-              saying what it would do. A word shows the day it resolves to; a
-              bare day of the month shows the date and the weekday, which is
-              the part you actually want to know before choosing between three
-              fifteenths. */}
-          {typed.trim() !== '' && (
-            suggestions.length > 0 ? (
-              <div className="schedulesuggest" role="listbox">
-                {suggestions.map((option, at) => {
-                  const day = new Date(`${option.date.slice(0, 10)}T00:00:00`);
-                  const named = formatDayOrName(day, locale, dateFormat);
-                  const label = option.word ?? formatDay(day, locale, dateFormat);
-                  const hint = option.word
-                    ? (sameWord(named, option.word) ? null : named)
-                    : weekdayName(day, locale);
-                  return (
-                    <button
-                      key={option.date + (option.word ?? '')}
-                      role="option"
-                      aria-selected={at === pick}
-                      className={`scheduleoption${at === pick ? ' on' : ''}`}
-                      onMouseDown={(e) => { e.preventDefault(); commitTyped(option); }}
-                      onMouseEnter={() => setPick(at)}
-                    >
-                      <span>{label}</span>
-                      {hint && <small>{hint}</small>}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className={`schedulepreview${reading ? '' : ' none'}`}>
-                {reading
-                  ? formatDayOrName(new Date(reading.date.slice(0, 10)), locale, dateFormat)
-                  : t('task.dateNotRead')}
-              </p>
-            )
-          )}
-
-          <button
-            className="opt"
-            onClick={() => void moveTo({ kind: 'today' }, t('common.today'))}
-          >
-            <span><Icon name="week" size="sm" /> {t('common.today')}</span>
-          </button>
-          <button
-            className="opt"
-            onClick={() =>
-              void moveTo({ kind: 'day', date: addDays(new Date(), 1) }, t('common.tomorrow'))}
-          >
-            <span><Icon name="arrow-right" size="sm" /> {t('common.tomorrow')}</span>
-          </button>
-          <button
-            className="opt"
-            onClick={() =>
-              void moveTo({ kind: 'day', date: nextMonday(new Date()) }, t('task.nextWeek'))}
-          >
-            <span><Icon name="upcoming" size="sm" /> {t('task.nextWeek')}</span>
-          </button>
-
-          {/* And a calendar, for a date it is easier to point at than to
-              name. The same one the composer uses, so picking a date from a
-              row and picking one while writing the task are the same control
-              rather than two that drifted apart. */}
-          <div className="rowmenu-date">
-            <DateField
-              value={item.due?.date.slice(0, 10) ?? ''}
-              label={t('task.schedule')}
-              placeholder={t('task.pickDate')}
-              onChange={(next) => {
-                if (!next) { schedule(null); return; }
-                const day = new Date(`${next}T00:00:00`);
-                void moveTo({ kind: 'day', date: day }, formatDayOrName(day, locale, dateFormat));
-              }}
-            />
-          </div>
-
-          {item.due?.is_recurring && (
-            <>
-              <hr />
-              <button
-                className="opt"
-                onClick={() => { setMenu('none'); void skipOccurrence(item.id); }}
-              >
-                <span><Icon name="repeat" size="sm" /> {t('task.nextOccurrence')}</span>
-              </button>
-              <p className="menuhint">{t('task.nextOccurrenceHint')}</p>
-            </>
-          )}
-
-          {item.due && (
-            <>
-              <hr />
-              <button className="opt" onClick={() => schedule(null)}>
-                <span><Icon name="close" size="sm" /> {t('task.removeDate')}</span>
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {menu === 'move' && (
-        <div className="popover rowmenu movemenu" role="menu">
-          {/* Typing is how you find one project among forty, so the field is
-              the first thing here and it already has the caret — the same
-              gesture the schedule menu asks for. The heading goes: the field's
-              placeholder says what the menu is for. */}
-          <input
-            className="schedulefield"
-            autoFocus
-            value={dest}
-            placeholder={t('task.typeDestination')}
-            aria-label={t('task.moveToProject')}
-            onChange={(e) => { setDest(e.target.value); setDestPick(-1); }}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === 'ArrowDown' && matches.length > 0) {
-                e.preventDefault();
-                setDestPick((at) => (at + 1) % matches.length);
-                return;
-              }
-              if (e.key === 'ArrowUp' && matches.length > 0) {
-                e.preventDefault();
-                setDestPick((at) => (at <= 0 ? matches.length - 1 : at - 1));
-                return;
-              }
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                /* Nothing is highlighted until you arrow onto it, so Enter on
-                   an untouched list would move the task somewhere you never
-                   looked at. It commits the first match only once you have
-                   typed enough to make "the first match" mean something. */
-                const chosenDest = destPick >= 0
-                  ? matches[destPick]
-                  : dest.trim() ? matches[0] : undefined;
-                if (chosenDest) void moveTo(chosenDest.target, chosenDest.label);
-                return;
-              }
-              if (e.key === 'Escape') setMenu('none');
-            }}
-          />
-
-          <div className="movelist" role="listbox">
-            {matches.map((destination, at) => (
-              <button
-                key={destination.key}
-                role="option"
-                aria-selected={at === destPick}
-                aria-checked={destination.current}
-                className={`opt${destination.hint ? ' sectionopt' : ''}${at === destPick ? ' on' : ''}`}
-                onMouseEnter={() => setDestPick(at)}
-                onClick={() => void moveTo(destination.target, destination.label)}
-              >
-                <span>
-                  {destination.hint ? (
-                    <Icon name="section" size="sm" />
-                  ) : (
-                    <span className="hash" style={markerStyle(destination.colour)}>#</span>
-                  )}
-                  {destination.label}
-                </span>
-                {/* Only while filtering: in the full list the section sits
-                    under its project and saying so twice is noise. */}
-                {destination.hint && dest.trim() !== '' && <small>{destination.hint}</small>}
-              </button>
-            ))}
-            {matches.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
-          </div>
-        </div>
-      )}
-
-      {menu === 'more' && (
-        <div className="popover rowmenu" role="menu">
-          <button className="opt" onClick={() => { setMenu('none'); onOpen(item.id); }}>
-            <span><Icon name="edit" size="sm" /> {t('detail.title')}</span>
-          </button>
-          {/* Dragging a subtask out to the left does this too, but a gesture
-              nobody has been told about is not a way out of anything. */}
-          {item.parent_id && (
-            <button className="opt" onClick={() => { setMenu('none'); void unnest(); }}>
-              <span><Icon name="subtask" size="sm" /> {t('task.unnest')}</span>
-            </button>
-          )}
-          <button
-            className="opt"
-            onClick={() => {
-              setMenu('none');
-              window.open(`https://app.todoist.com/app/task/${item.id}`, '_blank', 'noopener');
-            }}
-          >
-            <span><Icon name="external" size="sm" /> {t('task.openInTodoist')}</span>
-          </button>
-          <hr />
-          <button
-            className="opt danger"
-            onClick={() => {
-              setMenu('none');
-              // Deleting is irreversible here, so it is always confirmed.
-              void confirm({
-                title: t('task.deleteTitle'),
-                body: t('task.deleteConfirm', { name: item.content }),
-                confirmLabel: t('task.delete'),
-                destructive: true,
-              }).then((ok) => { if (ok) void removeTask(item.id); });
-            }}
-          >
-            <span><Icon name="close" size="sm" /> {t('task.delete')}</span>
-          </button>
-        </div>
-      )}
+      {/* On a phone the menus come up from the bottom edge as sheets with
+          room for a thumb, drawn into the document rather than into the row:
+          the row slides sideways to show its buttons, and anything positioned
+          inside a sliding row slides with it. */}
+      {phone
+        ? menu !== 'none' && createPortal(
+          <div className="rowsheet" ref={sheetRef}>
+            <div className="rowsheet-scrim" onClick={() => setMenu('none')} />
+            {menus}
+          </div>,
+          document.body,
+        )
+        : menus}
     </span>
   );
 }

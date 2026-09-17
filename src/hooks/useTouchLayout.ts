@@ -33,3 +33,22 @@ function useMedia(query: string): boolean {
 
 export const useIsPhone = (): boolean => useMedia(PHONE);
 export const useIsTouch = (): boolean => useMedia(TOUCH);
+
+/**
+ * Whether to behave like a phone: the layout is a phone's, or the pointer is a
+ * finger, or both.
+ *
+ * The gestures were gated on the pointer alone, which made them impossible to
+ * try in a narrow window on a laptop — the one place the layout is actually
+ * worked on. They are driven by pointer events, which a mouse raises too, so
+ * the narrow window can have them: holding the button is holding, and dragging
+ * sideways is a swipe. A phone still gets them for the other reason.
+ */
+export function usePhoneBehaviour(): boolean {
+  /* Both asked, every time, and combined afterwards. `a() || b()` would stop
+     at the first true and skip the second hook, which is a different number of
+     hooks on different renders — the one thing React cannot survive. */
+  const phone = useMedia(PHONE);
+  const touch = useMedia(TOUCH);
+  return phone || touch;
+}

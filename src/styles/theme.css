@@ -1424,8 +1424,9 @@
 /* A touch screen has no pointer to reveal anything with — and the three-dot
    button was a hover control, kept permanently visible on touch only because
    there was no other way to reach the menu. Holding the row is the way in
-   now, so the button goes and the count gets its place back. */
-@media (hover:none){
+   now, so the button goes and the count gets its place back. The phone layout
+   answers to the same rule, so it can be tried in a narrow window. */
+@media (hover:none),(max-width:720px){
   .navmore{display:none}
 }
 
@@ -2021,7 +2022,7 @@
    being carried off. `manipulation` is what a hold-to-lift sensor asks for —
    scrolling and pinching stay the browser's, and the drag takes over once the
    press has been held still long enough to mean something. */
-@media (hover:none){.navrow.sortable{touch-action:manipulation}}
+@media (hover:none),(max-width:720px){.navrow.sortable{touch-action:manipulation}}
 .navrow.lifting{opacity:.4}
 /* The row you are about to drop onto says so with a line, not a gap: a gap
    would push every row below it and the list would move under the pointer. */

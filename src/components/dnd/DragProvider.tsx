@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import {
-  DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, useSensor, useSensors,
+  DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors,
   type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import type { Modifier } from '@dnd-kit/core';
@@ -13,6 +13,7 @@ import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
 import type { RowList } from './RowList';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import { PRESS_HOLD_EVENT, projectRowAttr } from './ProjectRowSortable';
 
 /**
@@ -45,16 +46,14 @@ const anchorLeftOfCursor: Modifier = ({
  * Each drag is therefore only offered what it could possibly mean.
  */
 /**
- * A drag that was a finger held still: the press never became a pull.
+ * A drag that was a press held still: it never became a pull.
  *
- * Only a finger, because a mouse has no such gesture — a held click that goes
- * nowhere is a click, and the row it is on is already a link to the project.
+ * Only reachable where the drag waits for the press to be held, which is the
+ * phone rule — under the desktop rule a drag cannot start without movement, so
+ * this can never be true there.
  */
 const pressedAndHeld = (event: DragEndEvent): boolean =>
-  typeof TouchEvent !== 'undefined'
-  && event.activatorEvent instanceof TouchEvent
-  && Math.abs(event.delta.x) < HOLD_SLOP_PX
-  && Math.abs(event.delta.y) < HOLD_SLOP_PX;
+  Math.abs(event.delta.x) < HOLD_SLOP_PX && Math.abs(event.delta.y) < HOLD_SLOP_PX;
 
 const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'task' =>
   (id.startsWith('subtask:') ? 'subtask'
@@ -179,24 +178,26 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const setOutdenting = useStore((s) => s.setOutdenting);
 
   /**
-   * A mouse and a finger do not start a drag the same way.
+   * A drag starts on distance on a desktop and on time on a phone.
    *
-   * One sensor served both and began a drag as soon as anything moved six
-   * pixels. A mouse has nothing else to do with a press and a pull, so that is
-   * right for a mouse. A finger's press and pull is how you scroll, so on a
-   * phone every attempt to scroll the sidebar picked a project up and carried
-   * it off: the list moving under the thumb was a project being filed
-   * somewhere rather than the list scrolling.
+   * One rule served both and began a drag as soon as anything moved six
+   * pixels. On a desktop that is right: a press and a pull has nothing else it
+   * could mean. On a phone a press and a pull is how you scroll, so every
+   * attempt to scroll the sidebar picked a project up and carried it off —
+   * the list moving under the thumb was a project being filed somewhere
+   * rather than the list scrolling.
    *
-   * A mouse still starts on distance; a finger starts on time. Move before the
-   * press is held and it was a scroll, and nothing is picked up; hold still and
-   * the row lifts — which is the gesture every phone already uses to mean
-   * "this one".
+   * So on a phone the press has to be held. Move before it is and it was a
+   * scroll; hold still and the row lifts, which is the gesture every phone
+   * already uses to mean "this one" — and letting go of it without moving is
+   * how the project's menu opens.
    */
+  const phone = usePhoneBehaviour();
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: HOLD_MS, tolerance: HOLD_SLOP_PX },
+    useSensor(PointerSensor, {
+      activationConstraint: phone
+        ? { delay: HOLD_MS, tolerance: HOLD_SLOP_PX }
+        : { distance: 6 },
     }),
   );
 

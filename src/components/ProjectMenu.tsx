@@ -5,7 +5,7 @@ import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
 import { navigate } from '@/hooks/useRoute';
-import { useIsPhone } from '@/hooks/useTouchLayout';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import type { Project } from '@/domain/types';
 
 export interface ProjectMenuProps {
@@ -44,7 +44,7 @@ export function ProjectMenu({
   const duplicateProject = useStore((s) => s.duplicateProject);
   const nestProject = useStore((s) => s.nestProject);
   const ref = useRef<HTMLDivElement>(null);
-  const phone = useIsPhone();
+  const phone = usePhoneBehaviour();
 
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
