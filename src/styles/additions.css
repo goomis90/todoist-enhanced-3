@@ -929,3 +929,33 @@
   /* The task keys are the long column, and the one people come here for. */
   .keyscols section:last-child{grid-row:span 2}
 }
+
+/* ---------- The key that gets here ---------- */
+/*
+ * Todoist shows a destination's shortcut when the pointer rests on it, and it
+ * is how anybody learns that the shortcuts exist at all — a sheet behind `?`
+ * is only found by people who already suspected.
+ *
+ * Late and quiet: half a second of the pointer actually staying on the row,
+ * so passing down the sidebar on the way somewhere else lights nothing up. The
+ * delay is on the way in only; leaving takes it away at once, which is what
+ * stops a trail of them following the pointer down the list.
+ */
+.navitem[data-shortcut]{position:relative}
+.navitem[data-shortcut]::after{
+  content:attr(data-shortcut);
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  padding:1px 6px;border-radius:var(--r-xs);
+  border:1px solid var(--border-strong);background:var(--surface);
+  font-size:var(--fs-11);font-weight:600;color:var(--faint);
+  opacity:0;pointer-events:none;
+  transition:opacity .12s ease;
+}
+.navitem[data-shortcut]:hover::after{opacity:1;transition-delay:.55s}
+/* The count is what the hint stands in front of, so it steps aside rather
+   than being read through it. */
+.navitem[data-shortcut]:hover .count{opacity:0;transition:opacity .12s ease .55s}
+/* Nothing to reveal without a pointer, and no room for it either. */
+@media (hover:none),(max-width:720px){
+  .navitem[data-shortcut]::after{content:none}
+}

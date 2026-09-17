@@ -224,7 +224,12 @@ export function useKeyboard(bridge: KeyboardBridge) {
         e.preventDefault();
         const to = GO_TO[e.key.toLowerCase()];
         stopGoing();
-        if (to) navigate(to);
+        if (!to) return;
+        /* Today is a page of its own only when the week is split in two. Left
+           unified it is the top of My week, and there is no Today in the
+           sidebar to have meant — so `g t` goes where Today is. */
+        const merged = to === 'today' && store.prefs.weekLayout === 'unified';
+        navigate(merged ? 'week' : to);
         return;
       }
       if (e.key === 'g' && !e.metaKey && !e.ctrlKey && !e.altKey) {

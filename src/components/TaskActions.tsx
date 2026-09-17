@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { addDays, nextMonday } from 'date-fns';
 import { Icon } from './Icon';
 import { useT } from '@/hooks/useT';
+import { useMenuKeys } from '@/hooks/useMenuKeys';
 import { ROW_MENU_EVENT, type RowMenu } from '@/hooks/useKeyboard';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
@@ -74,6 +75,9 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   const [dest, setDest] = useState('');
   const [destPick, setDestPick] = useState(-1);
   const ref = useRef<HTMLSpanElement>(null);
+  /* Only the overflow menu. The other two open with a field already focused,
+     and taking the caret out of it would undo the point of opening them. */
+  const moreKeys = useMenuKeys(menu === 'more', () => setMenu('none'));
   /** Whether this menu was opened by a key, and so owes the row its focus back. */
   const fromKeyboard = useRef(false);
 
@@ -604,7 +608,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
       )}
 
       {menu === 'more' && (
-        <div className="popover rowmenu" role="menu">
+        <div className="popover rowmenu" role="menu" ref={moreKeys}>
           <button className="opt" onClick={() => { setMenu('none'); onOpen(item.id); }}>
             <span><Icon name="edit" size="sm" /> {t('detail.title')}</span>
           </button>

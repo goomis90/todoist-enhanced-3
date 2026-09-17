@@ -78,6 +78,20 @@ const SECTIONS: Array<{ title: TranslationKey; rows: Row[] }> = [
       [[['⌘', '⌫']], 'task.delete'],
     ],
   },
+  {
+    title: 'keys.inAnOpenTask',
+    rows: [
+      [[['P']], 'detail.project'],
+      [[['T']], 'detail.startDate'],
+      [[['D']], 'detail.deadline'],
+      [[['E']], 'detail.estimate'],
+      [[['Y']], 'detail.priority'],
+      [[['L']], 'detail.labels'],
+      [[['.']], 'task.moreActions'],
+      [[['⌘', '⌫']], 'task.delete'],
+      [[['Esc']], 'detail.close'],
+    ],
+  },
 ];
 
 /**

@@ -12,9 +12,23 @@ interface OverlayProps {
 }
 
 /**
+ * Something open in front of the dialog: a menu, a date picker, a select.
+ *
+ * Each closes itself on Escape, so while one is up the dialog behind it must
+ * not take the same keystroke as meaning itself.
+ */
+const OPEN_INSIDE = '.popover, .datepanel, .fselect-list';
+
+/** Everything in a dialog the keyboard can land on. */
+const FOCUSABLE = [
+  'a[href]', 'button', 'input', 'textarea', 'select',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+/**
  * The shell every dialog shares: a scrim that closes on click, Escape to
- * dismiss, focus moved inside on open and returned to where it came from on
- * close, and the page behind held still while it is up.
+ * dismiss, focus moved inside on open, kept inside while it is up, returned to
+ * where it came from on close, and the page behind held still throughout.
  */
 export function Overlay({
   open, onClose, children, label, variant = 'sheet', size = 'md',
@@ -42,9 +56,43 @@ export function Overlay({
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        /* Escape closes the innermost thing that is open. A menu or a picker
+           inside the dialog is in front of the dialog, so it answers first —
+           otherwise pressing Escape to put a date picker away took the whole
+           task panel with it, and the way back was to find the task again.
+           The pickers draw themselves into the document rather than into the
+           sheet, which is why this looks for them there. */
+        if (document.querySelector(OPEN_INSIDE)) return;
         e.stopPropagation();
         closeRef.current();
+        return;
       }
+
+      /* Tab stays inside. A dialog is modal — the page behind it is held still
+         and cannot be clicked — so tabbing out of it walked the keyboard
+         through a sidebar there was no point reaching, and the only way back
+         was to keep tabbing until it came round again. It comes round at the
+         edges of the dialog instead. */
+      if (e.key !== 'Tab') return;
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      const stops = [...sheet.querySelectorAll<HTMLElement>(FOCUSABLE)]
+        .filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
+      if (stops.length === 0) return;
+
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      const on = document.activeElement as HTMLElement | null;
+      /* Focus outside the dialog altogether — left behind on the page, or
+         nowhere at all — comes back to the near end of it rather than carrying
+         on from wherever it was. */
+      if (!on || !sheet.contains(on)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
+      if (!e.shiftKey && on === last) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && on === first) { e.preventDefault(); last.focus(); }
     };
     document.addEventListener('keydown', onKey);
 
