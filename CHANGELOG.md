@@ -6,6 +6,93 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.7.0
+
+Every list opens in the order that answers "what now", the keyboard reaches
+everything the mouse can, and a phone gets the two gestures it has instead of
+a pointer.
+
+🆕 **Move, open and delete a task without the mouse.** Arrows — or J and K —
+walk the tasks of whatever page is open, Enter opens one, Escape gives the
+cursor back. On the task under the cursor: E finishes it, T schedules it and
+Shift+T takes the date off, V moves it, X adds it to the selection, 1 to 4 set
+the priority, `.` opens the rest, and Cmd+Backspace deletes it — still asking
+first, because deleting is the one thing that should never be one keystroke
+away from done. The keys are Todoist's own, from Todoist's published list;
+where Todoist has no equivalent, nothing was invented.
+
+🆕 **Typing goes to the search.** Start typing on a page with no task under
+the cursor and the search takes it, with the first letter already in the field.
+The search already reaches projects, sections, tags and views, which makes it
+the way to a project without a mouse. Letters are commands when the cursor is
+on a task and text when it is not — one sentence covering every key.
+
+🆕 **G, then where to.** G then W, T, U, S, I, R, L, A, or a comma for
+Settings. A prefix rather than a letter each, so the alphabet stays free for
+typing. The sidebar says which key gets to a row once the pointer has rested on
+it, and `?` shows the whole list.
+
+🆕 **An opened task answers the keyboard.** P opens the project, T the start
+date, D the deadline, E the estimate, Y the priority, L the tags — each letter
+shown, faintly, beside the property it opens. Tab stays inside the panel, the
+overflow menu takes arrow keys, and Escape closes the innermost thing that is
+open rather than the outermost.
+
+🆕 **Swipe a task aside on a phone.** The row slides and shows what hovering
+would have shown on a desktop: estimate, schedule, move, and the rest. Holding
+a row opens the same actions as a sheet with their names on. A phone has no
+pointer to reveal anything with, and the answer until now had been to take the
+controls away.
+
+🆕 **An estimate is a row of durations on a phone.** Five minutes to two
+hours, with the field underneath for anything else — typing "45" on a phone
+means opening a keyboard over half the screen to press two keys.
+
+🎨 **A view opens sorted by priority.** Manual order is whatever order things
+were added in, which puts a p1 below three p4s on a page opened to decide what
+to do next. Projects open grouped by their own sections, a backlog and a tag
+page by project. Dropping a task into a place is what makes a view manual
+again — and the order written down is the order that was on the screen, so the
+page the sort leaves behind is the page you were looking at.
+
+🎨 **The undo toast says what the drop did.** "Moved to Thursday", "Moved to
+#Website", "Became a subtask of Prepare the kick-off meeting". Every drop used
+to read the same, which is no use at all when a drop landing a few pixels off
+does something different from what was meant.
+
+🎨 **Insights picks its range with the app's own calendar.** The one control
+the rest of the app refuses to use is gone from the last place it was hiding.
+Days outside the range are drawn and greyed rather than hidden.
+
+🎨 **Someday is in the phone's navigation bar.** Browse was there and in the
+bar at the top of every page; it stays at the top, and the slot it gives up
+goes to a destination that was two taps away behind it.
+
+🎨 **The first run asks one question on a phone.** Light or dark. Three grids
+of cards at 375px is a page and a half of scrolling before anyone has seen a
+task, and the other two choices are a pleasure to find later in Settings.
+
+🐛 **Row menus open upwards when there is no room below them.** The foot of a
+list is where the work nobody has dealt with sits, which is exactly the work
+you want to reschedule.
+
+🐛 **A task ticked off in the daily review leaves the way it does everywhere
+else.** It was being kept and marked instead of going, which made the review
+the one place where finishing a task looked like something else.
+
+🐛 **Scrolling the sidebar with a finger no longer carries a project off.** A
+drag starts on distance with a mouse and on time with a finger: move before the
+press is held and it was a scroll.
+
+🐛 **Connecting no longer leaves the app zoomed in on iOS.** Safari zooms the
+page when a field smaller than 16px takes the caret, and does not zoom back.
+
+🐛 **Adding a task with Cmd+Enter created it twice.** The name field answered
+the keystroke and so did the sheet.
+
+🐛 **Escape in a description or an estimate saves and leaves the field**,
+rather than discarding the edit and closing the task behind it.
+
 ## 1.6.0
 
 Dragging a task says three things instead of one, a list can be put in the
