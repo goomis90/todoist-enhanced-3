@@ -253,7 +253,6 @@ export function InsightsView() {
               value={toApiDate(range.until)}
               label={t('insights.to')}
               min={toApiDate(range.since)}
-              max={toApiDate(new Date())}
               clearable={false}
               onChange={(next) => pickBound('until', next)}
             />
