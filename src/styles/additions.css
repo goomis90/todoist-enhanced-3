@@ -575,17 +575,8 @@
   border-radius:1px;background:var(--accent);
 }
 
-/* A row you picked out is a row you are holding, not a row that is wrong:
-   grey, with a rule down the side to say it is one of a set. */
-/* The tint is wider than the row it marks, so the checkbox sits inside it
-   with room around rather than on its edge. The padding is given back by the
-   margin and the width, so nothing on the row moves when it is picked. */
-.task.picked{
-  background:var(--picked);border-radius:var(--r-sm);border-bottom-color:transparent;
-  padding-left:12px;padding-right:12px;
-  margin-left:-12px;margin-right:-12px;width:calc(100% + 24px);
-}
-.task.picked:hover{background:var(--picked)}
+/* How a picked row looks is settled with the cursor and the hover in one
+   place — see "Which row you mean" in theme.css. */
 
 .bulkbar{
   position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;
@@ -887,36 +878,8 @@
 .titleactions{display:flex;justify-content:flex-end;gap:var(--s2);margin:var(--s2) 0 0}
 .titleactions .btn{min-height:28px;padding:0 12px;font-size:var(--fs-13)}
 
-/* ---------- The keyboard cursor ---------- */
-/*
- * The row the keyboard is on is the row that has focus, so the cursor is a
- * focus style — but a deliberate one. The browser's own ring is drawn outside
- * the row, and on a list whose rows are separated by hairlines it reads as a
- * rectangle that has landed on the page rather than as a place in a list.
- *
- * It is a tint and nothing else: no bar down one edge. A border on a single
- * side is a shape the eye has to finish for itself, and the tint has already
- * said the whole of it.
- *
- * It reaches a little past both ends of the row, so the tick sitting hard
- * against the left edge is inside the shape rather than on its corner. The
- * reach is drawn rather than padded: padding would move the row's contents as
- * the cursor arrived on it, and a list that shifts under the arrow keys is
- * worse than one with no cursor at all.
- */
-.task:focus-visible{
-  outline:none;
-  border-radius:var(--r-md);
-  background:var(--accent-tint);
-  /* The same tint, offset left and right, so the shape reaches past both ends
-     of the row without any padding to push the content around — and without a
-     pseudo-element behind it, which would have to be dug out of the stacking
-     order of every tinted group it sits in. */
-  box-shadow:-10px 0 0 0 var(--accent-tint), 10px 0 0 0 var(--accent-tint);
-}
-/* A row reached by Tab rather than by the arrows is the same place; the mouse
-   clicking one is not, and `:focus-visible` is exactly that distinction. */
-.task:focus-visible .ttitle{color:var(--text)}
+/* The keyboard cursor's colour lives with the other row states, in the
+   "Which row you mean" block in theme.css. */
 
 /* ---------- The shortcuts sheet ---------- */
 .keyssheet{padding:var(--s5);position:relative}
@@ -1118,4 +1081,13 @@
 /* No keyboard to tell anyone about. */
 @media (hover:none),(max-width:720px){
   .propkey{display:none}
+}
+
+/* ---------- A section heading that takes a drop ---------- */
+/* Favourites is the one heading you can drop on, and it says so the way every
+   other destination in the sidebar does. */
+.side-head.dropping{
+  background:var(--accent-tint);
+  border-radius:var(--r-sm);
+  box-shadow:inset 0 0 0 1px var(--accent);
 }

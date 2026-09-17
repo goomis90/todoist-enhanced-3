@@ -70,7 +70,57 @@
   padding-left:0;
   padding-right:0;
 }
+
+/* ---------- Which row you mean ---------- */
+/*
+ * Three things can want to colour a row: the mouse is resting on it, the
+ * keyboard cursor is on it, and you have picked it out for the bulk bar.
+ *
+ * They used to be written in three files at the same specificity, so which
+ * one you actually saw was decided by import order. Hover came last and won,
+ * which is why a row under the pointer lost the cursor's colour and went
+ * white in the middle with the tint left showing at its two ends.
+ *
+ * One ladder now, weakest first, in one place. Read it downwards:
+ *
+ *   hover    the mouse was abandoned there, which is not a choice
+ *   cursor   where the keyboard is, which is one
+ *   picked   what you have chosen, which outranks where you happen to be
+ *
+ * Cursor and picked are two strengths of the accent rather than two different
+ * colours, because they are two degrees of one statement — "this row" and
+ * "this row, and I mean it". A row that is both is simply the stronger, which
+ * is what the order below already says without a rule for it; it keeps a ring
+ * so the cursor is still findable inside a run of picked rows.
+ *
+ * All of them paint past the ends of the row with offset shadows rather than
+ * padding. Padding moves the row's contents as the state arrives, and a list
+ * that shifts under the arrow keys is worse than one with no cursor at all.
+ */
 .task:hover{background:transparent}
+
+.task:focus-visible{
+  outline:none;
+  border-radius:var(--r-md);
+  background:var(--accent-tint);
+  box-shadow:-10px 0 0 0 var(--accent-tint), 10px 0 0 0 var(--accent-tint);
+}
+/* A row reached by Tab rather than by the arrows is the same place; the mouse
+   clicking one is not, and `:focus-visible` is exactly that distinction. */
+.task:focus-visible .ttitle{color:var(--text)}
+
+.task.picked,
+.task.picked:hover{
+  border-radius:var(--r-md);
+  border-bottom-color:transparent;
+  background:var(--accent-soft);
+  box-shadow:-10px 0 0 0 var(--accent-soft), 10px 0 0 0 var(--accent-soft);
+}
+
+.task.picked:focus-visible{
+  box-shadow:-10px 0 0 0 var(--accent-soft), 10px 0 0 0 var(--accent-soft),
+             inset 0 0 0 1px var(--accent);
+}
 .task:last-child{border-bottom:0}
 .ttitle{font-size:var(--fs-14);font-weight:400;color:var(--text)}
 .tdesc{color:var(--faint)}
