@@ -108,6 +108,9 @@ export function TaskRow({
         className={`task${settling ? ' done settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}`}
         role="button"
         tabIndex={0}
+        /* The row the keyboard is on is the row that has focus, so the walk
+           needs nothing but a way to recognise a task row in the document. */
+        data-task-id={item.id}
         /* The tour lights up a parent together with the children under it,
            because the two being one thing is the point being made. They are
            siblings rather than nested — a wrapper here would have to fight the

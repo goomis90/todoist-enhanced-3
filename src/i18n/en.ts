@@ -691,6 +691,20 @@ export const en = {
   /* 1.1.1 — third pass */
   'search.goTo': 'Go to',
   'review.mail.default': 'Default app',
+  /* The keyboard. Todoist's own keys, wherever Todoist has one. */
+  'keys.or': 'or',
+  'keys.title': 'Keyboard shortcuts',
+  'keys.typingHint': 'With no task under the cursor, a letter starts a search — projects, tags and views included.',
+  'keys.anywhere': 'Anywhere',
+  'keys.moving': 'Moving through a list',
+  'keys.onATask': 'On the task under the cursor',
+  'keys.thisList': 'This list',
+  'keys.moveCursor': 'Previous and next task',
+  'keys.moveCursorAlt': 'The same, without leaving the home row',
+  'keys.dropCursor': 'Leave the list',
+  'keys.openTask': 'Open the task',
+  'keys.setPriority': 'Priority 1 to 4',
+  'keys.select': 'Add to the selection',
 };
 
 export type TranslationKey = keyof typeof en;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { addDays, nextMonday } from 'date-fns';
 import { Icon } from './Icon';
 import { useT } from '@/hooks/useT';
+import { ROW_MENU_EVENT, type RowMenu } from '@/hooks/useKeyboard';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
 import { withEstimate, effectiveEstimate } from '@/domain/estimates';
@@ -73,11 +74,37 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   const [dest, setDest] = useState('');
   const [destPick, setDestPick] = useState(-1);
   const ref = useRef<HTMLSpanElement>(null);
+  /** Whether this menu was opened by a key, and so owes the row its focus back. */
+  const fromKeyboard = useRef(false);
 
   // A menu that opens holding the last thing typed into it is a menu lying
   // about what it will do if you press Enter.
   useEffect(() => { if (menu !== 'schedule') { setTyped(''); setPick(-1); } }, [menu]);
   useEffect(() => { if (menu !== 'move') { setDest(''); setDestPick(-1); } }, [menu]);
+
+  /* The keyboard asks the row it is on to open one of these — `t`, `v`, `.`,
+     Todoist's own keys — and the row passes the question inward. It arrives as
+     an event on the row's own element rather than through a context, because
+     a context would re-render every other row on the page to tell this one. */
+  useEffect(() => {
+    const row = ref.current?.closest<HTMLElement>('[data-task-id]');
+    if (!row) return;
+    const open = (event: Event) => {
+      fromKeyboard.current = true;
+      setMenu((event as CustomEvent<RowMenu>).detail);
+    };
+    row.addEventListener(ROW_MENU_EVENT, open);
+    return () => row.removeEventListener(ROW_MENU_EVENT, open);
+  }, []);
+
+  /* A menu opened from the keyboard takes focus into its own field. Closing
+     it has to give the cursor back to the row it belongs to, or every schedule
+     from the keyboard ends with the cursor nowhere. */
+  useEffect(() => {
+    if (menu !== 'none' || !fromKeyboard.current) return;
+    fromKeyboard.current = false;
+    ref.current?.closest<HTMLElement>('[data-task-id]')?.focus({ preventScroll: true });
+  }, [menu]);
 
   useEffect(() => {
     if (menu === 'none') return;

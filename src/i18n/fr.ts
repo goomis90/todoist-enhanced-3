@@ -693,4 +693,18 @@ export const fr: Record<TranslationKey, string> = {
   /* 1.1.1 — troisième passe */
   'search.goTo': 'Aller à',
   'review.mail.default': 'App par défaut',
+  /* Le clavier. Les touches de Todoist, partout où Todoist en a une. */
+  'keys.or': 'ou',
+  'keys.title': 'Raccourcis clavier',
+  'keys.typingHint': 'Sans tâche sous le curseur, une lettre lance une recherche — projets, étiquettes et vues compris.',
+  'keys.anywhere': 'Partout',
+  'keys.moving': 'Se déplacer dans une liste',
+  'keys.onATask': 'Sur la tâche sous le curseur',
+  'keys.thisList': 'Cette liste',
+  'keys.moveCursor': 'Tâche précédente et suivante',
+  'keys.moveCursorAlt': 'Idem, sans quitter la rangée de repos',
+  'keys.dropCursor': 'Quitter la liste',
+  'keys.openTask': 'Ouvrir la tâche',
+  'keys.setPriority': 'Priorité 1 à 4',
+  'keys.select': 'Ajouter à la sélection',
 };
