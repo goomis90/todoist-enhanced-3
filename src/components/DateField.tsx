@@ -17,6 +17,20 @@ interface DateFieldProps {
   /** The accessible name, and what the field says when it is empty. */
   label: string;
   placeholder?: string;
+  /**
+   * The earliest and latest dates this field will take, as API date strings.
+   *
+   * Days outside them are drawn and greyed rather than hidden: a calendar that
+   * silently omits the days you cannot choose gives no account of why, and the
+   * whole point of showing a month is that you can see where the edge is.
+   */
+  min?: string;
+  max?: string;
+  /**
+   * Whether the field can be emptied. A field standing for one end of a range
+   * cannot: a range with no start is not a range.
+   */
+  clearable?: boolean;
 }
 
 /** The shortcuts, because most dates a person picks are one of these four. */
@@ -35,7 +49,9 @@ const SHORTCUTS = [
  * app drew. This is a month, four shortcuts, and a way to clear it — in the
  * app's own type, at the app's own size, everywhere.
  */
-export function DateField({ value, onChange, label, placeholder }: DateFieldProps) {
+export function DateField({
+  value, onChange, label, placeholder, min, max, clearable = true,
+}: DateFieldProps) {
   const { t, locale } = useT();
   const dateFormat = useStore((s) => s.prefs.dateFormat);
   const [open, setOpen] = useState(false);
@@ -45,6 +61,14 @@ export function DateField({ value, onChange, label, placeholder }: DateFieldProp
   const panelRef = useRef<HTMLDivElement>(null);
 
   const selected = parse(value);
+
+  /* The bounds as days, so a date is compared to a date rather than to a
+     string that happens to sort. */
+  const floor = parse(min ?? '');
+  const ceiling = parse(max ?? '');
+  const outOfRange = (day: Date): boolean =>
+    (floor !== null && startOfDay(day) < startOfDay(floor))
+    || (ceiling !== null && startOfDay(day) > startOfDay(ceiling));
 
   // Opening lands on the month being edited, not on wherever it was left.
   useEffect(() => {
@@ -123,6 +147,7 @@ export function DateField({ value, onChange, label, placeholder }: DateFieldProp
           <button
             key={shortcut.key}
             type="button"
+            disabled={outOfRange(addDays(startOfDay(new Date()), shortcut.days))}
             onMouseDown={(e) => { e.preventDefault(); pick(addDays(startOfDay(new Date()), shortcut.days)); }}
           >
             {t(`date.${shortcut.key}` as TranslationKey)}
@@ -135,6 +160,7 @@ export function DateField({ value, onChange, label, placeholder }: DateFieldProp
           type="button"
           className="iconbtn"
           aria-label={t('date.previousMonth')}
+          disabled={floor !== null && startOfMonth(floor) >= month}
           onMouseDown={(e) => { e.preventDefault(); setMonth((m) => addMonths(m, -1)); }}
         >
           <Icon name="arrow-left" size="sm" />
@@ -146,6 +172,7 @@ export function DateField({ value, onChange, label, placeholder }: DateFieldProp
           type="button"
           className="iconbtn"
           aria-label={t('date.nextMonth')}
+          disabled={ceiling !== null && startOfMonth(ceiling) <= month}
           onMouseDown={(e) => { e.preventDefault(); setMonth((m) => addMonths(m, 1)); }}
         >
           <Icon name="arrow-right" size="sm" />
@@ -161,12 +188,14 @@ export function DateField({ value, onChange, label, placeholder }: DateFieldProp
           const outside = !isSameMonth(day, month);
           const isToday = isSameDay(day, new Date());
           const isChosen = selected !== null && isSameDay(day, selected);
+          const barred = outOfRange(day);
           return (
             <button
               key={day.toISOString()}
               type="button"
               className={`dateday${outside ? ' outside' : ''}${isToday ? ' today' : ''}${isChosen ? ' chosen' : ''}`}
               aria-pressed={isChosen}
+              disabled={barred}
               onMouseDown={(e) => { e.preventDefault(); pick(day); }}
             >
               {format(day, 'd')}
@@ -175,7 +204,7 @@ export function DateField({ value, onChange, label, placeholder }: DateFieldProp
         })}
       </div>
 
-      {value && (
+      {value && clearable && (
         <button
           type="button"
           className="datepanel-clear"

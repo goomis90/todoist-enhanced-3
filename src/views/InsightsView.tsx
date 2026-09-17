@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { format, startOfDay } from 'date-fns';
 import { Icon } from '@/components/Icon';
+import { DateField } from '@/components/DateField';
 import { CoffeeLine } from '@/components/CoffeeLine';
 import {
   Bars, ChartCard, CompareBars, Donut, RankedBars, SplitBar, StatTile, seriesColor,
@@ -232,24 +233,31 @@ export function InsightsView() {
         {/* The dates the presets resolve to, editable: change one and the
             range becomes your own. */}
         <span className="rangefields">
-          <label className="datefield">
-            <span>{t('insights.from')}</span>
-            <input
-              type="date"
+          {/* The app's own calendar, not the browser's. `<input type="date">`
+              was the one control the rest of the app refuses to use, and it
+              put the system's picker, in the system's type, in the middle of a
+              page drawn in this one's. */}
+          <span className="rangefield">
+            <span className="rangefield-label">{t('insights.from')}</span>
+            <DateField
               value={toApiDate(range.since)}
+              label={t('insights.from')}
               max={toApiDate(new Date())}
-              onChange={(e) => pickBound('since', e.target.value)}
+              clearable={false}
+              onChange={(next) => pickBound('since', next)}
             />
-          </label>
-          <label className="datefield">
-            <span>{t('insights.to')}</span>
-            <input
-              type="date"
+          </span>
+          <span className="rangefield">
+            <span className="rangefield-label">{t('insights.to')}</span>
+            <DateField
               value={toApiDate(range.until)}
+              label={t('insights.to')}
               min={toApiDate(range.since)}
-              onChange={(e) => pickBound('until', e.target.value)}
+              max={toApiDate(new Date())}
+              clearable={false}
+              onChange={(next) => pickBound('until', next)}
             />
-          </label>
+          </span>
         </span>
         <span className="rangelabel">{formatRange(range, intl)}</span>
       </div>
