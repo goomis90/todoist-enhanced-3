@@ -1,6 +1,6 @@
-<div align="center">
+https://github.com/user-attachments/assets/909248a7-af29-4077-b17a-56fd1b174e5a
 
-[![Enhanced for Todoist — watch the tour](docs/default-my-week.png)](https://github.com/julesvbertolino/todoist-enhancements/raw/main/docs/tour.mp4)
+<div align="center">
 
 # Enhanced for Todoist
 
@@ -8,8 +8,8 @@
 tasks.** The data stays in Todoist, but now you can plan a week, have a review,
 and get a lot of new features and visual enhancements.
 
-**[▶ Watch the tour](https://github.com/julesvbertolino/todoist-enhancements/raw/main/docs/tour.mp4)** ·
-two and a half minutes, no sign-in
+**The tour, above** · two and a half minutes, no sign-in ·
+[download it](https://github.com/julesvbertolino/todoist-enhancements/raw/main/docs/tour.mp4)
 
 [Open the app](https://todoistenhanced.julesbertolino.fr) ·
 [Changelog](CHANGELOG.md) ·
