@@ -68,7 +68,6 @@ export function Sidebar({
   const weekLayout = useStore((s) => s.prefs.weekLayout);
   const disconnect = useStore((s) => s.disconnect);
   const draggingProjectId = useStore((s) => s.draggingProjectId);
-  const draggingTag = useStore((s) => s.draggingTag);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
@@ -217,11 +216,6 @@ export function Sidebar({
       target={{ kind: 'label', label: name }}
       scope="nav"
       key={`tag-${name}`}
-      /* A tag takes tasks and nothing else. While a project or another tag is
-         in flight this row lit up as though it would accept one, which is an
-         offer the drop cannot keep: there is no such thing as a project
-         inside a tag. */
-      disabled={draggingProjectId !== null || draggingTag !== null}
     >
       {({ isOver }) => (
         <DraggableTag name={name}>

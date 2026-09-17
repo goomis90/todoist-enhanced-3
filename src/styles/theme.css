@@ -87,16 +87,15 @@
  *   cursor   where the keyboard is, which is one
  *   picked   what you have chosen, which outranks where you happen to be
  *
- * Cursor and picked are two strengths of one colour. Not two tokens that
- * looked like a pair: `--accent-tint` and `--accent-soft` are different hues,
- * not two steps of one — side by side the first reads red and the second
- * orange — so they are both mixed here from `--accent` itself, at two
- * percentages. That also means they follow whichever of the eleven accents is
- * set, and go dark with the surface rather than needing a second table.
+ * Cursor and picked are the same colour — one mix of `--accent`, so it holds
+ * for whichever of the eleven accents is set and goes dark with the surface.
+ * Two strengths of it were still two colours to anybody looking at them side
+ * by side, which is what they had been before.
  *
- * A row that is both is simply the stronger, which the order below already
- * says without a rule for it; it keeps a ring so the cursor is still findable
- * inside a run of picked rows.
+ * What tells them apart is a ring, not a hue: the cursor carries one, because
+ * a ring is what focus looks like everywhere and the cursor is focus. A row
+ * that is both picked and under the cursor is the fill and the ring together,
+ * which needs no rule of its own.
  *
  * All of them paint past the ends of the row with offset shadows rather than
  * padding. Padding moves the row's contents as the state arrives, and a list
@@ -104,15 +103,15 @@
  */
 .task:hover{background:transparent}
 
-/* One statement, two strengths, one hue. */
-.task{--row-here:color-mix(in srgb, var(--accent) 8%, var(--surface));}
-.task{--row-chosen:color-mix(in srgb, var(--accent) 17%, var(--surface));}
+/* One statement, one colour. */
+.task{--row-marked:color-mix(in srgb, var(--accent) 13%, var(--surface));}
 
 .task:focus-visible{
   outline:none;
   border-radius:var(--r-md);
-  background:var(--row-here);
-  box-shadow:-10px 0 0 0 var(--row-here), 10px 0 0 0 var(--row-here);
+  background:var(--row-marked);
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked),
+             inset 0 0 0 1px var(--accent);
 }
 /* A row reached by Tab rather than by the arrows is the same place; the mouse
    clicking one is not, and `:focus-visible` is exactly that distinction. */
@@ -122,12 +121,15 @@
 .task.picked:hover{
   border-radius:var(--r-md);
   border-bottom-color:transparent;
-  background:var(--row-chosen);
-  box-shadow:-10px 0 0 0 var(--row-chosen), 10px 0 0 0 var(--row-chosen);
+  background:var(--row-marked);
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
 }
 
+/* Picked and under the cursor: the fill once, and the ring the cursor always
+   carries. Written out because `box-shadow` replaces rather than adds, so the
+   rule above would otherwise take the ring off again. */
 .task.picked:focus-visible{
-  box-shadow:-10px 0 0 0 var(--row-chosen), 10px 0 0 0 var(--row-chosen),
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked),
              inset 0 0 0 1px var(--accent);
 }
 .task:last-child{border-bottom:0}
