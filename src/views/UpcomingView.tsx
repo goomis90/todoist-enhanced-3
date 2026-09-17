@@ -125,7 +125,8 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
               items={column.items}
               childrenOf={childrenOf}
               onOpen={onOpen}
-              reorderable={current.sort === 'manual' ? 'day' : undefined}
+              reorderable="day"
+              viewKey="upcoming"
               dropTarget={{ kind: 'day', date: new Date(`${column.id}T00:00:00`) }}
               onAddTask={() => onAddTaskTo({ date: column.id })}
             />

@@ -115,7 +115,11 @@ function WeekBody({
   /* A week is drawn from every project at once, so the order it is put into
      is the one Todoist keeps for lists like this one. */
   const sortedGroup = (list: typeof scoped) => sortItems(list, current.sort, childrenOf, 'day');
-  const byHand = current.sort === 'manual' ? ('day' as const) : undefined;
+  /* Dropping a task into a place in a list is always offered, whatever the
+     list is sorted by: it is how you ask this view for an order of your own,
+     and the drop makes it manual rather than being refused for not being
+     manual already. */
+  const byHand = 'day' as const;
 
   /* The board shows the same five buckets the list does. Without this it fell
      back to the generic grouping, which for "no grouping" is a single column
@@ -181,6 +185,7 @@ function WeekBody({
             childrenOf={childrenOf}
             onOpen={onOpen}
             reorderable={byHand}
+            viewKey={viewKey}
             accent="late"
             onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
             actions={
@@ -201,6 +206,7 @@ function WeekBody({
               childrenOf={childrenOf}
               onOpen={onOpen}
               reorderable={byHand}
+              viewKey={viewKey}
               accent="quick"
               dropTarget={{ kind: 'quick' }}
               onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
@@ -213,6 +219,7 @@ function WeekBody({
             childrenOf={childrenOf}
             onOpen={onOpen}
             reorderable={byHand}
+            viewKey={viewKey}
             dropTarget={{ kind: 'today' }}
             onAddTask={() => onAddTaskTo({ date: toApiDate(new Date()) })}
           />
@@ -234,6 +241,7 @@ function WeekBody({
               childrenOf={childrenOf}
               onOpen={onOpen}
               reorderable={byHand}
+              viewKey={viewKey}
               dropTarget={{ kind: 'anytime' }}
               onAddTask={() => onAddTaskTo({})}
             />

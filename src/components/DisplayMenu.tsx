@@ -6,7 +6,7 @@ import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
 import { countActiveFilters } from '@/store/selectors';
 import {
-  defaultFilters, type DisplayMode, type DisplayPriority,
+  defaultViewPrefs, type DisplayMode, type DisplayPriority,
   type GroupKey, type SortKey,
 } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
@@ -37,6 +37,10 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
   const setViewPrefs = useStore((s) => s.setViewPrefs);
   const snapshot = useStore((s) => s.snapshot);
   const current = viewPrefs(prefs, viewKey);
+  /* What this page opens as, which is not the same on every page: the count
+     and the reset both mean "back to how this view starts", and a view that
+     starts grouped by project has to be able to say so. */
+  const base = defaultViewPrefs(viewKey);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -61,9 +65,9 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
   // How many settings this view carries beyond the defaults.
   const changed =
     countActiveFilters(current.filters) +
-    (current.group !== 'none' ? 1 : 0) +
-    (current.sort !== 'manual' ? 1 : 0) +
-    (current.mode !== 'list' ? 1 : 0);
+    (current.group !== base.group ? 1 : 0) +
+    (current.sort !== base.sort ? 1 : 0) +
+    (current.mode !== base.mode ? 1 : 0);
 
   const tags = Object.values(snapshot.labels).filter((l) => !l.name.startsWith('est-'));
 
@@ -92,11 +96,7 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
             <h5>{t('toolbar.presentation')}</h5>
             <button
               className="resetbtn"
-              onClick={() =>
-                setViewPrefs(viewKey, {
-                  mode: 'list', group: 'none', sort: 'manual', filters: defaultFilters(),
-                })
-              }
+              onClick={() => setViewPrefs(viewKey, base)}
             >
               {t('toolbar.resetAll')}
             </button>

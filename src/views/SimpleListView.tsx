@@ -142,7 +142,8 @@ function SimpleListBody({
             dropTarget={dropTarget}
             onAddTask={() => onAddTaskTo(addition)}
             keepWhenEmpty
-            reorderable={current.sort === 'manual' ? order : undefined}
+            reorderable={order}
+            viewKey={viewKey}
           />
         </div>
       ) : (

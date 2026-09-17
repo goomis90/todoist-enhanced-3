@@ -152,6 +152,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
   /** A subtask pulled out to the left: on release it becomes a task of its own. */
   const outdenting = useStore((s) => s.outdenting);
   const setOutdenting = useStore((s) => s.setOutdenting);
+  const setViewPrefs = useStore((s) => s.setViewPrefs);
 
   // A short distance threshold keeps a plain click on a task from starting a drag.
   const sensors = useSensors(
@@ -325,9 +326,16 @@ export function DragProvider({ children }: { children: ReactNode }) {
       const row = snapshot.items[onRow];
       if (!row) return;
       const list = (event.over.data.current as { list?: RowList } | undefined)?.list;
-      if (nesting) await nestTask(item, row.id);
-      else if (list?.order === 'day') await orderInList(item, row, list);
-      else if (list) await reorderTask(item, row);
+      if (nesting) { await nestTask(item, row.id); return; }
+      if (!list) return;
+      /* A task put into a place by hand is a view arranged by hand. Views open
+         sorted by priority, and a drop used to be refused rather than obeyed
+         on one; it is obeyed, and the sort gives way to it. The order written
+         below is the order that was on the screen, so the page the sort leaves
+         behind is the page you were looking at. */
+      if (list.viewKey) setViewPrefs(list.viewKey, { sort: 'manual' });
+      if (list.order === 'day') await orderInList(item, row, list);
+      else await reorderTask(item, row, list);
       return;
     }
 
@@ -446,7 +454,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
    * joins that container first, in the same batch — otherwise Todoist would
    * renumber it among tasks it does not live with.
    */
-  async function reorderTask(item: Item, row: Item) {
+  async function reorderTask(item: Item, row: Item, list: RowList) {
     const container = {
       project_id: row.project_id,
       section_id: row.section_id,
@@ -457,9 +465,23 @@ export function DragProvider({ children }: { children: ReactNode }) {
       || (item.parent_id ?? null) !== (container.parent_id ?? null);
 
     const siblings = siblingTasks(snapshot.items, joining ? { ...item, ...container } : item);
-    const onto = siblings.indexOf(row.id);
+
+    /* `child_order` is the order in the database and the list is in the order
+       on the screen, which are the same thing only under a manual sort. The
+       drop is about the one you are looking at, so the numbering is written
+       from the screen: the siblings the page is showing are laid back into
+       their own slots in screen order, and the ones a filter is hiding keep
+       the places they had between them. */
+    const shown = list.ids.filter((id) => siblings.includes(id));
+    const arranged = [...siblings];
+    const slots = siblings
+      .map((id, at) => (shown.includes(id) ? at : -1))
+      .filter((at) => at >= 0);
+    slots.forEach((at, index) => { arranged[at] = shown[index]; });
+
+    const onto = arranged.indexOf(row.id);
     if (onto < 0) return;
-    const next = [...siblings];
+    const next = [...arranged];
     const at = next.indexOf(item.id);
     if (at >= 0) next.splice(onto, 0, ...next.splice(at, 1));
     else next.splice(onto, 0, item.id);

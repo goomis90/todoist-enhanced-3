@@ -16,6 +16,13 @@ export interface RowList {
   ids: string[];
   /** What the list is, so a task arriving from another one takes it on. */
   target?: DropTarget;
+  /**
+   * The page this list is drawn on.
+   *
+   * Putting a task in a place by hand is how you ask a view for an order of
+   * your own, so the drop has to be able to say which view was asked.
+   */
+  viewKey?: string;
 }
 
 export const RowListContext = createContext<RowList | null>(null);
