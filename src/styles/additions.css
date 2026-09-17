@@ -870,3 +870,55 @@
    with the one that commits carrying the weight. */
 .titleactions{display:flex;justify-content:flex-end;gap:var(--s2);margin:var(--s2) 0 0}
 .titleactions .btn{min-height:28px;padding:0 12px;font-size:var(--fs-13)}
+
+/* ---------- Fields on a phone ---------- */
+/*
+ * Safari on iOS zooms the page in when a field smaller than 16px takes the
+ * caret, and it does not zoom back out afterwards. Tapping Connect therefore
+ * signed you in and left you on a page magnified to about 115%, to be pinched
+ * back by hand — a bug whose cause is a font size two points too small and
+ * whose symptom looks like a broken layout.
+ *
+ * 16px is the threshold, not a preference; below it the browser overrules the
+ * design. Only where the pointer is a finger, so nothing changes on a desktop.
+ */
+@media (hover:none) and (pointer:coarse){
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select{font-size:16px}
+}
+
+/* The line that stands in for the two choices a phone does not ask. */
+.wt-rest{color:var(--muted);font-size:var(--fs-13);line-height:1.55}
+
+/* Three swatches across, on the screen that has room for exactly three. Wrapped
+   two-and-one they left an orphan the width of the sheet, which reads as a card
+   that failed to line up rather than as the third of three. */
+@media (max-width:720px){
+  .wt-body .themechoice{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
+  .wt-body .themechoice > *{min-width:0}
+}
+
+/* The demo button says the longest sentence on the page, and on a phone its
+   words ran past both ends of the pill they sit in. It wraps instead. */
+.connect-demo{white-space:normal;text-align:center;line-height:1.35}
+@media (max-width:420px){
+  .connect-demo{padding-block:10px}
+}
+
+/* ---------- The first run, on a phone ---------- */
+/* The sheet fills the screen here, so the greeting is laid out like a screen:
+   the question at the top under the thumb's reach, and the one button at the
+   bottom where a thumb already is. Left as a short card floating in a tall
+   empty sheet, it read as a dialog that had failed to finish loading. */
+@media (max-width:720px){
+  .walkthrough{min-height:100%;display:flex;flex-direction:column}
+  .wt-body{flex:0 0 auto}
+  .wt-foot{margin-top:auto;padding-top:var(--s4)}
+  .wt-foot .btn{width:100%;justify-content:center;min-height:46px}
+}
+
+/* The trail keeps the places; the name of the task is the headline below it. */
+@media (max-width:720px){
+  .crumbself{display:none}
+}

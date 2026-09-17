@@ -1421,10 +1421,12 @@
 .navmore:hover{background:var(--hover);color:var(--text)}
 .navrow.menuopen .navmore{background:var(--hover);color:var(--text)}
 
-/* A touch screen has no pointer to reveal anything with. */
+/* A touch screen has no pointer to reveal anything with — and the three-dot
+   button was a hover control, kept permanently visible on touch only because
+   there was no other way to reach the menu. Holding the row is the way in
+   now, so the button goes and the count gets its place back. */
 @media (hover:none){
-  .navend .count{opacity:0}
-  .navmore{opacity:1;pointer-events:auto}
+  .navmore{display:none}
 }
 
 /* ---------- The menu itself ---------- */
@@ -1434,6 +1436,17 @@
   position:fixed;z-index:90;
   min-width:226px;max-width:min(260px,calc(100vw - 16px));padding:var(--s2);
 }
+/* On a phone it comes up from the bottom edge, the way a phone's own menus do,
+   and the same way this app's other popovers already do at this width. A menu
+   nearly as tall as the list it belongs to cannot hang off a row halfway down
+   that list. */
+.projectmenu.asSheet{
+  top:auto;left:var(--s3);right:var(--s3);
+  bottom:calc(var(--s3) + env(safe-area-inset-bottom));
+  min-width:0;max-width:none;max-height:70vh;overflow-y:auto;
+  padding:var(--s2) var(--s2) var(--s3);
+}
+.projectmenu.asSheet .opt{min-height:44px}
 /* An icon then its label, hard against the left. The shared option row pushes
    its two halves apart, which is right for a setting with a value and wrong
    for a verb with a glyph. */
@@ -2003,6 +2016,12 @@
 /* The row is its own handle: there is no grip to find, you just move the
    project. The drag starts after a few pixels so a click still opens it. */
 .navrow.sortable{touch-action:none}
+/* Except under a finger, where the browser has to be allowed to scroll: with
+   `none` it never did, and every swipe down the sidebar was read as a project
+   being carried off. `manipulation` is what a hold-to-lift sensor asks for —
+   scrolling and pinching stay the browser's, and the drag takes over once the
+   press has been held still long enough to mean something. */
+@media (hover:none){.navrow.sortable{touch-action:manipulation}}
 .navrow.lifting{opacity:.4}
 /* The row you are about to drop onto says so with a line, not a gap: a gap
    would push every row below it and the list would move under the pointer. */

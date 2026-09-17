@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import {
-  DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors,
+  DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, useSensor, useSensors,
   type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import type { Modifier } from '@dnd-kit/core';
@@ -13,6 +13,7 @@ import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
 import type { RowList } from './RowList';
+import { PRESS_HOLD_EVENT, projectRowAttr } from './ProjectRowSortable';
 
 /**
  * Puts the preview under the pointer by its left edge rather than its centre.
@@ -43,6 +44,18 @@ const anchorLeftOfCursor: Modifier = ({
  * region of the page behind a dialog can win a drop aimed at a row inside it.
  * Each drag is therefore only offered what it could possibly mean.
  */
+/**
+ * A drag that was a finger held still: the press never became a pull.
+ *
+ * Only a finger, because a mouse has no such gesture — a held click that goes
+ * nowhere is a click, and the row it is on is already a link to the project.
+ */
+const pressedAndHeld = (event: DragEndEvent): boolean =>
+  typeof TouchEvent !== 'undefined'
+  && event.activatorEvent instanceof TouchEvent
+  && Math.abs(event.delta.x) < HOLD_SLOP_PX
+  && Math.abs(event.delta.y) < HOLD_SLOP_PX;
+
 const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'task' =>
   (id.startsWith('subtask:') ? 'subtask'
     : id.startsWith('section:') ? 'section'
@@ -112,6 +125,23 @@ export const dragClock = {
 };
 
 /**
+ * How long a finger has to stay still before a row lifts.
+ *
+ * Long enough that scrolling never trips it, short enough that holding a row
+ * on purpose does not feel like waiting. It is also the press that opens a
+ * project's menu, so both gestures are measured by the one duration.
+ */
+export const HOLD_MS = 320;
+
+/**
+ * How far a finger may stray during that hold and still be holding.
+ *
+ * Past it the press was a scroll, and the drag is called off rather than
+ * started.
+ */
+const HOLD_SLOP_PX = 8;
+
+/**
  * How far right a sidebar project, or a task row, has to be dragged before the
  * drop nests it rather than reordering or moving it.
  *
@@ -148,9 +178,26 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const outdenting = useStore((s) => s.outdenting);
   const setOutdenting = useStore((s) => s.setOutdenting);
 
-  // A short distance threshold keeps a plain click on a task from starting a drag.
+  /**
+   * A mouse and a finger do not start a drag the same way.
+   *
+   * One sensor served both and began a drag as soon as anything moved six
+   * pixels. A mouse has nothing else to do with a press and a pull, so that is
+   * right for a mouse. A finger's press and pull is how you scroll, so on a
+   * phone every attempt to scroll the sidebar picked a project up and carried
+   * it off: the list moving under the thumb was a project being filed
+   * somewhere rather than the list scrolling.
+   *
+   * A mouse still starts on distance; a finger starts on time. Move before the
+   * press is held and it was a scroll, and nothing is picked up; hold still and
+   * the row lifts — which is the gesture every phone already uses to mean
+   * "this one".
+   */
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: HOLD_MS, tolerance: HOLD_SLOP_PX },
+    }),
   );
 
   function onDragStart(event: DragStartEvent) {
@@ -197,6 +244,20 @@ export function DragProvider({ children }: { children: ReactNode }) {
         return;
       }
     }
+    /* Pressed and held on a sidebar project and let go without moving. On a
+       phone that is the gesture for "tell me about this one", and it is the
+       same press that would have carried the row off had the finger gone on
+       to move — held, lifted, put back: a question rather than a move. The
+       three-dot button it replaces was a hover control with nothing to hover
+       it, kept visible on touch only because there was no other way in. */
+    if (activeId.startsWith('project-row:') && pressedAndHeld(event)) {
+      const id = activeId.slice('project-row:'.length);
+      document
+        .querySelector<HTMLElement>(`[${projectRowAttr}="${id}"]`)
+        ?.dispatchEvent(new CustomEvent(PRESS_HOLD_EVENT));
+      return;
+    }
+
     if (!event.over) return;
 
     /* A section is dragged whole, into a slot between two others. It is not a

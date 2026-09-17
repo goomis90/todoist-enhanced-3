@@ -693,4 +693,6 @@ export const fr: Record<TranslationKey, string> = {
   /* 1.1.1 — troisième passe */
   'search.goTo': 'Aller à',
   'review.mail.default': 'App par défaut',
+  'walkthrough.restInSettings': 'La couleur d’accent et la densité des listes sont dans les Réglages, quand vous voudrez.',
+  'walkthrough.welcomeBodyPhone': 'Vos tâches sont déjà là — voici une autre façon de les regarder, pensée pour planifier une semaine plutôt qu’une journée. Un seul choix avant de commencer : clair ou sombre. Il s’applique à la page derrière celle-ci au fur et à mesure.',
 };

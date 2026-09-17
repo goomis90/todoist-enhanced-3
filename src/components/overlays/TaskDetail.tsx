@@ -376,8 +376,14 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               </button>
             </span>
           ))}
-          <span className="crumb-sep">/</span>
-          <span className="crumbhere" aria-current="page">{item.content}</span>
+          {/* The task's own name ends the trail. On a phone it is dropped:
+              the headline two lines below says it already, and said twice in
+              a column 375px wide it is the whole top of the panel spent on
+              one sentence. */}
+          <span className="crumbstep crumbself">
+            <span className="crumb-sep">/</span>
+            <span className="crumbhere" aria-current="page">{item.content}</span>
+          </span>
         </nav>
 
         <div className="detail-tools">

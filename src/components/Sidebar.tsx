@@ -16,6 +16,7 @@ import { Droppable } from './dnd/Droppable';
 import { ProjectDropRow, ProjectRowSortable } from './dnd/ProjectRowSortable';
 import { COFFEE_URL, FEEDBACK_URL } from '@/app-info';
 import { ProjectMenu } from './ProjectMenu';
+import { dragClock } from './dnd/DragProvider';
 import type { ProjectSheetTarget } from './overlays/ProjectSheet';
 
 interface SidebarProps {
@@ -218,12 +219,19 @@ export function Sidebar({
             projectId={project.id}
             sortable={keyPrefix === ''}
             className={menuOpen ? ' menuopen' : ''}
+            /* Held under a finger, the row itself is the anchor: the button
+               this menu usually hangs from is not on the page on a phone. */
+            onPressHold={(node) => setRowMenu(menuOpen ? null : { key: rowKey, anchor: node })}
           >
             <button
               className={`navitem${isOver ? ' dropping' : ''}`}
               style={depth > 0 ? { paddingLeft: `${8 + depth * 16}px` } : undefined}
               aria-current={route.view === 'project' && route.id === project.id ? 'page' : undefined}
-              onClick={() => navigate('project', project.id)}
+              /* A press that has just been held is a press that has just done
+                 something — opened this menu, or carried the row somewhere —
+                 and the click the browser sends afterwards is not a second
+                 instruction to go to the project. */
+              onClick={() => { if (!dragClock.justEnded()) navigate('project', project.id); }}
             >
               <span className="hash" style={markerStyle(project.color)}>#</span>
               <span className="label">{project.name}</span>

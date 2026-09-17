@@ -420,6 +420,28 @@ function AppShell({
      one would leave a bar offering to delete tasks that are no longer shown. */
   useEffect(() => clearSelection(), [route.view, route.id, clearSelection]);
 
+  /**
+   * Whether the page's own heading has scrolled out of sight.
+   *
+   * Watched rather than measured on every scroll: the question is only ever
+   * "is that element still on the screen", which is the one question an
+   * intersection observer answers without running anything while nothing is
+   * happening.
+   */
+  const [titleShown, setTitleShown] = useState(false);
+  useEffect(() => {
+    const screen = document.querySelector('.screen.active');
+    const heading = screen?.querySelector('.ptitle');
+    if (!screen || !heading) { setTitleShown(false); return; }
+    const watch = new IntersectionObserver(
+      ([entry]) => setTitleShown(!entry.isIntersecting),
+      { root: screen, threshold: 0 },
+    );
+    watch.observe(heading);
+    return () => watch.disconnect();
+    // A new page brings a new heading to watch.
+  }, [route.view, route.id]);
+
   const openTask = (id: string) => setOpenTaskId(id);
   const addTask = () => {
     setPlacement(route.view === 'project' && route.id ? { projectId: route.id } : {});
@@ -470,7 +492,12 @@ function AppShell({
           >
             <Icon name="menu" />
           </button>
-          <strong>{contextLabel}</strong>
+          {/* The page names itself twice on a phone — once in this bar and once
+              as the heading under it — which costs a row of a short screen to
+              say nothing. The bar holds the name back until the heading has
+              scrolled away, which is the same title arriving where it is
+              needed rather than a second one standing beside it. */}
+          <strong className={titleShown ? ' shown' : ''}>{contextLabel}</strong>
           <button className="iconbtn" aria-label={t('nav.search')} onClick={() => setSearchOpen(true)}>
             <Icon name="search" />
           </button>
