@@ -26,16 +26,6 @@ affiliated with, or supported by Todoist.**
 ## Contents
 
 - [New features for Todoist](#new-features-for-todoist)
-  - [Today / Anytime this week / Someday](#today--anytime-this-week--someday)
-  - [Daily and weekly review](#daily-and-weekly-review)
-  - [Task durations](#task-durations)
-  - [Quick tasks on top of the list](#quick-tasks-on-top-of-the-list)
-  - [Visible subtasks](#visible-subtasks)
-  - [Dashboard](#dashboard)
-  - [Better logbook](#better-logbook)
-  - [Custom themes](#custom-themes)
-  - [Things to settle](#things-to-settle)
-  - [The keyboard, and a phone](#the-keyboard-and-a-phone)
 - […and what you already know from Todoist](#and-what-you-already-know-from-todoist)
 - [Screenshots](#screenshots)
 - [How to use it](#how-to-use-it)
@@ -53,147 +43,109 @@ priorities and dates. Open the official app afterwards and nothing looks
 unusual. If this project stopped working tomorrow your data would be untouched,
 because it never lived anywhere else.
 
-### Today / Anytime this week / Someday
+- **Today / Anytime this week / Someday:** Todoist asks which day a task belongs
+  to, and most work has no answer to that — it belongs to *this week*, and
+  picking Tuesday for it is a guess you then spend the week correcting. So there
+  are three commitments instead of one. Today is what you have actually dated,
+  Anytime this week is what you have committed to without pinning to an
+  afternoon, and Someday is what you are not committing to yet — out of the week
+  but not out of the app, and read back to you at the weekly review so it never
+  quietly becomes a graveyard.
 
-Todoist asks which day a task belongs to. Most work does not have an answer to
-that — it belongs to *this week*, and picking Tuesday for it is a guess you
-then spend the week correcting.
+- **Daily and weekly review:** a few minutes, one question at a time, with an
+  end. The daily one walks what is late, your mail, the Inbox, what you
+  committed to this week without naming a day, what has no estimate, and what
+  today weighs against the hours you have — each step answered from inside it,
+  so you never leave the review to act on what it just told you. The weekly one
+  closes the week and opens the next: what you finished, the week in numbers,
+  what is late, which projects have gone quiet.
 
-So there are three commitments instead of one. **Today** is what you have
-actually dated. **Anytime this week** is what you have committed to without
-pinning it to an afternoon, which turns out to be most of it. **Someday** is
-what you are not committing to yet — out of the week, but not out of the app,
-and read back to you at the weekly review so it does not quietly become a
-graveyard.
+- **Task durations:** write down how long a task will take — `25`, `1h15`,
+  `90 min` — and every page then carries a line saying how many tasks are on it,
+  how much time they add up to, and what share of the capacity you set for that
+  day or week. That last figure is a load pill: green, amber, over. A day you
+  have filled to 140% says so before you start it rather than at six in the
+  evening. A parent with no estimate of its own sums its subtasks, and anything
+  still unestimated is counted separately and listed in one place so you can
+  fill a page of them in one pass.
 
-My week shows all of it in one page, in the order a week is actually worked:
-behind schedule, quick, today, scheduled today, then anytime this week.
+- **Quick tasks on top of the list:** anything short enough to *do* rather than
+  plan, gathered into its own bucket at the top of the week — under five
+  minutes, or tagged `quick`. It sits at the top because that is when it is
+  useful: the five minutes before a meeting are the five minutes those tasks are
+  for. A task tagged quick but estimated at forty minutes is not quick, so it
+  stays out and is reported as a contradiction instead.
 
-### Daily and weekly review
+- **Visible subtasks:** drawn under their parent in the list, indented, rather
+  than hidden behind a count you have to open the task to see. The parent shows
+  how many are done and its estimate is the sum of theirs. They can be made and
+  unmade by dragging — pull a row a little to the right over another and it goes
+  inside it; pull a subtask out to the left and it is a task of its own again.
 
-A few minutes, one question at a time, with an end.
+- **Dashboard:** a board that changes with the period you pick. A day shows the
+  hours you finished things in, a week adds its shape and a comparison with the
+  one before, a year reads month by month. The focus score weights what you
+  finished by its priority, which answers the only question worth asking about a
+  finished week: whether the effort went where it mattered, or into whatever was
+  easiest to close.
 
-The **daily review** walks what is late, your mail, the Inbox, what you
-committed to this week without naming a day, what has no estimate, and what
-today weighs against the hours you have. Each step is answered from inside it —
-reschedule, file, tick off — so you never leave the review to act on what it
-just told you.
+- **Better logbook:** what you actually finished, grouped by day, and filtered by
+  several projects and priorities at once rather than one at a time. It shares
+  the period control with the dashboard, so the two always describe the same
+  window.
 
-The **weekly review** closes the week and opens the next one: what you
-finished, the week in numbers, what is late, which projects have gone quiet. You
-choose which week you are closing, and it opens on the one that has just ended.
+- **Custom themes:** ten accent colours plus one you pick yourself, every one of
+  them drawn in light *and* dark and checked for contrast rather than chosen by
+  eye. Dark mode is not a second-class version of the theme — it is the theme.
+  Light, dark, or whatever the device is set to.
 
-### Task durations
+- **Things to settle:** the contradictions no app should resolve on its own — a
+  task both dated and labelled for the week, two estimates on one task, a quick
+  task estimated at forty minutes. Each is listed with the options that match
+  each possible intent, and nothing changes until you choose one.
 
-Write down how long a task will take, in the same field everywhere: `25`,
-`1h15`, `90 min`.
-
-The consequence is the point. Every page then carries a line saying how many
-tasks are on it, how much time they add up to, and — the **load pill** — what
-share of the capacity you set for that day or that week. Green, amber, over.
-A day you have filled to 140% says so before you start it rather than at six
-in the evening.
-
-A parent with no estimate of its own adds up its subtasks. Anything still
-unestimated is counted separately and listed in one place, so you can fill a
-page of them in one pass instead of one task at a time.
-
-### Quick tasks on top of the list
-
-Anything short enough to *do* rather than plan, gathered into its own bucket at
-the top of the week. Under five minutes, or tagged `quick` — and a task tagged
-quick but estimated at forty minutes is not quick, so it stays out and is
-reported as a contradiction instead.
-
-It sits at the top because that is when it is useful: the five minutes before a
-meeting are the five minutes those tasks are for.
-
-### Visible subtasks
-
-Subtasks are drawn under their parent in the list, indented, not hidden behind
-a count you have to open the task to see. The parent shows how many of them are
-done, and its estimate is the sum of theirs.
-
-They can be made and unmade by dragging: pull a row a little to the right over
-another and it goes inside it; pull a subtask out to the left and it becomes a
-task of its own again.
-
-### Dashboard
-
-A board that changes with the period you pick. A day shows the hours you
-finished things in; a week adds its shape and a comparison with the one before;
-a year reads month by month.
-
-The **focus score** weights what you finished by its priority, which answers
-the only question worth asking about a finished week: whether the effort went
-where it mattered, or into whatever was easiest to close.
-
-### Better logbook
-
-What you actually finished, grouped by day, and filtered by several projects
-and priorities at once rather than one at a time. It shares the period control
-with the dashboard, so the two always describe the same window.
-
-### Custom themes
-
-Ten accent colours, plus one you pick yourself. Every one of them is drawn in
-light **and** dark and checked for contrast rather than chosen by eye, so dark
-mode is not a second-class version of the theme — it is the theme.
-
-Light, dark, or whatever the device is set to.
-
-### Things to settle
-
-The contradictions no app should resolve on its own: a task both dated and
-labelled for the week, two estimates on one task, a "quick" task estimated at
-forty minutes. Each is listed with the options that match each possible intent,
-and nothing changes until you choose one.
-
-### The keyboard, and a phone
-
-Arrows walk the list, Enter opens a task, `E` finishes it, `T` schedules it,
-`G` then a letter goes somewhere, and typing anything else starts a search.
-Todoist's own keys wherever Todoist has one. `?` shows the list.
-
-On a phone, swipe a task aside for its actions and hold it for the rest — the
-two gestures a phone has in place of a pointer hovering over a row.
+- **The keyboard, and a phone:** arrows walk the list, Enter opens a task, `E`
+  finishes it, `T` schedules it, `G` then a letter goes somewhere, and typing
+  anything else starts a search — Todoist's own keys wherever Todoist has one,
+  with `?` for the list. On a phone, swipe a task aside for its actions and hold
+  it for the rest, which are the two gestures a phone has in place of a pointer
+  hovering over a row.
 
 ## …and what you already know from Todoist
 
-**Drag and drop.** A task onto a day, a project, a tag, a section, a board
-column, or another task. In the sidebar, projects reorder by dragging and nest
-by dragging one a little to the right. Dropping a task straight onto a row puts
-it in that row's place, and the order is written back to Todoist rather than
-into a corner of this app. Every destination has one fixed meaning, every drop
-says what it did, and every drop can be undone.
+- **Drag and drop:** a task onto a day, a project, a tag, a section, a board
+  column, or another task. In the sidebar, projects reorder by dragging and nest
+  by dragging one a little to the right. Dropped straight onto a row, a task
+  takes that row's place, and the order is written back to Todoist rather than
+  into a corner of this app. Every destination has one fixed meaning, every drop
+  says what it did, and every drop can be undone.
 
-**List and board views**, with grouping, sorting and filtering behind one
-Display control, remembered per page.
+- **List and board views:** with grouping, sorting and filtering behind one
+  Display control, remembered separately for each page.
 
-**Natural language in the task composer.** `Call Marc tomorrow at 9h p1 #Work
-@quick (25)` — the date, project, priority, tag and estimate are marked inside
-the field as you type and fill the fields underneath, so you can see what it
-understood before you commit. Click a mark, or press Backspace against it, and
-that reading turns back into ordinary text. Recurring dates use Todoist's own
-grammar — `every monday`, `every 3 days`, `every!` — and the rule is handed to
-Todoist to resolve rather than guessed at here.
+- **Natural language in the task composer:** `Call Marc tomorrow at 9h p1 #Work
+  @quick (25)` — the date, project, priority, tag and estimate are marked inside
+  the field as you type and fill the fields underneath, so you see what it
+  understood before you commit. Click a mark, or press Backspace against it, and
+  that reading turns back into ordinary text. Recurring dates use Todoist's own
+  grammar — `every monday`, `every 3 days`, `every!` — handed to Todoist to
+  resolve rather than guessed at here.
 
-**Projects, sections, tags and favourites.** A page for each, nested and
-ordered by dragging, with the Inbox and Upcoming where you expect them.
+- **Projects, sections, tags and favourites:** a page for each, nested and
+  ordered by dragging, with the Inbox and Upcoming where you expect them.
 
-**Search** (`⌘K`, or just start typing) across tasks, projects, sections, tags
-and every view in the app — which makes it the fastest way to anywhere.
+- **Search:** `⌘K`, or just start typing. It covers tasks, projects, sections,
+  tags and every view in the app, which makes it the fastest way to anywhere.
 
-**Multi-select** (`⌘`-click) with one bar at the foot of the window to give the
-lot a date, a project, a tag or a priority.
+- **Multi-select:** `⌘`-click, with one bar at the foot of the window to give the
+  lot a date, a project, a tag or a priority.
 
-**Markdown in descriptions**, rendered in the list and in the task panel.
+- **Markdown in descriptions:** rendered in the list and in the task panel.
 
-**Undo** (`⌘Z`) for a move, a completion, a deletion, a drop. A deleted task
-comes back with its subtasks.
-
-**Offline.** Changes are queued and sent when you reconnect. It installs as an
-app. **English and French**, and settings for the things people disagree about.
+- **And the rest:** undo (`⌘Z`) for a move, a completion, a deletion or a drop,
+  with a deleted task coming back with its subtasks. Offline, with changes
+  queued and sent when you reconnect, and installable as an app. English and
+  French, and settings for the things people disagree about.
 
 ## Screenshots
 
