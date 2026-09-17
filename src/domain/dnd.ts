@@ -77,6 +77,8 @@ export interface TaskPlacement {
   sectionId?: string;
   date?: string;
   labels?: string[];
+  /** As it is written and read, 1 to 4, not Todoist's inverted number. */
+  priority?: 1 | 2 | 3 | 4;
 }
 
 export function placementFor(target: DropTarget, now = new Date()): TaskPlacement {

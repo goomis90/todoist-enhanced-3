@@ -17,6 +17,7 @@ import { toApiDate } from '@/domain/dates';
 import { dueForDate } from '@/domain/recurrence';
 import { weekLabel } from '@/domain/types';
 import { placementFor, type TaskPlacement } from '@/domain/dnd';
+import type { GroupKey } from '@/domain/types';
 
 /**
  * How much of the week this page is showing.
@@ -43,6 +44,25 @@ interface WeekViewProps {
  * untimed, then timed. Anytime this week follows, holding the flexible work
  * that carries the `week` label but no day.
  */
+/**
+ * What a column's own heading fixes, and nothing else.
+ *
+ * Grouped by priority, My week knows the priority of every task in a column
+ * and knows nothing at all about when it is meant to happen — so the line at
+ * the bottom of that column fills the priority in and leaves the date and the
+ * week label alone. The same for a project column and a tag column. A column
+ * that fixes nothing the composer can be opened with gets no line.
+ */
+function addToGroupFor(group: GroupKey, key: string): TaskPlacement | undefined {
+  if (group === 'project') return { projectId: key };
+  if (group === 'label' && key !== 'none') return { labels: [key] };
+  if (group === 'priority') {
+    const at = Number(key.replace('p', ''));
+    if (at >= 1 && at <= 4) return { priority: at as 1 | 2 | 3 | 4 };
+  }
+  return undefined;
+}
+
 function WeekBody({
   onOpen, onInsights, onUnestimated, onAddTaskTo, scope = 'all',
 }: WeekViewProps) {
@@ -266,6 +286,10 @@ function WeekBody({
           boardColumns={
             current.mode === 'board' && current.group === 'none' ? weekColumns : undefined
           }
+          addToGroup={(key) => {
+            const place = addToGroupFor(current.group, key);
+            return place && (() => onAddTaskTo(place));
+          }}
         />
       )}
     </div>

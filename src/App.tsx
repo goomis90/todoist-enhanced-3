@@ -219,6 +219,7 @@ export interface ComposerPlacement {
   sectionId?: string;
   date?: string;
   labels?: string[];
+  priority?: 1 | 2 | 3 | 4;
 }
 
 /**
@@ -555,6 +556,7 @@ function AppShell({
         defaultSectionId={placement.sectionId}
         defaultDate={placement.date}
         defaultLabels={placement.labels}
+        defaultPriority={placement.priority}
       />
       <TaskDetail
         taskId={openTaskId}

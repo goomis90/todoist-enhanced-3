@@ -6,6 +6,7 @@ import { TaskGroup } from '@/components/TaskGroup';
 import { ModeSurface } from '@/components/ModeSurface';
 import { Icon } from '@/components/Icon';
 import { useT } from '@/hooks/useT';
+import type { TaskPlacement } from '@/domain/dnd';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
@@ -19,7 +20,7 @@ interface UpcomingViewProps {
   onOpen: (id: string) => void;
   onInsights: () => void;
   onUnestimated: () => void;
-  onAddTaskTo: (placement: { projectId?: string; sectionId?: string; date?: string }) => void;
+  onAddTaskTo: (placement: TaskPlacement) => void;
 }
 
 /** How many day columns the board shows at once. */

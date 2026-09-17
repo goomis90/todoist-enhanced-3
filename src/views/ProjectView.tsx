@@ -12,6 +12,7 @@ import { AddSectionLine } from '@/components/AddSectionLine';
 import { useConfirm } from '@/components/overlays/Confirm';
 import { Icon } from '@/components/Icon';
 import { useT } from '@/hooks/useT';
+import type { TaskPlacement } from '@/domain/dnd';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
@@ -24,9 +25,7 @@ interface ProjectViewProps {
   onInsights: () => void;
   onUnestimated: () => void;
   /** Adds a task straight into a section of this project. */
-  onAddTaskTo: (placement: {
-    projectId: string; sectionId?: string; date?: string; labels?: string[];
-  }) => void;
+  onAddTaskTo: (placement: TaskPlacement) => void;
   /** Opens the project sheet, to edit this one or add one beside it. */
   onProjectSheet: (target: ProjectSheetTarget) => void;
 }
@@ -38,6 +37,18 @@ interface ProjectViewProps {
  * the work is already organised in Todoist. Splitting it into scheduled and
  * available work stays available as an explicit grouping.
  */
+/**
+ * The priority a `priority` group's key stands for.
+ *
+ * A group only ever offers what its own heading already fixes. Priority is
+ * one of those: a column headed P2 knows every task in it is a P2, so the
+ * line at the bottom of it can say so and leave everything else alone.
+ */
+const priorityOf = (key: string): 1 | 2 | 3 | 4 | undefined => {
+  const at = Number(key.replace('p', ''));
+  return at >= 1 && at <= 4 ? (at as 1 | 2 | 3 | 4) : undefined;
+};
+
 function ProjectBody({
   projectId, onOpen, onInsights, onUnestimated, onAddTaskTo, onProjectSheet,
 }: ProjectViewProps) {
@@ -323,6 +334,10 @@ function ProjectBody({
           showProject={false}
           /* A day column and a tag column are places inside this project; a
              priority column is not one, and says nothing. */
+          /* The page already fixes the project; the column fixes one more
+             thing. Grouped by priority there was no line at all, which made
+             no sense on the one page where both halves of the answer are
+             known. */
           addToGroup={(key) => {
             if (current.group === 'day' && key !== 'none') {
               return () => onAddTaskTo({ projectId, date: key });
@@ -330,7 +345,14 @@ function ProjectBody({
             if (current.group === 'label' && key !== 'none') {
               return () => onAddTaskTo({ projectId, labels: [key] });
             }
-            return undefined;
+            if (current.group === 'priority') {
+              const priority = priorityOf(key);
+              if (priority) return () => onAddTaskTo({ projectId, priority });
+            }
+            if (current.group === 'section') {
+              return () => onAddTaskTo({ projectId, sectionId: key === 'none' ? undefined : key });
+            }
+            return () => onAddTaskTo({ projectId });
           }}
         />
       )}
