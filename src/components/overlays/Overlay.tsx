@@ -56,6 +56,11 @@ export function Overlay({
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        /* Already answered by something inside the dialog — a field leaving
+           itself, a picker closing. React stops the native event at its own
+           root, which is usually enough; this is the part that does not
+           depend on knowing that. */
+        if (e.defaultPrevented) return;
         /* Escape closes the innermost thing that is open. A menu or a picker
            inside the dialog is in front of the dialog, so it answers first —
            otherwise pressing Escape to put a date picker away took the whole

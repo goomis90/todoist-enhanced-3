@@ -92,9 +92,21 @@ export function EstimateField({
             onAdvance(e.currentTarget, e.shiftKey ? -1 : 1);
           }
           if (e.key === 'Escape') {
+            e.preventDefault();
             e.stopPropagation();
-            setDraft(minutes === null ? '' : String(minutes));
-            onCancel?.();
+            /* Somewhere to cancel back to — a menu that opened for this and
+               nothing else — and Escape closes it, unchanged. Where there is
+               not, the field is a property of the thing being edited and
+               Escape simply leaves it, saving on the way out exactly as
+               clicking away would. Either way it stops here: there is no
+               reading of Escape in a field that means "close the dialog". */
+            if (onCancel) {
+              setDraft(minutes === null ? '' : String(minutes));
+              onCancel();
+              return;
+            }
+            commit();
+            e.currentTarget.blur();
           }
         }}
       />

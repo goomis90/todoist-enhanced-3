@@ -615,9 +615,18 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                   onChange={(e) => setDescription(e.target.value)}
                   onBlur={commitDescription}
                   onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setDescription(item.description);
-                      setEditingDescription(false);
+                    /* Escape leaves the field, and leaving the field saves —
+                       the same thing clicking away from it does. It used to
+                       throw the edit away and take the whole panel with it,
+                       which is two surprises for one key. Nothing typed here
+                       is ever discarded, so Escape and clicking away agree.
+                       Cmd+Enter is the same act, said deliberately. */
+                    if (e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      commitDescription();
+                      // The panel keeps the keyboard; only the field gives it up.
+                      descriptionRef.current?.blur();
                     }
                   }}
                 />
