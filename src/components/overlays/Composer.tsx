@@ -26,6 +26,7 @@ interface ComposerProps {
   defaultDate?: string;
   /** Pre-filled tags, for a page that is one tag. */
   defaultLabels?: string[];
+  defaultPriority?: DisplayPriority;
 }
 
 /**
@@ -36,7 +37,7 @@ interface ComposerProps {
  * priority, tags and the estimate all sit on the row below.
  */
 export function Composer({
-  open, onClose, defaultProjectId, defaultSectionId, defaultDate, defaultLabels,
+  open, onClose, defaultProjectId, defaultSectionId, defaultDate, defaultLabels, defaultPriority,
 }: ComposerProps) {
   const { t } = useT();
   const snapshot = useStore((s) => s.snapshot);
@@ -65,6 +66,7 @@ export function Composer({
     setDescription('');
     setPriority(4);
     setLabels(defaultLabels ?? []);
+    setPriority(defaultPriority ?? 4);
     setMinutes(null);
     setTagsOpen(false);
     setSubtasks([]);
@@ -77,7 +79,7 @@ export function Composer({
     setDeadline('');
     /* eslint-disable-next-line react-hooks/exhaustive-deps -- the array is
        built fresh by the caller on every render; its contents are the dep. */
-  }, [open, defaultProjectId, defaultSectionId, defaultDate, defaultLabels?.join('\u0000'),
+  }, [open, defaultProjectId, defaultSectionId, defaultDate, defaultPriority, defaultLabels?.join('\u0000'),
     snapshot.user?.inbox_project_id]);
 
   const tags = Object.values(snapshot.labels)

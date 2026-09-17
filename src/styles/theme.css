@@ -70,7 +70,62 @@
   padding-left:0;
   padding-right:0;
 }
+
+/* ---------- Which row you mean ---------- */
+/*
+ * Three things can want to colour a row: the mouse is resting on it, the
+ * keyboard cursor is on it, and you have picked it out for the bulk bar.
+ *
+ * They used to be written in three files at the same specificity, so which
+ * one you actually saw was decided by import order. Hover came last and won,
+ * which is why a row under the pointer lost the cursor's colour and went
+ * white in the middle with the tint left showing at its two ends.
+ *
+ * One ladder now, weakest first, in one place. Read it downwards:
+ *
+ *   hover    the mouse was abandoned there, which is not a choice
+ *   cursor   where the keyboard is, which is one
+ *   picked   what you have chosen, which outranks where you happen to be
+ *
+ * Cursor and picked are the same colour — one mix of `--accent`, so it holds
+ * for whichever of the eleven accents is set and goes dark with the surface.
+ * Two strengths of it were still two colours to anybody looking at them side
+ * by side, which is what they had been before.
+ *
+ * They are not told apart at all, and that is the answer rather than a gap in
+ * it. A ring on the cursor was tried and read as a dark red outline drawn on
+ * the row — a third mark competing with the two it was meant to separate.
+ * There is one way of saying "this row" and both of them say it: what tells
+ * you which is which is everything around it, the bulk bar standing up for a
+ * selection and the arrow keys having just moved for a cursor.
+ *
+ * All of them paint past the ends of the row with offset shadows rather than
+ * padding. Padding moves the row's contents as the state arrives, and a list
+ * that shifts under the arrow keys is worse than one with no cursor at all.
+ */
 .task:hover{background:transparent}
+
+/* One statement, one colour. */
+.task{--row-marked:color-mix(in srgb, var(--accent) 13%, var(--surface));}
+
+.task:focus-visible{
+  outline:none;
+  border-radius:var(--r-md);
+  background:var(--row-marked);
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
+}
+/* A row reached by Tab rather than by the arrows is the same place; the mouse
+   clicking one is not, and `:focus-visible` is exactly that distinction. */
+.task:focus-visible .ttitle{color:var(--text)}
+
+.task.picked,
+.task.picked:hover{
+  border-radius:var(--r-md);
+  border-bottom-color:transparent;
+  background:var(--row-marked);
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
+}
+
 .task:last-child{border-bottom:0}
 .ttitle{font-size:var(--fs-14);font-weight:400;color:var(--text)}
 .tdesc{color:var(--faint)}

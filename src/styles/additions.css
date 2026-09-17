@@ -575,17 +575,8 @@
   border-radius:1px;background:var(--accent);
 }
 
-/* A row you picked out is a row you are holding, not a row that is wrong:
-   grey, with a rule down the side to say it is one of a set. */
-/* The tint is wider than the row it marks, so the checkbox sits inside it
-   with room around rather than on its edge. The padding is given back by the
-   margin and the width, so nothing on the row moves when it is picked. */
-.task.picked{
-  background:var(--picked);border-radius:var(--r-sm);border-bottom-color:transparent;
-  padding-left:12px;padding-right:12px;
-  margin-left:-12px;margin-right:-12px;width:calc(100% + 24px);
-}
-.task.picked:hover{background:var(--picked)}
+/* How a picked row looks is settled with the cursor and the hover in one
+   place — see "Which row you mean" in theme.css. */
 
 .bulkbar{
   position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;
@@ -887,36 +878,8 @@
 .titleactions{display:flex;justify-content:flex-end;gap:var(--s2);margin:var(--s2) 0 0}
 .titleactions .btn{min-height:28px;padding:0 12px;font-size:var(--fs-13)}
 
-/* ---------- The keyboard cursor ---------- */
-/*
- * The row the keyboard is on is the row that has focus, so the cursor is a
- * focus style — but a deliberate one. The browser's own ring is drawn outside
- * the row, and on a list whose rows are separated by hairlines it reads as a
- * rectangle that has landed on the page rather than as a place in a list.
- *
- * It is a tint and nothing else: no bar down one edge. A border on a single
- * side is a shape the eye has to finish for itself, and the tint has already
- * said the whole of it.
- *
- * It reaches a little past both ends of the row, so the tick sitting hard
- * against the left edge is inside the shape rather than on its corner. The
- * reach is drawn rather than padded: padding would move the row's contents as
- * the cursor arrived on it, and a list that shifts under the arrow keys is
- * worse than one with no cursor at all.
- */
-.task:focus-visible{
-  outline:none;
-  border-radius:var(--r-md);
-  background:var(--accent-tint);
-  /* The same tint, offset left and right, so the shape reaches past both ends
-     of the row without any padding to push the content around — and without a
-     pseudo-element behind it, which would have to be dug out of the stacking
-     order of every tinted group it sits in. */
-  box-shadow:-10px 0 0 0 var(--accent-tint), 10px 0 0 0 var(--accent-tint);
-}
-/* A row reached by Tab rather than by the arrows is the same place; the mouse
-   clicking one is not, and `:focus-visible` is exactly that distinction. */
-.task:focus-visible .ttitle{color:var(--text)}
+/* The keyboard cursor's colour lives with the other row states, in the
+   "Which row you mean" block in theme.css. */
 
 /* ---------- The shortcuts sheet ---------- */
 .keyssheet{padding:var(--s5);position:relative}
@@ -1119,3 +1082,43 @@
 @media (hover:none),(max-width:720px){
   .propkey{display:none}
 }
+
+/* ---------- A section that takes a drop ---------- */
+/* Favourites is the one section you can drop into, and the whole box says so:
+   "put this in there" is aimed at the box, and a one-line target at the top
+   of it is something you would have to be told about. */
+.side-group.dropping{
+  border-radius:var(--r-md);
+  background:var(--accent-tint);
+  box-shadow:0 0 0 1px var(--accent);
+}
+/* Empty, it is still somewhere to aim at. */
+.side-group.dropping .side-head{min-height:32px}
+
+/* ---------- The Display panel on a phone ---------- */
+/*
+ * 320px hung from the right edge of its button is 320px going left, so on a
+ * phone the panel ran off the left of the screen and half of it could not be
+ * read.
+ *
+ * It stays under its button — a menu belongs to the control that opened it,
+ * and this one is opened from the top of the page, so answering at the bottom
+ * of the screen puts it a long way from the thing it belongs to. It is the
+ * width of the page instead, hung from the button's left edge, which since
+ * the header controls sit at the page margin is the page margin.
+ */
+@media (max-width:720px){
+  .displaypanel{
+    left:0;right:auto;
+    width:calc(100vw - 2 * var(--s4));
+    max-width:none;max-height:min(64vh, calc(100dvh - 220px));
+  }
+}
+
+/* A project and a tag, carried under the pointer like a task. */
+.dragoverlay.project,.dragoverlay.tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:var(--fs-13);font-weight:600;
+}
+.dragoverlay.project .hash{width:18px;height:18px;font-size:var(--fs-12);flex:0 0 auto}
+.dragoverlay.tag .ic{color:var(--muted);flex:0 0 auto}

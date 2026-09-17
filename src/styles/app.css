@@ -1116,7 +1116,15 @@ kbd{padding:2px 5px;border:1px solid var(--border-strong);border-radius:var(--r-
   /* compact header: the subtitle and the duplicated "+ Add" are desktop-only —
      on a phone the FAB already adds tasks, and the subtitle is orientation,
      not information you need every time you open the view. */
-  .phead{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s2)}
+  /* The title takes a line and the controls take the next one, on every page.
+     They used to share a line when the title was short enough to allow it and
+     wrap when it was not, so Display and Insights moved between two places
+     depending on which page you were on and how long its name happened to be
+     — the one row of the page whose position you should never have to look
+     for. */
+  .phead{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2);margin-bottom:var(--s2)}
+  .phead-text,.pactions{flex:1 0 100%;min-width:0}
+  .pactions{display:flex;align-items:center;gap:var(--s2)}
   .psub{display:none}
   .pactions{margin-top:0}
   .pactions .btn.primary{display:none}

@@ -50,16 +50,34 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 
       {request && (
         <Overlay open onClose={() => settle(false)} label={request.title} size="sm">
-          <div className="confirmbox">
+          {/* Cmd+Enter answers yes wherever the focus happens to be. It is the
+              app's "do it" everywhere else — it saves in the composer and in
+              the task panel — and a question that can only be answered by
+              aiming at a button is not answerable from the keyboard. */}
+          <div
+            className="confirmbox"
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey)) return;
+              e.preventDefault();
+              e.stopPropagation();
+              settle(true);
+            }}
+          >
             <h2>{request.title}</h2>
             {request.body && <p className="confirmbody">{request.body}</p>}
             <div className="confirmactions">
               <button className="btn quiet" onClick={() => settle(false)}>
                 {request.cancelLabel ?? t('common.cancel')}
               </button>
+              {/* `autoFocus` is not enough on its own: the dialog shell moves
+                  the focus itself once it is up, and without a marker it takes
+                  the first focusable thing in the box — which is Cancel,
+                  written first so the pair reads left to right. Enter then
+                  answered no, every time, and there was no way through this
+                  dialog from a keyboard at all. */}
               <button
                 className={`btn ${request.destructive ? 'danger' : 'primary'}`}
-                autoFocus
+                data-autofocus
                 onClick={() => settle(true)}
               >
                 {request.confirmLabel ?? t('common.confirm')}

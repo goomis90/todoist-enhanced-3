@@ -14,7 +14,7 @@ import { somedayItems, hasLabel } from '@/domain/views';
 import { summariseLoad } from '@/domain/load';
 import type { TranslationKey } from '@/i18n';
 import type { Item } from '@/domain/types';
-import type { DropTarget, RowOrder } from '@/domain/dnd';
+import type { DropTarget, RowOrder, TaskPlacement } from '@/domain/dnd';
 
 interface SimpleListViewProps {
   kind: 'someday' | 'inbox' | 'label';
@@ -22,9 +22,7 @@ interface SimpleListViewProps {
   onOpen: (id: string) => void;
   onInsights: () => void;
   onUnestimated: () => void;
-  onAddTaskTo: (placement: {
-    projectId?: string; sectionId?: string; date?: string; labels?: string[];
-  }) => void;
+  onAddTaskTo: (placement: TaskPlacement) => void;
 }
 
 /**
@@ -34,6 +32,18 @@ interface SimpleListViewProps {
  * Someday deliberately shows no capacity percentage: a backlog has no deadline
  * to measure itself against.
  */
+/**
+ * The priority a `priority` group's key stands for.
+ *
+ * A group only ever offers what its own heading already fixes. Priority is
+ * one of those: a column headed P2 knows every task in it is a P2, so the
+ * line at the bottom of it can say so and leave everything else alone.
+ */
+const priorityOf = (key: string): 1 | 2 | 3 | 4 | undefined => {
+  const at = Number(key.replace('p', ''));
+  return at >= 1 && at <= 4 ? (at as 1 | 2 | 3 | 4) : undefined;
+};
+
 function SimpleListBody({
   kind, labelName, onOpen, onInsights, onUnestimated, onAddTaskTo,
 }: SimpleListViewProps) {
@@ -94,15 +104,23 @@ function SimpleListBody({
       ? { projectId: inboxId }
       : { labels: labelName ? [labelName] : [] };
 
-  /* Grouped, in a list or on a board, a column is only somewhere to add a task
-     when the column is a place: a project, a tag. A priority or an estimate is
-     something a task has, not somewhere it goes, and a line offering to put one
-     there would be writing a promise the composer never keeps. */
+  /* A column is somewhere to add a task when the column fixes something the
+     composer can be opened with: a project, a tag, a priority. The line then
+     fills in exactly that and nothing else — a P2 column knows the priority
+     and knows nothing about the date.
+
+     An estimate column is the exception and still gets no line: its heading
+     is a range, and "under 15 minutes" is not a number the composer can be
+     opened with. */
   const addToGroup = (key: string): (() => void) | undefined => {
     if (current.group === 'none') return () => onAddTaskTo(addition);
     if (current.group === 'project') return () => onAddTaskTo({ ...addition, projectId: key });
     if (current.group === 'label' && key !== 'none') {
       return () => onAddTaskTo({ ...addition, labels: [...(addition.labels ?? []), key] });
+    }
+    if (current.group === 'priority') {
+      const priority = priorityOf(key);
+      if (priority) return () => onAddTaskTo({ ...addition, priority });
     }
     return undefined;
   };

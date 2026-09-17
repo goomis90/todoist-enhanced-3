@@ -19,7 +19,15 @@ export type DropTarget =
   | { kind: 'day'; date: Date }
   | { kind: 'project'; projectId: string }
   | { kind: 'section'; sectionId: string | null; projectId: string }
-  | { kind: 'label'; label: string };
+  | { kind: 'label'; label: string }
+  /**
+   * The Favourites heading in the sidebar.
+   *
+   * A place for a project or a tag to be dropped, and for nothing else: a
+   * task has no business being a favourite, so `dropMutation` reads this as
+   * no mutation at all and the heading stands down while a task is in flight.
+   */
+  | { kind: 'favourites' };
 
 export interface DropMutation {
   /** Fields for an `item_update` command, when the drop changes the task itself. */
@@ -53,6 +61,52 @@ const withWeek = (labels: string[]): string[] =>
  * wearing a repeat marker that will never repeat again.
  */
 const dueOn = (item: Item, date: Date) => dueForDate(item.due, toApiDate(date));
+
+/**
+ * Where a task typed into a group should land, from what the group means.
+ *
+ * A section's "Add task" line and a task dropped onto that same section are
+ * the same intention said two ways, and they used to disagree: dropping into
+ * Anytime this week put the week label on, and adding there opened an empty
+ * composer, so the task went to Someday — out of the section it was added
+ * from and out of the week. Both readings come from one table now, so a group
+ * cannot mean one thing to a drop and another to a line.
+ */
+export interface TaskPlacement {
+  projectId?: string;
+  sectionId?: string;
+  date?: string;
+  labels?: string[];
+  /** As it is written and read, 1 to 4, not Todoist's inverted number. */
+  priority?: 1 | 2 | 3 | 4;
+}
+
+export function placementFor(target: DropTarget, now = new Date()): TaskPlacement {
+  switch (target.kind) {
+    case 'today':
+      return { date: toApiDate(now) };
+    case 'quick':
+      return { date: toApiDate(now), labels: [SYSTEM_LABELS.quick] };
+    case 'day':
+      return { date: toApiDate(target.date) };
+    case 'anytime':
+      return { labels: [weekLabel()] };
+    // Nothing to carry: Someday is what a task with no date and no week label
+    // already is.
+    case 'someday':
+      return {};
+    case 'project':
+      return { projectId: target.projectId };
+    case 'section':
+      return target.sectionId
+        ? { projectId: target.projectId, sectionId: target.sectionId }
+        : { projectId: target.projectId };
+    case 'label':
+      return { labels: [target.label] };
+    default:
+      return {};
+  }
+}
 
 export function dropMutation(item: Item, target: DropTarget): DropMutation | null {
   switch (target.kind) {
@@ -237,7 +291,8 @@ function encodeKind(target: DropTarget): string {
 
 export function decodeTarget(encoded: string): DropTarget | null {
   const id = encoded.includes('|') ? encoded.slice(encoded.indexOf('|') + 1) : encoded;
-  if (id === 'today' || id === 'quick' || id === 'anytime' || id === 'someday') return { kind: id };
+  if (id === 'today' || id === 'quick' || id === 'anytime' || id === 'someday'
+    || id === 'favourites') return { kind: id };
 
   const [kind, ...rest] = id.split(':');
   if (kind === 'day') {
