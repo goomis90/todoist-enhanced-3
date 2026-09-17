@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { addDays, nextMonday } from 'date-fns';
 import { Icon } from './Icon';
 import { useT } from '@/hooks/useT';
@@ -41,6 +41,57 @@ interface Destination {
   current: boolean;
 }
 
+/** How far below the row's buttons a menu hangs, matching `.rowmenu` in CSS. */
+const ROWMENU_OFFSET_PX = 32;
+
+/**
+ * Which way a row menu opens.
+ *
+ * `.rowmenu` hung below its button at a fixed offset and measured nothing, so
+ * a task near the foot of the window opened its menu off the bottom of the
+ * screen — and the foot of a list is exactly where the work nobody has dealt
+ * with sits. The pickers in the composer and the task panel already measure
+ * the room below them and flip above when the list would not fit; this is that
+ * rule, given to the row menus that were never handed it.
+ *
+ * The menu changes height while it is open — the schedule field grows a list
+ * of suggestions under it as you type — so it is measured again whenever it
+ * resizes rather than only when it appears.
+ */
+function useMenuPlacement(open: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [up, setUp] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!open) { setUp(false); return; }
+    const menu = ref.current;
+    const anchor = menu?.parentElement;
+    if (!menu || !anchor) return;
+
+    const place = () => {
+      const box = anchor.getBoundingClientRect();
+      const height = menu.offsetHeight;
+      const margin = 8;
+      const fitsBelow = box.top + ROWMENU_OFFSET_PX + height <= window.innerHeight - margin;
+      const fitsAbove = box.bottom - ROWMENU_OFFSET_PX - height >= margin;
+      // Below by default: a menu only moves when it has to, and only when the
+      // other side is genuinely better.
+      setUp(!fitsBelow && fitsAbove);
+    };
+
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(menu);
+    window.addEventListener('resize', place);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', place);
+    };
+  }, [open]);
+
+  return { ref, className: up ? ' up' : '' };
+}
+
 interface TaskActionsProps {
   item: Item;
   childrenOf: (id: string) => Item[];
@@ -73,6 +124,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   const [dest, setDest] = useState('');
   const [destPick, setDestPick] = useState(-1);
   const ref = useRef<HTMLSpanElement>(null);
+  const placement = useMenuPlacement(menu !== 'none' && menu !== 'estimate');
 
   // A menu that opens holding the last thing typed into it is a menu lying
   // about what it will do if you press Enter.
@@ -378,7 +430,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
       </button>
 
       {menu === 'schedule' && (
-        <div className="popover rowmenu schedulemenu" role="menu">
+        <div className={`popover rowmenu schedulemenu${placement.className}`} role="menu" ref={placement.ref}>
           {/* Typing is the fastest way to say "next sunday", so it is the
               first thing here and it already has the caret. */}
           <input
@@ -507,7 +559,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
       )}
 
       {menu === 'move' && (
-        <div className="popover rowmenu movemenu" role="menu">
+        <div className={`popover rowmenu movemenu${placement.className}`} role="menu" ref={placement.ref}>
           {/* Typing is how you find one project among forty, so the field is
               the first thing here and it already has the caret — the same
               gesture the schedule menu asks for. The heading goes: the field's
@@ -577,7 +629,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
       )}
 
       {menu === 'more' && (
-        <div className="popover rowmenu" role="menu">
+        <div className={`popover rowmenu${placement.className}`} role="menu" ref={placement.ref}>
           <button className="opt" onClick={() => { setMenu('none'); onOpen(item.id); }}>
             <span><Icon name="edit" size="sm" /> {t('detail.title')}</span>
           </button>

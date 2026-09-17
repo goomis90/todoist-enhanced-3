@@ -251,6 +251,10 @@
 
 /* ---------- Row menus ---------- */
 .rowmenu{top:32px;right:0;left:auto;min-width:230px;text-align:left}
+/* Opened upwards, when there is no room for it below. The offset is the
+   same 32px, measured from the other edge, so the menu sits the same
+   distance from the row either way. */
+.rowmenu.up{top:auto;bottom:32px}
 .rowmenu .opt{justify-content:flex-start}
 .rowmenu .opt > span{display:inline-flex;align-items:center;gap:8px}
 .rowmenu .opt.danger{color:var(--accent-dark)}
