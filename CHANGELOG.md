@@ -6,6 +6,40 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.8.1
+
+A corrective pass over the task and bulk-edit pickers introduced in 1.8.0,
+with consistent project, section, date and tag behaviour everywhere they
+appear.
+
+🆕 **Bulk move includes sections.** Projects and their sections now share the
+same searchable destination list used when moving a single task. A section can
+be found by either its own name or its project's name, and moving several tasks
+there is one change with one undo.
+
+🎨 **Bulk destination lists stay compact without browser scrollbars.** Six
+rows are visible, further results remain reachable with a wheel or trackpad,
+and typing filters the list. The panel has a stable width, hides its vertical
+scrollbar and cannot drift sideways; long names are truncated rather than
+creating horizontal scrolling.
+
+🎨 **The Tags page has one clear creation control.** The duplicate Add tag
+button in the page header is gone, while the inline name field remains where
+the new tag will appear. Bulk tag selection also drops its unnecessary helper
+sentence.
+
+🐛 **Project selection stays open in a task.** Scrolling the selected option
+into view was mistaken for a page scroll and immediately dismissed the
+project picker. The picker now remains available for searching and choosing.
+
+🐛 **Bulk dates take the keyboard on the first click.** Opening Date now opens
+and focuses the natural-language date field immediately, so typing no longer
+falls through to the app-wide search.
+
+🐛 **Tags can be reordered all the way to the top.** A dedicated first
+insertion point accepts a dragged tag, and every destination displays the same
+accent line used for project reordering.
+
 ## 1.8.0
 
 The controls now answer the keyboard wherever a value is chosen, and boards
