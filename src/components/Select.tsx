@@ -115,13 +115,12 @@ export function Select({
     };
     document.addEventListener('mousedown', dismiss);
     document.addEventListener('keydown', onKey);
-    window.addEventListener('resize', () => setOpen(false));
-    window.addEventListener('scroll', () => setOpen(false), true);
+    const close = () => setOpen(false);
+    window.addEventListener('resize', close);
     return () => {
       document.removeEventListener('mousedown', dismiss);
       document.removeEventListener('keydown', onKey);
-      window.removeEventListener('resize', () => setOpen(false));
-      window.removeEventListener('scroll', () => setOpen(false), true);
+      window.removeEventListener('resize', close);
     };
   }, [open]);
 

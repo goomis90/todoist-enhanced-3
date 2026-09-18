@@ -257,7 +257,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
       if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
         || target?.isContentEditable) return;
       // A picker already open is driving the keyboard itself.
-      if (document.querySelector('.datepanel, .fselect-list, .popover.rowmenu')) return;
+      if (document.querySelector('.datepanel, .listbox, .popover.rowmenu')) return;
 
       if ((event.metaKey || event.ctrlKey)
         && (event.key === 'Backspace' || event.key === 'Delete')) {

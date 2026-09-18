@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Icon } from '@/components/Icon';
 import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
@@ -23,7 +23,6 @@ export function LabelsView() {
   const updateLabelFavourite = useStore((s) => s.setLabelFavourite);
   const createLabel = useStore((s) => s.createLabel);
   const [draft, setDraft] = useState('');
-  const draftRef = useRef<HTMLInputElement>(null);
 
   const roots = useMemo(() => rootItems(items), [items]);
 
@@ -52,12 +51,6 @@ export function LabelsView() {
           <h1 className="ptitle">{t('nav.labels')}</h1>
           {labels.length > 1 && <p className="psub">{t('labels.orderHint')}</p>}
         </div>
-        <div className="pactions">
-          <button className="btn primary" onClick={() => draftRef.current?.focus()}>
-            <Icon name="plus" />
-            {t('nav.addTag')}
-          </button>
-        </div>
       </div>
 
       {/* A tag is a name and nothing else, so making one is a line to type in
@@ -75,7 +68,6 @@ export function LabelsView() {
       >
         <Icon name="tag" size="sm" />
         <input
-          ref={draftRef}
           value={draft}
           placeholder={t('labels.newPlaceholder')}
           aria-label={t('nav.addTag')}

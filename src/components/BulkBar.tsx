@@ -28,7 +28,14 @@ function BulkMenu({
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as HTMLElement | null;
+      if (ref.current?.contains(target)) return;
+      /* DateField is portalled to the document body so the bar cannot clip
+         its calendar. It is still part of this menu: clicking its typing
+         field must not close the menu, unmount the field and hand the next
+         letter to the app-wide search shortcut. */
+      if (target?.closest('.datepanel')) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
@@ -261,7 +268,6 @@ export function BulkBar() {
       <BulkMenu icon="tag" label={t('bulk.labels')}>
         {() => (
           <>
-            <p className="menuhint">{t('bulk.labelsHint')}</p>
             <div className="pickersearch">
               <Icon name="search" size="sm" />
               <input
