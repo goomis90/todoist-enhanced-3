@@ -6,6 +6,32 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.8.0
+
+The controls now answer the keyboard wherever a value is chosen, and boards
+show the grouping their Display menu promises.
+
+🆕 **Type into dates, projects and tags.** Every date calendar starts with the
+same natural-language field used on a task row, so `tomorrow`, `next Sunday`
+and `12 April` work in the composer, task panel, bulk bar and Insights. Long
+project and section lists filter as you type. Tag pickers do the same, with
+Enter toggling the first match without closing a multi-select list.
+
+🆕 **Sort tasks by the order of the Tags list.** A task with several tags uses
+the highest one in that list as its sort key, internal estimate labels do not
+count, and untagged work stays at the end. Grouping is deliberately different:
+a task with two tags remains visible under both of them.
+
+🎨 **A project board honours its grouping.** The ordinary board still uses
+sections. Choosing scheduled, priority, tag, estimate or day now makes those
+values the columns instead, and adding in an unambiguous column pre-fills its
+date, priority or tag.
+
+🐛 **Equal priorities have a stable, meaningful order.** Inside one project
+they retain its hand-made task order. Across projects they use the view's
+global day order, then a stable creation/id fallback, rather than comparing
+unrelated per-project positions.
+
 ## 1.7.1
 
 A pass over what 1.7.0 got wrong, and the small things it made obvious.
