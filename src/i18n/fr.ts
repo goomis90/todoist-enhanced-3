@@ -159,6 +159,7 @@ export const fr: Record<TranslationKey, string> = {
   'sort.alphabetical': 'Alphabétique',
   'sort.estimate-asc': 'Estimation croissante',
   'sort.estimate-desc': 'Estimation décroissante',
+  'sort.label': 'Ordre des étiquettes',
 
   'filter.workspaces': 'Espaces de travail',
   'filter.projects': 'Projets',

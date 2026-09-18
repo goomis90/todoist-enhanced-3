@@ -116,7 +116,7 @@ function ProjectBody({
     [snapshot.sections, projectId],
   );
 
-  const sorted = (list: typeof scoped) => sortItems(list, current.sort, childrenOf);
+  const sorted = (list: typeof scoped) => sortItems(list, current.sort, childrenOf, 'project', snapshot);
 
   /**
    * The tasks in the project itself, in no section.
@@ -246,11 +246,24 @@ function ProjectBody({
           items={scoped}
           childrenOf={childrenOf}
           mode="board"
-          group="section"
+          group={current.group}
           sort={current.sort}
           onOpen={onOpen}
           showProject={false}
-          boardColumns={boardColumns}
+          boardColumns={current.group === 'none' ? boardColumns : undefined}
+          addToGroup={(key) => {
+            if (current.group === 'day' && key !== 'none') {
+              return () => onAddTaskTo({ projectId, date: key });
+            }
+            if (current.group === 'label' && key !== 'none') {
+              return () => onAddTaskTo({ projectId, labels: [key] });
+            }
+            if (current.group === 'priority') {
+              const priority = priorityOf(key);
+              if (priority) return () => onAddTaskTo({ projectId, priority });
+            }
+            return () => onAddTaskTo({ projectId });
+          }}
         />
       ) : current.mode === 'list' && current.group === 'none' ? (
         <div className="mode">

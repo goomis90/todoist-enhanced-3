@@ -78,7 +78,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
     .map((day) => ({
       id: toApiDate(day),
       title: formatRelativeDay(day, locale),
-      items: sortItems(byDay.get(toApiDate(day)) ?? [], current.sort, childrenOf, 'day'),
+      items: sortItems(byDay.get(toApiDate(day)) ?? [], current.sort, childrenOf, 'day', snapshot),
       dropTarget: { kind: 'day' as const, date: day },
       capacityMinutes: prefs.dailyCapacity[day.getDay()],
     }))
@@ -114,6 +114,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
           mode="board"
           group="day"
           sort={current.sort}
+          order="day"
           onOpen={onOpen}
           boardColumns={columns}
         />
@@ -141,6 +142,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
           mode="list"
           group={current.group}
           sort={current.sort}
+          order="day"
           onOpen={onOpen}
         />
       )}

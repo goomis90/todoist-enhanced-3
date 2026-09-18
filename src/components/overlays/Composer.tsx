@@ -14,6 +14,7 @@ import { toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import {
   parseShorthand, type HighlightKind, type Shorthand, type TextRange,
 } from '@/domain/shorthand';
+import { matchesSearch } from '@/domain/search';
 
 interface ComposerProps {
   open: boolean;
@@ -55,6 +56,7 @@ export function Composer({
   const [labels, setLabels] = useState<string[]>([]);
   const [minutes, setMinutes] = useState<number | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [tagQuery, setTagQuery] = useState('');
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [subtaskDraft, setSubtaskDraft] = useState('');
   /** The readings of the name that have been turned down, by position in it. */
@@ -69,6 +71,7 @@ export function Composer({
     setPriority(defaultPriority ?? 4);
     setMinutes(null);
     setTagsOpen(false);
+    setTagQuery('');
     setSubtasks([]);
     setSubtaskDraft('');
     setRefusals([]);
@@ -85,6 +88,10 @@ export function Composer({
   const tags = Object.values(snapshot.labels)
     .filter((l) => !l.is_deleted && !l.name.startsWith('est-'))
     .sort((a, b) => a.item_order - b.item_order);
+  const filteredTags = tags.filter((label) => matchesSearch(label.name, tagQuery));
+
+  const toggleTag = (name: string) => setLabels((prev) =>
+    prev.includes(name) ? prev.filter((label) => label !== name) : [...prev, name]);
 
   const parsed = parseShorthand(name, snapshot, naturalDates, refusals);
 
@@ -308,7 +315,10 @@ export function Composer({
           <button
             className="btn sm"
             aria-expanded={tagsOpen}
-            onClick={() => setTagsOpen((v) => !v)}
+            onClick={() => setTagsOpen((openNow) => {
+              if (!openNow) setTagQuery('');
+              return !openNow;
+            })}
           >
             <Icon name="tag" size="sm" />
             {t('composer.labels')}
@@ -337,19 +347,32 @@ export function Composer({
               aria-label={t('composer.labels')}
               ref={(node) => node?.scrollIntoView({ block: 'nearest' })}
             >
+              <div className="pickersearch">
+                <Icon name="search" size="sm" />
+                <input
+                  autoFocus
+                  value={tagQuery}
+                  placeholder={t('nav.search')}
+                  aria-label={t('nav.search')}
+                  onChange={(event) => setTagQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    event.stopPropagation();
+                    if (event.key === 'Enter' && filteredTags[0]) {
+                      event.preventDefault();
+                      toggleTag(filteredTags[0].name);
+                    }
+                    if (event.key === 'Escape') setTagsOpen(false);
+                  }}
+                />
+              </div>
               {tags.length === 0 && <p className="menuhint">{t('labels.none')}</p>}
-              {tags.map((label) => (
+              {tags.length > 0 && filteredTags.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
+              {filteredTags.map((label) => (
                 <label className="checkrow" key={label.id}>
                   <input
                     type="checkbox"
                     checked={labels.includes(label.name)}
-                    onChange={() =>
-                      setLabels((prev) =>
-                        prev.includes(label.name)
-                          ? prev.filter((l) => l !== label.name)
-                          : [...prev, label.name],
-                      )
-                    }
+                    onChange={() => toggleTag(label.name)}
                   />
                   <Icon name="tag" size="sm" className="taglabel" style={markerStyle(label.color, false)} />
                   <span>{label.name}</span>

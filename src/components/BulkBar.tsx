@@ -7,6 +7,7 @@ import { useConfirm } from './overlays/Confirm';
 import { markerStyle } from '@/domain/colors';
 import { toDisplayPriority, toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import type { DropTarget } from '@/domain/dnd';
+import { matchesSearch } from '@/domain/search';
 
 /**
  * One button in the bar, and the panel it opens.
@@ -83,6 +84,8 @@ export function BulkBar() {
   const moveMany = useStore((s) => s.moveMany);
   const snapshot = useStore((s) => s.snapshot);
   const [date, setDate] = useState('');
+  const [projectQuery, setProjectQuery] = useState('');
+  const [tagQuery, setTagQuery] = useState('');
 
   if (selection.length === 0) return null;
 
@@ -113,6 +116,8 @@ export function BulkBar() {
   const projects = Object.values(snapshot.projects)
     .filter((p) => !p.is_archived && !p.is_deleted && !p.is_folder)
     .sort((a, b) => a.child_order - b.child_order);
+  const filteredProjects = projects.filter((project) =>
+    matchesSearch(project.inbox_project ? t('nav.inbox') : project.name, projectQuery));
 
   /* Only the tags in play, plus every tag that exists: the point of the panel
      is usually to take one off, and the ones already on the selection are the
@@ -121,6 +126,7 @@ export function BulkBar() {
   const tags = Object.values(snapshot.labels)
     .filter((l) => !l.is_deleted && !l.name.startsWith('est-'))
     .sort((a, b) => a.item_order - b.item_order);
+  const filteredTags = tags.filter((label) => matchesSearch(label.name, tagQuery));
 
   /** How many of the selected tasks carry this tag: none, some, or all. */
   const tagState = (name: string): 'none' | 'some' | 'all' => {
@@ -205,7 +211,31 @@ export function BulkBar() {
       <BulkMenu icon="project" label={t('bulk.move')}>
         {(close) => (
           <div className="bulkpop-list">
-            {projects.map((project) => (
+            <div className="pickersearch">
+              <Icon name="search" size="sm" />
+              <input
+                autoFocus
+                value={projectQuery}
+                placeholder={t('nav.search')}
+                aria-label={t('nav.search')}
+                onChange={(event) => setProjectQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if (event.key === 'Enter' && filteredProjects[0]) {
+                    event.preventDefault();
+                    const project = filteredProjects[0];
+                    const ids = selection;
+                    const name = project.inbox_project ? t('nav.inbox') : project.name;
+                    close();
+                    setProjectQuery('');
+                    clearSelection();
+                    void moveMany(ids, project.id, name);
+                  }
+                }}
+              />
+            </div>
+            {filteredProjects.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
+            {filteredProjects.map((project) => (
               <button
                 key={project.id}
                 className="opt"
@@ -213,6 +243,7 @@ export function BulkBar() {
                   const ids = selection;
                   const name = project.inbox_project ? t('nav.inbox') : project.name;
                   close();
+                  setProjectQuery('');
                   clearSelection();
                   void moveMany(ids, project.id, name);
                 }}
@@ -231,9 +262,28 @@ export function BulkBar() {
         {() => (
           <>
             <p className="menuhint">{t('bulk.labelsHint')}</p>
+            <div className="pickersearch">
+              <Icon name="search" size="sm" />
+              <input
+                autoFocus
+                value={tagQuery}
+                placeholder={t('nav.search')}
+                aria-label={t('nav.search')}
+                onChange={(event) => setTagQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if (event.key === 'Enter' && filteredTags[0]) {
+                    event.preventDefault();
+                    const first = filteredTags[0];
+                    setTag(first.name, tagState(first.name) !== 'all');
+                  }
+                }}
+              />
+            </div>
             <div className="bulkpop-list">
               {tags.length === 0 && <p className="menuhint">{t('labels.none')}</p>}
-              {tags.map((label) => {
+              {tags.length > 0 && filteredTags.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
+              {filteredTags.map((label) => {
                 const state = tagState(label.name);
                 return (
                   <label className="checkrow" key={label.id}>

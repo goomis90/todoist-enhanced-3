@@ -22,6 +22,7 @@ import { PlacementField } from '../PlacementField';
 import { DateField } from '../DateField';
 import { markerStyle } from '@/domain/colors';
 import { toDisplayPriority, toTodoistPriority, type DisplayPriority, type Item } from '@/domain/types';
+import { matchesSearch } from '@/domain/search';
 
 /**
  * The repeat rule, as a rule rather than as a reading of one.
@@ -204,6 +205,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [tagQuery, setTagQuery] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
   const menuRef = useMenuKeys(menuOpen, () => setMenuOpen(false));
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -356,6 +358,13 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const allTags = Object.values(snapshot.labels)
     .filter((l) => !l.is_deleted && !l.name.startsWith('est-'))
     .sort((a, b) => a.item_order - b.item_order);
+  const filteredTags = allTags.filter((label) => matchesSearch(label.name, tagQuery));
+
+  const toggleTag = (name: string) => void updateTask(item.id, {
+    labels: item.labels.includes(name)
+      ? item.labels.filter((label) => label !== name)
+      : [...item.labels, name],
+  });
 
   /**
    * Saves the title, and everything the title turned out to be saying.
@@ -808,7 +817,10 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                 aria-label={t('composer.labels')}
                 title={t('composer.labels')}
                 aria-expanded={tagPickerOpen}
-                onClick={() => setTagPickerOpen((v) => !v)}
+                onClick={() => setTagPickerOpen((openNow) => {
+                  if (!openNow) setTagQuery('');
+                  return !openNow;
+                })}
               >
                 <Icon name="plus" size="sm" />
               </button>
@@ -844,19 +856,32 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                    the list it opens can land below the fold. Bring it up. */
                 ref={(node) => node?.scrollIntoView({ block: 'nearest' })}
               >
+                <div className="pickersearch">
+                  <Icon name="search" size="sm" />
+                  <input
+                    autoFocus
+                    value={tagQuery}
+                    placeholder={t('nav.search')}
+                    aria-label={t('nav.search')}
+                    onChange={(event) => setTagQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      event.stopPropagation();
+                      if (event.key === 'Enter' && filteredTags[0]) {
+                        event.preventDefault();
+                        toggleTag(filteredTags[0].name);
+                      }
+                      if (event.key === 'Escape') setTagPickerOpen(false);
+                    }}
+                  />
+                </div>
                 {allTags.length === 0 && <p className="menuhint">{t('labels.none')}</p>}
-                {allTags.map((label) => (
+                {allTags.length > 0 && filteredTags.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
+                {filteredTags.map((label) => (
                   <label className="checkrow" key={label.id}>
                     <input
                       type="checkbox"
                       checked={item.labels.includes(label.name)}
-                      onChange={() =>
-                        void updateTask(item.id, {
-                          labels: item.labels.includes(label.name)
-                            ? item.labels.filter((l) => l !== label.name)
-                            : [...item.labels, label.name],
-                        })
-                      }
+                      onChange={() => toggleTag(label.name)}
                     />
                     <Icon name="tag" size="sm" className="taglabel" style={markerStyle(label.color, false)} />
                     <span>{label.name}</span>

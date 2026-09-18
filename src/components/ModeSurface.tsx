@@ -62,7 +62,7 @@ function useGrouped(props: ModeSurfaceProps) {
   const { items, group, sort, childrenOf, order } = props;
 
   return useMemo(() => {
-    const sorted = sortItems(items, sort, childrenOf, order);
+    const sorted = sortItems(items, sort, childrenOf, order, snapshot);
     return groupItems(sorted, group, snapshot, {
       none: t('common.none'),
       noProject: t('nav.inbox'),
@@ -71,6 +71,8 @@ function useGrouped(props: ModeSurfaceProps) {
       noLabel: t('common.none'),
       priority: (p) => t(`common.p${p}` as TranslationKey),
       day: (d) => (d ? formatRelativeDay(d, locale) : t('common.none')),
+      scheduled: t('section.scheduled'),
+      available: t('section.available'),
     });
   }, [items, group, sort, childrenOf, order, snapshot, t, locale]);
 }

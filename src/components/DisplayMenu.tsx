@@ -59,7 +59,7 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
   }, [open]);
 
   const sorts: SortKey[] = [
-    'manual', 'priority', 'due', 'added', 'alphabetical', 'estimate-asc', 'estimate-desc',
+    'manual', 'priority', 'due', 'added', 'alphabetical', 'estimate-asc', 'estimate-desc', 'label',
   ];
 
   // How many settings this view carries beyond the defaults.

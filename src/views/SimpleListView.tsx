@@ -79,8 +79,8 @@ function SimpleListBody({
   const order: RowOrder = kind === 'inbox' ? 'project' : 'day';
 
   const ordered = useMemo(
-    () => sortItems(scoped, current.sort, childrenOf, order),
-    [scoped, current.sort, childrenOf, order],
+    () => sortItems(scoped, current.sort, childrenOf, order, snapshot),
+    [scoped, current.sort, childrenOf, order, snapshot],
   );
 
   const load = useMemo(
