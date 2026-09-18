@@ -8,6 +8,8 @@ import { Icon } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { formatDayOrName, toApiDate } from '@/domain/dates';
+import { dateSuggestions } from '@/domain/dateWords';
+import { readNaturalDate } from '@/domain/nlp';
 import type { TranslationKey } from '@/i18n';
 
 interface DateFieldProps {
@@ -31,6 +33,8 @@ interface DateFieldProps {
    * cannot: a range with no start is not a range.
    */
   clearable?: boolean;
+  /** Row action menus already provide their own natural-language field. */
+  searchable?: boolean;
 }
 
 /** The shortcuts, because most dates a person picks are one of these four. */
@@ -50,15 +54,18 @@ const SHORTCUTS = [
  * app's own type, at the app's own size, everywhere.
  */
 export function DateField({
-  value, onChange, label, placeholder, min, max, clearable = true,
+  value, onChange, label, placeholder, min, max, clearable = true, searchable = true,
 }: DateFieldProps) {
   const { t, locale } = useT();
   const dateFormat = useStore((s) => s.prefs.dateFormat);
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(() => startOfMonth(parse(value) ?? new Date()));
+  const [query, setQuery] = useState('');
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const selected = parse(value);
 
@@ -72,8 +79,13 @@ export function DateField({
 
   // Opening lands on the month being edited, not on wherever it was left.
   useEffect(() => {
-    if (open) setMonth(startOfMonth(parse(value) ?? new Date()));
-  }, [open, value]);
+    if (open) {
+      setMonth(startOfMonth(parse(value) ?? new Date()));
+      setQuery('');
+      setActiveSuggestion(-1);
+      if (searchable) requestAnimationFrame(() => searchRef.current?.focus());
+    }
+  }, [open, value, searchable]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -91,7 +103,7 @@ export function DateField({
       Math.max(margin, window.innerWidth - width - margin),
     );
     setPosition({ top, left });
-  }, [open, month]);
+  }, [open, month, query]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,10 +136,25 @@ export function DateField({
     return Array.from({ length: 7 }, (_, offset) => fmt.format(addDays(first, offset)));
   }, [locale]);
 
+  const suggestions = useMemo(
+    () => dateSuggestions(query, locale),
+    [query, locale],
+  );
+  const reading = useMemo(() => readNaturalDate(query), [query]);
+
   function pick(day: Date) {
     onChange(toApiDate(day));
     setOpen(false);
     buttonRef.current?.focus();
+  }
+
+  function commitTyped(at = activeSuggestion) {
+    const candidate = (at >= 0 ? suggestions[at]?.date : suggestions[0]?.date)
+      ?? reading?.date.slice(0, 10);
+    if (!candidate) return;
+    const day = parse(candidate);
+    if (!day || outOfRange(day)) return;
+    pick(day);
   }
 
   const panel = open && (
@@ -142,6 +169,66 @@ export function DateField({
         visibility: position ? undefined : 'hidden',
       }}
     >
+      {searchable && (
+        <div className="pickersearch datepickersearch">
+          <Icon name="search" size="sm" />
+          <input
+            ref={searchRef}
+            value={query}
+            placeholder={t('task.typeDate')}
+            aria-label={t('task.typeDate')}
+            onChange={(event) => { setQuery(event.target.value); setActiveSuggestion(-1); }}
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              if (event.key === 'ArrowDown' && suggestions.length > 0) {
+                event.preventDefault();
+                setActiveSuggestion((at) => (at + 1) % suggestions.length);
+              } else if (event.key === 'ArrowUp' && suggestions.length > 0) {
+                event.preventDefault();
+                setActiveSuggestion((at) => (at <= 0 ? suggestions.length - 1 : at - 1));
+              } else if (event.key === 'Enter') {
+                event.preventDefault();
+                commitTyped();
+              } else if (event.key === 'Escape') {
+                setOpen(false);
+                buttonRef.current?.focus();
+              }
+            }}
+          />
+        </div>
+      )}
+
+      {searchable && query.trim() !== '' && (
+        suggestions.length > 0 ? (
+          <div className="pickersuggestions" role="listbox">
+            {suggestions.map((suggestion, at) => {
+              const day = parse(suggestion.date)!;
+              return (
+                <button
+                  key={`${suggestion.date}-${suggestion.word ?? ''}`}
+                  type="button"
+                  role="option"
+                  aria-selected={activeSuggestion === at}
+                  className={activeSuggestion === at ? 'active' : ''}
+                  disabled={outOfRange(day)}
+                  onMouseEnter={() => setActiveSuggestion(at)}
+                  onMouseDown={(event) => { event.preventDefault(); pick(day); }}
+                >
+                  <span>{suggestion.word ?? format(day, 'd')}</span>
+                  <small>{formatDayOrName(day, locale, dateFormat)}</small>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className={`pickerreading${reading ? '' : ' none'}`}>
+            {reading
+              ? formatDayOrName(parse(reading.date)!, locale, dateFormat)
+              : t('task.dateNotRead')}
+          </p>
+        )
+      )}
+
       <div className="datepanel-quick">
         {SHORTCUTS.map((shortcut) => (
           <button

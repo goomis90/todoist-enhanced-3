@@ -1997,6 +1997,18 @@
   max-width:min(340px,calc(100vw - 16px));max-height:min(320px,60vh);
   overflow-y:auto;padding:var(--s2);
 }
+.pickersearch{
+  position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:7px;
+  margin:calc(var(--s2) * -1) calc(var(--s2) * -1) var(--s2);
+  padding:var(--s2);border-bottom:1px solid var(--border);background:var(--surface);
+}
+.pickersearch > .ic{flex:0 0 auto;color:var(--faint)}
+.pickersearch input{
+  width:100%;min-width:0;height:30px;padding:0;border:0;outline:0;
+  background:transparent;color:var(--text);font:inherit;font-size:var(--fs-13);
+}
+.pickersearch input::placeholder{color:var(--faint)}
+.listbox .menuhint{padding:8px}
 .listbox .opt{
   width:100%;display:flex;align-items:center;gap:8px;justify-content:flex-start;
   min-height:32px;padding:0 8px;border-radius:var(--r-sm);
@@ -2018,6 +2030,13 @@
 /* ---------- The calendar ---------- */
 .datefield{display:grid;gap:4px;min-width:0}
 .datepanel{position:fixed;z-index:95;width:278px;padding:var(--s3)}
+.datepanel .pickersearch{position:static;margin:calc(var(--s3) * -1) calc(var(--s3) * -1) var(--s3);padding:var(--s2) var(--s3)}
+.pickersuggestions{display:grid;margin:-4px 0 var(--s3);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.pickersuggestions button{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;text-align:left;font-size:var(--fs-12)}
+.pickersuggestions button:hover,.pickersuggestions button.active{background:var(--hover)}
+.pickersuggestions small{color:var(--faint)}
+.pickerreading{margin:-4px 0 var(--s3);padding:7px 8px;border-radius:var(--r-sm);background:var(--hover);font-size:var(--fs-12)}
+.pickerreading.none{color:var(--faint)}
 .datepanel-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--s3)}
 .datepanel-quick button{
   min-height:28px;padding:0 10px;border-radius:var(--r-full);

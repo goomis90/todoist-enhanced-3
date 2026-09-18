@@ -270,7 +270,8 @@ export type SortKey =
   | 'added'
   | 'alphabetical'
   | 'estimate-asc'
-  | 'estimate-desc';
+  | 'estimate-desc'
+  | 'label';
 
 export interface ViewFilters {
   workspaces: string[];

@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, type IconName } from './Icon';
 import { markerStyle } from '@/domain/colors';
+import { useT } from '@/hooks/useT';
+import { matchesSearch } from '@/domain/search';
 
 export interface SelectOption {
   value: string;
@@ -26,6 +28,8 @@ interface SelectProps {
   ariaLabel?: string;
   /** Shown when nothing matches the current value. */
   placeholder?: string;
+  /** Overrides the automatic search field shown for long option lists. */
+  searchable?: boolean;
 }
 
 /**
@@ -42,26 +46,41 @@ interface SelectProps {
  * scrolling box can clip it.
  */
 export function Select({
-  label, value, options, onChange, ariaLabel, placeholder,
+  label, value, options, onChange, ariaLabel, placeholder, searchable: searchableProp,
 }: SelectProps) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [query, setQuery] = useState('');
   const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const typed = useRef({ text: '', at: 0 });
+  const searchable = searchableProp ?? options.length > 8;
 
   const current = useMemo(
     () => options.find((option) => option.value === value),
     [options, value],
   );
+  const filtered = useMemo(() => {
+    if (!query.trim()) return options;
+    return options.filter((option) =>
+      matchesSearch(`${option.label} ${option.face ?? ''}`, query));
+  }, [options, query]);
 
   // Opening starts on what is already chosen, not at the top of the list.
   useEffect(() => {
     if (!open) return;
+    setQuery('');
     const at = options.findIndex((option) => option.value === value);
     setActive(at < 0 ? 0 : at);
-  }, [open, options, value]);
+    if (searchable) requestAnimationFrame(() => searchRef.current?.focus());
+  }, [open, options, value, searchable]);
+
+  useEffect(() => {
+    if (open && query) setActive(0);
+  }, [open, query]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -74,7 +93,7 @@ export function Select({
       ? Math.max(margin, button.top - height - 4)
       : below;
     setPosition({ top, left: button.left, width: button.width });
-  }, [open, options.length]);
+  }, [open, filtered.length, searchable]);
 
   useEffect(() => {
     if (!open) return;
@@ -115,7 +134,7 @@ export function Select({
   }, [open, active]);
 
   function choose(at: number) {
-    const option = options[at];
+    const option = filtered[at];
     if (!option) return;
     onChange(option.value);
     setOpen(false);
@@ -150,23 +169,22 @@ export function Select({
     if (event.key === 'Enter' || event.key === 'Tab') { event.preventDefault(); choose(active); return; }
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      setActive((at) => (at + 1) % options.length);
+      if (filtered.length > 0) setActive((at) => (at + 1) % filtered.length);
       return;
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      setActive((at) => (at - 1 + options.length) % options.length);
+      if (filtered.length > 0) setActive((at) => (at - 1 + filtered.length) % filtered.length);
       return;
     }
     if (event.key === 'Home') { event.preventDefault(); setActive(0); return; }
-    if (event.key === 'End') { event.preventDefault(); setActive(options.length - 1); return; }
-    if (event.key.length === 1 && !event.metaKey && !event.ctrlKey) typeAhead(event.key);
+    if (event.key === 'End') { event.preventDefault(); setActive(filtered.length - 1); return; }
+    if (!searchable && event.key.length === 1 && !event.metaKey && !event.ctrlKey) typeAhead(event.key);
   }
 
   const list = open && (
     <div
       className="popover listbox"
-      role="listbox"
       aria-label={ariaLabel ?? label}
       ref={listRef}
       style={{
@@ -176,7 +194,22 @@ export function Select({
         visibility: position ? undefined : 'hidden',
       }}
     >
-      {options.map((option, at) => (
+      {searchable && (
+        <div className="pickersearch">
+          <Icon name="search" size="sm" />
+          <input
+            ref={searchRef}
+            value={query}
+            placeholder={t('nav.search')}
+            aria-label={t('nav.search')}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={onKeyDown}
+          />
+        </div>
+      )}
+      <div role="listbox" aria-label={ariaLabel ?? label}>
+      {filtered.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
+      {filtered.map((option, at) => (
         <button
           key={option.value}
           type="button"
@@ -195,6 +228,7 @@ export function Select({
           {option.value === value && <Icon name="check" size="sm" />}
         </button>
       ))}
+      </div>
     </div>
   );
 

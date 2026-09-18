@@ -157,6 +157,7 @@ export const en = {
   'sort.alphabetical': 'Alphabetical',
   'sort.estimate-asc': 'Estimate, shortest first',
   'sort.estimate-desc': 'Estimate, longest first',
+  'sort.label': 'Tag order',
 
   'filter.workspaces': 'Workspaces',
   'filter.projects': 'Projects',
