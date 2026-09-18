@@ -123,8 +123,38 @@ export function BulkBar() {
   const projects = Object.values(snapshot.projects)
     .filter((p) => !p.is_archived && !p.is_deleted && !p.is_folder)
     .sort((a, b) => a.child_order - b.child_order);
-  const filteredProjects = projects.filter((project) =>
-    matchesSearch(project.inbox_project ? t('nav.inbox') : project.name, projectQuery));
+  const sections = Object.values(snapshot.sections)
+    .filter((section) => !section.is_archived && !section.is_deleted)
+    .sort((a, b) => a.section_order - b.section_order);
+  const destinations = projects.flatMap((project) => {
+    const projectName = project.inbox_project ? t('nav.inbox') : project.name;
+    return [
+      {
+        key: `project:${project.id}`,
+        projectId: project.id,
+        sectionId: null as string | null,
+        label: projectName,
+        search: projectName,
+        color: project.color,
+        section: false,
+        projectName,
+      },
+      ...sections
+        .filter((section) => section.project_id === project.id)
+        .map((section) => ({
+          key: `section:${section.id}`,
+          projectId: project.id,
+          sectionId: section.id as string | null,
+          label: section.name || t('section.untitled'),
+          search: `${projectName} ${section.name}`,
+          color: project.color,
+          section: true,
+          projectName,
+        })),
+    ];
+  });
+  const filteredDestinations = destinations.filter((destination) =>
+    matchesSearch(destination.search, projectQuery));
 
   /* Only the tags in play, plus every tag that exists: the point of the panel
      is usually to take one off, and the ones already on the selection are the
@@ -203,6 +233,7 @@ export function BulkBar() {
                 value={date}
                 label={t('task.schedule')}
                 placeholder={t('bulk.pickDate')}
+                openOnMount
                 onChange={(next) => {
                   setDate('');
                   if (!next) return;
@@ -228,36 +259,48 @@ export function BulkBar() {
                 onChange={(event) => setProjectQuery(event.target.value)}
                 onKeyDown={(event) => {
                   event.stopPropagation();
-                  if (event.key === 'Enter' && filteredProjects[0]) {
+                  if (event.key === 'Enter' && filteredDestinations[0]) {
                     event.preventDefault();
-                    const project = filteredProjects[0];
+                    const destination = filteredDestinations[0];
                     const ids = selection;
-                    const name = project.inbox_project ? t('nav.inbox') : project.name;
+                    const name = destination.section
+                      ? `${destination.projectName} / ${destination.label}`
+                      : destination.label;
                     close();
                     setProjectQuery('');
                     clearSelection();
-                    void moveMany(ids, project.id, name);
+                    void moveMany(ids, {
+                      project_id: destination.projectId,
+                      section_id: destination.sectionId,
+                    }, name);
                   }
                 }}
               />
             </div>
-            {filteredProjects.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
-            {filteredProjects.map((project) => (
+            {filteredDestinations.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
+            {filteredDestinations.map((destination) => (
               <button
-                key={project.id}
-                className="opt"
+                key={destination.key}
+                className={`opt${destination.section ? ' sectionopt' : ''}`}
                 onClick={() => {
                   const ids = selection;
-                  const name = project.inbox_project ? t('nav.inbox') : project.name;
+                  const name = destination.section
+                    ? `${destination.projectName} / ${destination.label}`
+                    : destination.label;
                   close();
                   setProjectQuery('');
                   clearSelection();
-                  void moveMany(ids, project.id, name);
+                  void moveMany(ids, {
+                    project_id: destination.projectId,
+                    section_id: destination.sectionId,
+                  }, name);
                 }}
               >
-                <span>
-                  <span className="hash" style={markerStyle(project.color)}>#</span>
-                  {project.inbox_project ? t('nav.inbox') : project.name}
+                <span className="bulkdest">
+                  {destination.section
+                    ? <Icon name="section" size="sm" />
+                    : <span className="hash" style={markerStyle(destination.color)}>#</span>}
+                  <span className="bulkdest-label">{destination.label}</span>
                 </span>
               </button>
             ))}

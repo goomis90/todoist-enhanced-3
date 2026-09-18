@@ -35,6 +35,8 @@ interface DateFieldProps {
   clearable?: boolean;
   /** Row action menus already provide their own natural-language field. */
   searchable?: boolean;
+  /** Open as soon as the field is mounted, for a menu whose button is already the trigger. */
+  openOnMount?: boolean;
 }
 
 /** The shortcuts, because most dates a person picks are one of these four. */
@@ -55,10 +57,11 @@ const SHORTCUTS = [
  */
 export function DateField({
   value, onChange, label, placeholder, min, max, clearable = true, searchable = true,
+  openOnMount = false,
 }: DateFieldProps) {
   const { t, locale } = useT();
   const dateFormat = useStore((s) => s.prefs.dateFormat);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(openOnMount);
   const [month, setMonth] = useState(() => startOfMonth(parse(value) ?? new Date()));
   const [query, setQuery] = useState('');
   const [activeSuggestion, setActiveSuggestion] = useState(-1);

@@ -16,7 +16,7 @@ import { withEstimate } from '@/domain/estimates';
 import { toApiDate } from '@/domain/dates';
 import type { RecurrenceReading } from '@/domain/recurrence';
 import { detectLocale, translate, type Locale } from '@/i18n';
-import { dropMutation, type DropTarget } from '@/domain/dnd';
+import { dropMutation, moveArgs, type DropTarget } from '@/domain/dnd';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import {
   defaultPreferences, hydratePreferences, viewPrefs as readViewPrefs,
@@ -163,8 +163,12 @@ interface AppState {
     fieldsFor: (item: Item) => Record<string, unknown> | null,
     message: string,
   ) => Promise<void>;
-  /** Moves a selection into a project, as one change and one undo. */
-  moveMany: (ids: string[], projectId: string, destination: string) => Promise<void>;
+  /** Moves a selection into a project or one of its sections, as one change and one undo. */
+  moveMany: (
+    ids: string[],
+    target: { project_id: string; section_id: string | null },
+    destination: string,
+  ) => Promise<void>;
   createTask: (args: Record<string, unknown>) => Promise<void>;
   moveTask: (id: string, target: { project_id?: string; section_id?: string | null }) => Promise<void>;
   /**
@@ -831,12 +835,13 @@ export const useStore = create<AppState>((set, get) => ({
    * the old project would leave the task in a place its new project has no
    * name for.
    */
-  async moveMany(ids, projectId, destination) {
+  async moveMany(ids, target, destination) {
     const snapshot = get().snapshot;
     const changes = ids
       .map((id) => {
         const item = snapshot.items[id];
-        if (!item || item.project_id === projectId) return null;
+        if (!item || (item.project_id === target.project_id
+          && (item.section_id ?? null) === target.section_id)) return null;
         return {
           id,
           before: { project_id: item.project_id, section_id: item.section_id },
@@ -852,8 +857,11 @@ export const useStore = create<AppState>((set, get) => ({
       changes.reduce((acc, change) => patchItem(acc, change.id, fields(change)), current);
 
     await get().apply(
-      changes.map((change) => moveItem(change.id, { project_id: projectId })),
-      patchAll(() => ({ project_id: projectId, section_id: null })),
+      changes.map((change) => moveItem(change.id, moveArgs(target))),
+      patchAll(() => ({
+        project_id: target.project_id,
+        section_id: target.section_id,
+      })),
     );
 
     get().toast(

@@ -7,6 +7,7 @@ export const TAG_DRAG_PREFIX = 'tag-row:';
 
 /** And the id it answers to as a place another tag can be dropped. */
 export const TAG_DROP_PREFIX = 'tag-slot:';
+export const TAG_TOP_DROP_ID = 'tag-top-slot';
 
 /**
  * A tag row that can be picked up.
@@ -55,6 +56,11 @@ export function DraggableTag({ name, children }: { name: string; children: React
 const tagOrder = new Map<string, string[]>();
 
 export const tagOrderFor = (name: string): string[] => tagOrder.get(name) ?? [];
+
+export function useTagTopDrop() {
+  const { setNodeRef, isOver } = useDroppable({ id: TAG_TOP_DROP_ID });
+  return { topDropRef: setNodeRef, isTopOver: isOver };
+}
 
 export function useTagDrag(name: string, order: string[]) {
   tagOrder.set(name, order);

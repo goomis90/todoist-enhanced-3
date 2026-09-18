@@ -1249,6 +1249,11 @@
 /* One tag per row, in the order Todoist keeps them, so the rows can be
    dragged into a new one. Cards side by side had no order to speak of. */
 .taglist{display:grid;gap:var(--s2);margin-top:var(--s5)}
+.tagdrop-top{position:relative;height:10px;margin-bottom:calc(-10px - var(--s2));z-index:3}
+.tagdrop-top.over::after{
+  content:"";position:absolute;left:4px;right:4px;top:0;height:2px;
+  border-radius:1px;background:var(--accent);
+}
 .tagcard{
   position:relative;display:flex;align-items:center;
   border:1px solid var(--border);border-radius:14px;background:var(--surface);

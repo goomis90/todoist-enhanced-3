@@ -13,7 +13,9 @@ import { formatDayOrName } from '@/domain/dates';
 import { useT } from '@/hooks/useT';
 import { siblingOrder } from '@/store/selectors';
 import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
-import { TAG_DRAG_PREFIX, TAG_DROP_PREFIX, tagOrderFor } from '@/components/dnd/DraggableTag';
+import {
+  TAG_DRAG_PREFIX, TAG_DROP_PREFIX, TAG_TOP_DROP_ID, tagOrderFor,
+} from '@/components/dnd/DraggableTag';
 import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
 import type { Item } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
@@ -374,6 +376,18 @@ export function DragProvider({ children }: { children: ReactNode }) {
 
       if (decodeTarget(overId)?.kind === 'favourites') {
         if (!label.is_favorite) await setLabelFavourite(label.id, true);
+        return;
+      }
+
+      if (overId === TAG_TOP_DROP_ID) {
+        const names = [...tagOrderFor(name)];
+        const at = names.indexOf(name);
+        if (at <= 0) return;
+        names.unshift(...names.splice(at, 1));
+        const byName = new Map(
+          Object.values(snapshot.labels).map((l) => [l.name, l.id] as const),
+        );
+        await reorderLabels(names.map((n) => byName.get(n)).filter((id): id is string => !!id));
         return;
       }
 

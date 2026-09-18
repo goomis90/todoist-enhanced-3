@@ -4,7 +4,7 @@ import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { navigate } from '@/hooks/useRoute';
-import { useTagDrag } from '@/components/dnd/DraggableTag';
+import { useTagDrag, useTagTopDrop } from '@/components/dnd/DraggableTag';
 import { rootItems } from '@/store/selectors';
 import { hasLabel } from '@/domain/views';
 import { markerStyle } from '@/domain/colors';
@@ -23,6 +23,7 @@ export function LabelsView() {
   const updateLabelFavourite = useStore((s) => s.setLabelFavourite);
   const createLabel = useStore((s) => s.createLabel);
   const [draft, setDraft] = useState('');
+  const { topDropRef, isTopOver } = useTagTopDrop();
 
   const roots = useMemo(() => rootItems(items), [items]);
 
@@ -83,6 +84,11 @@ export function LabelsView() {
         <p className="empty">{t('labels.none')}</p>
       ) : (
         <div className="mode taglist">
+          <div
+            ref={topDropRef}
+            className={`tagdrop-top${isTopOver ? ' over' : ''}`}
+            aria-hidden="true"
+          />
           {labels.map((label) => (
             <TagRow
               key={label.id}
