@@ -27,6 +27,8 @@ interface ProjectRowSortableProps {
 
 /** The id a sidebar project row registers under, in both roles. */
 export const projectRowId = (projectId: string): string => `project-row:${projectId}`;
+export const projectSlotId = (projectId: string, position: 'before' | 'after'): string =>
+  `project-slot:${projectId}:${position}`;
 
 /**
  * How a row is found in the document, and what it is told.
@@ -77,17 +79,24 @@ export function ProjectRowSortable({
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id, disabled: !sortable || taskDragging,
   });
+  const { setNodeRef: setBeforeRef, isOver: beforeOver } = useDroppable({
+    id: projectSlotId(projectId, 'before'), disabled: !sortable || taskDragging,
+  });
+  const { setNodeRef: setAfterRef, isOver: afterOver } = useDroppable({
+    id: projectSlotId(projectId, 'after'), disabled: !sortable || taskDragging,
+  });
   const nesting = useStore((s) => s.nesting);
   const { active, over } = useDndContext();
 
   if (!sortable) return <div className={`navrow${className}`}>{children}</div>;
 
-  const landing = isOver && !isDragging && !taskDragging;
+  const landing = (isOver || beforeOver || afterOver) && !isDragging && !taskDragging;
   const translated = active?.rect.current.translated;
   const overMiddle = over ? over.rect.top + over.rect.height / 2 : null;
   const activeMiddle = translated ? translated.top + translated.height / 2 : null;
   const position = landing && !nesting
-    ? (activeMiddle !== null && overMiddle !== null && activeMiddle > overMiddle ? 'after' : 'before')
+    ? (beforeOver ? 'before' : afterOver ? 'after'
+      : activeMiddle !== null && overMiddle !== null && activeMiddle > overMiddle ? 'after' : 'before')
     : null;
 
   return (
@@ -98,7 +107,9 @@ export function ProjectRowSortable({
       {...attributes}
       {...listeners}
     >
+      <span ref={setBeforeRef} className="project-drop-slot before" aria-hidden="true" />
       {children}
+      <span ref={setAfterRef} className="project-drop-slot after" aria-hidden="true" />
     </div>
   );
 }

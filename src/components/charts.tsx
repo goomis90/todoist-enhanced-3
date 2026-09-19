@@ -504,9 +504,8 @@ interface CompareBarsProps {
 /**
  * This period against the one before it.
  *
- * Both series share one axis — never two scales. The current period is a
- * filled bar and the earlier one a dot at the same height, so the comparison
- * is read as a position, not as a second colour.
+ * Both series share one axis — never two scales. Paired bars let the earlier
+ * period be read directly next to this one, including when both are small.
  */
 export function CompareBars({
   data, height = 150, format, labelEvery = 1, emptyLabel,
@@ -515,14 +514,26 @@ export function CompareBars({
   const [hover, setHover] = useState<number | null>(null);
   const id = useId();
 
-  if (data.length === 0) return <p className="chart-empty">{emptyLabel}</p>;
+  if (data.length === 0 || data.every((datum) => datum.value === 0 && (datum.previous ?? 0) === 0)) {
+    return <p className="chart-empty">{emptyLabel}</p>;
+  }
 
   const max = Math.max(1, ...data.map((d) => Math.max(d.value, d.previous ?? 0)));
   const shown = hover === null ? null : data[hover];
   const fmt = (value: number) => (format ? format(value) : String(value));
+  const total = data.reduce((sum, datum) => sum + datum.value, 0);
+  const previousTotal = data.reduce((sum, datum) => sum + (datum.previous ?? 0), 0);
+  const change = total - previousTotal;
 
   return (
     <div className="chart">
+      <div className="compare-summary">
+        <strong>{fmt(total)}</strong>
+        <span className={`compare-delta${change > 0 ? ' up' : change < 0 ? ' down' : ''}`}>
+          {change > 0 ? '+' : ''}{fmt(change)}
+        </span>
+        <small>{previousLabel}: {fmt(previousTotal)}</small>
+      </div>
       <div className="chart-plot compare" style={{ height }} role="img" aria-labelledby={id}>
         {data.map((datum, index) => (
           <button
@@ -537,13 +548,9 @@ export function CompareBars({
               + (datum.previous === undefined ? '' : `, ${previousLabel} ${fmt(datum.previous)}`)
             }
           >
-            <i
-              className={`bar${datum.current ? ' current' : ''}`}
-              style={{ height: `${Math.max(2, (datum.value / max) * 100)}%` }}
-            />
-            {datum.previous !== undefined && (
-              <s className="ghosttick" style={{ bottom: `${(datum.previous / max) * 100}%` }} />
-            )}
+            <i className="bar previous" style={{ height: `${(datum.previous ?? 0) / max * 100}%` }} />
+            <i className={`bar current${datum.current ? ' today' : ''}`}
+              style={{ height: `${datum.value / max * 100}%` }} />
           </button>
         ))}
       </div>
@@ -556,7 +563,7 @@ export function CompareBars({
 
       <ul className="legend inline">
         <li><i className="swatch-bar" /><span className="legendname">{currentLabel}</span></li>
-        <li><i className="swatch-dot" /><span className="legendname">{previousLabel}</span></li>
+        <li><i className="swatch-previous" /><span className="legendname">{previousLabel}</span></li>
       </ul>
 
       <p className="chart-readout" id={id} aria-live="polite">

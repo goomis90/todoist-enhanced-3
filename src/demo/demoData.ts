@@ -382,7 +382,12 @@ export function buildDemoCompleted(locale: Locale = 'en', seed = 20260914): Comp
         content: copy.completed[Math.floor(random() * copy.completed.length)],
         completed_at: at.toISOString(),
         priority: (1 + Math.floor(random() * 4)) as 1 | 2 | 3 | 4,
-        labels: random() > 0.35 ? [`est-${minutes}`] : [],
+        labels: [
+          ...(random() > 0.35 ? [`est-${minutes}`] : []),
+          ...(id % 3 === 0 ? ['quick'] : []),
+          ...(id % 7 === 0 ? ['automation'] : []),
+          ...(id % 11 === 0 ? ['waiting'] : []),
+        ],
       });
     }
   }

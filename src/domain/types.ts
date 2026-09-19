@@ -210,6 +210,10 @@ export const UNCOMPLETABLE_PREFIX = '* ';
 export const isUncompletable = (item: Pick<Item, 'content'>): boolean =>
   item.content.startsWith(UNCOMPLETABLE_PREFIX);
 
+/** Keep the Todoist marker in stored content, but never show it as title text. */
+export const displayTaskContent = (item: Pick<Item, 'content'>): string =>
+  isUncompletable(item) ? item.content.slice(UNCOMPLETABLE_PREFIX.length) : item.content;
+
 /** The technical labels the product reads. These are never translated. */
 export const SYSTEM_LABELS = {
   quick: 'quick',

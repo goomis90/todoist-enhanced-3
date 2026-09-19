@@ -441,6 +441,7 @@ export const en = {
   'insights.storyOutcome_one': '{count} task completed',
   'insights.storyOutcome_other': '{count} tasks completed',
   'insights.storyCompared': '{delta} vs previous period ({previous})',
+  'insights.previousCount': 'vs {count} in the previous period',
   'insights.contribution': 'Activity heatmap',
   'insights.contributionHint': 'Completed tasks by day. Intensity shows activity, not productivity quality.',
   'insights.contributionSummary': 'Activity on {active} of {total} days in this period.',

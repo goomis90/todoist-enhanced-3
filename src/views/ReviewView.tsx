@@ -21,7 +21,7 @@ import {
 } from '@/components/charts';
 import { formatRange, rangeFor } from '@/domain/periods';
 import { addDays, format, startOfDay } from 'date-fns';
-import { isUncompletable, toDisplayPriority, type CompletedItem, type Item, type Project } from '@/domain/types';
+import { displayTaskContent, isUncompletable, toDisplayPriority, type CompletedItem, type Item, type Project } from '@/domain/types';
 import type { DropTarget } from '@/domain/dnd';
 import {
   buildReview,
@@ -442,7 +442,7 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
         )}
 
         <button className="reviewname" onClick={() => onOpen(item.id)}>
-          <span className="ttitle">{item.content}</span>
+          <span className="ttitle">{displayTaskContent(item)}</span>
           <span className="meta">
             {due && (
               <span className={s.id === 'overdue' ? 'late' : undefined}>

@@ -7,7 +7,7 @@ import { useT } from '@/hooks/useT';
 import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import { useRowGesture } from '@/hooks/useRowGesture';
 import { useStore } from '@/store/store';
-import { isUncompletable, toDisplayPriority, type Item } from '@/domain/types';
+import { displayTaskContent, isUncompletable, toDisplayPriority, type Item } from '@/domain/types';
 import { effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { deadlineDate, dueDate, formatRelativeDay, formatTime, hasTime, isOverdue, isToday, overdueBy } from '@/domain/dates';
 import { markerStyle } from '@/domain/colors';
@@ -237,7 +237,7 @@ export function TaskRow({
         )}
 
         <span className="tmain">
-          <span className="ttitle">{item.content}</span>
+          <span className="ttitle">{displayTaskContent(item)}</span>
 
           {item.description && (
             /* The row shows the formatted line, not the Markdown syntax. */

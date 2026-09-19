@@ -443,6 +443,7 @@ export const fr: Record<TranslationKey, string> = {
   'insights.storyOutcome_one': '{count} tâche terminée',
   'insights.storyOutcome_other': '{count} tâches terminées',
   'insights.storyCompared': '{delta} par rapport à la période précédente ({previous})',
+  'insights.previousCount': 'contre {count} à la période précédente',
   'insights.contribution': 'Heatmap d’activité',
   'insights.contributionHint': 'Tâches terminées par jour. L’intensité montre l’activité, pas la qualité de la productivité.',
   'insights.contributionSummary': 'Activité pendant {active} jours sur {total} dans cette période.',

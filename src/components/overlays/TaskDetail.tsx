@@ -21,7 +21,7 @@ import { Select } from '../Select';
 import { PlacementField } from '../PlacementField';
 import { DateField } from '../DateField';
 import { markerStyle } from '@/domain/colors';
-import { isUncompletable, toDisplayPriority, toTodoistPriority, type DisplayPriority, type Item } from '@/domain/types';
+import { displayTaskContent, isUncompletable, toDisplayPriority, toTodoistPriority, type DisplayPriority, type Item } from '@/domain/types';
 import { matchesSearch } from '@/domain/search';
 
 /**
@@ -208,7 +208,7 @@ function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) 
       ) : (
         <button className="subtasktitle" onClick={() => onOpen(child.id)}>
           <span style={child.checked ? { textDecoration: 'line-through', color: 'var(--faint)' } : undefined}>
-            {child.content}
+            {displayTaskContent(child)}
           </span>
         </button>
       )}
@@ -599,7 +599,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               one sentence. */}
           <span className="crumbstep crumbself">
             <span className="crumb-sep">/</span>
-            <span className="crumbhere" aria-current="page">{item.content}</span>
+            <span className="crumbhere" aria-current="page">{displayTaskContent(item)}</span>
           </span>
         </nav>
 

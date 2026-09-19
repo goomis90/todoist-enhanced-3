@@ -75,7 +75,7 @@ const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'tag' | 'task
 const dropKind = (id: string): 'subtask' | 'slot' | 'project' | 'tag' | 'target' =>
   (id.startsWith('subtask:') ? 'subtask'
     : id.startsWith('slot:') || id.startsWith('section-slot:') ? 'slot'
-      : id.startsWith('project-row:') ? 'project'
+      : id.startsWith('project-row:') || id.startsWith('project-slot:') ? 'project'
         : id.startsWith(TAG_DROP_PREFIX) ? 'tag' : 'target');
 
 const ACCEPTS: Record<ReturnType<typeof dragKind>, Array<ReturnType<typeof dropKind>>> = {
@@ -134,6 +134,8 @@ const collisionsForKind: CollisionDetection = (args) => {
      droppables, which made a project appear to land but left the order
      unchanged. Moving right still turns the same target into nesting. */
   if (dragKind(String(args.active.id)) === 'project') {
+    const projectSlots = hits.filter((c) => String(c.id).startsWith('project-slot:'));
+    if (projectSlots.length) return nearestVertical(projectSlots);
     const projectRows = hits.filter((c) => String(c.id).startsWith('project-row:'));
     if (projectRows.length) return nearestVertical(projectRows);
   }
@@ -507,7 +509,10 @@ export function DragProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const over = overId.startsWith('project-row:')
+      const projectSlot = /^project-slot:(.+):(before|after)$/.exec(overId);
+      const over = projectSlot
+        ? projectSlot[1]
+        : overId.startsWith('project-row:')
         ? overId.slice('project-row:'.length)
         : decodeTarget(overId)?.kind === 'project'
           ? (decodeTarget(overId) as { kind: 'project'; projectId: string }).projectId
@@ -524,14 +529,15 @@ export function DragProvider({ children }: { children: ReactNode }) {
 
       const siblings = siblingOrder(snapshot, from);
       if (!siblings.includes(from) || !siblings.includes(over)) return;
-      const translated = event.active.rect.current.translated;
-      const activeMiddle = translated ? translated.top + translated.height / 2 : null;
-      const overMiddle = event.over.rect.top + event.over.rect.height / 2;
+      const pointerY = event.activatorEvent instanceof MouseEvent || event.activatorEvent instanceof PointerEvent
+        ? event.activatorEvent.clientY + event.delta.y : null;
+      const rowRect = document.querySelector<HTMLElement>(`[${projectRowAttr}="${over}"]`)?.getBoundingClientRect();
+      const overMiddle = rowRect ? rowRect.top + rowRect.height / 2 : event.over.rect.top + event.over.rect.height / 2;
       const fromIndex = siblings.indexOf(from);
       const overIndex = siblings.indexOf(over);
-      const position = relativePositionFromCenters(
-        fromIndex, overIndex, activeMiddle, overMiddle,
-      );
+      const position = projectSlot
+        ? projectSlot[2] as 'before' | 'after'
+        : relativePositionFromCenters(fromIndex, overIndex, pointerY, overMiddle);
       const next = reorderRelative(
         siblings, from, over, position,
       );

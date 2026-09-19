@@ -4,8 +4,8 @@ import { Icon } from '@/components/Icon';
 import { DateField } from '@/components/DateField';
 import { CoffeeLine } from '@/components/CoffeeLine';
 import {
-  Bars, ChartCard, CompareBars, ContributionGrid, Donut, RankedBars, Ring, SplitBar,
-  StatTile, seriesColor, type BarDatum, type CompareDatum, type ContributionDatum,
+  ChartCard, CompareBars, ContributionGrid, Donut, RankedBars, SplitBar,
+  StatTile, seriesColor, type CompareDatum, type ContributionDatum,
   type RankedDatum, type SliceDatum,
 } from '@/components/charts';
 import { useT } from '@/hooks/useT';
@@ -119,15 +119,19 @@ export function InsightsView() {
     }));
   }, [completed, previous, range, grain, intl]);
 
-  const byHour: BarDatum[] = useMemo(
-    () =>
-      summary.byHour.map((value, hour) => ({
-        key: String(hour),
-        label: `${hour}h`,
-        value,
-      })),
-    [summary.byHour],
-  );
+  const byHour: CompareDatum[] = useMemo(() => {
+    const before = new Array<number>(24).fill(0);
+    for (const item of previous) before[new Date(item.completed_at).getHours()] += 1;
+    // Eight three-hour windows keep the two series legible side by side.
+    return Array.from({ length: 8 }, (_, index) => {
+      const hour = index * 3;
+      return {
+        key: String(hour), label: `${hour}–${hour + 3}h`,
+        value: summary.byHour.slice(hour, hour + 3).reduce((sum, n) => sum + n, 0),
+        previous: before.slice(hour, hour + 3).reduce((sum, n) => sum + n, 0),
+      };
+    });
+  }, [summary.byHour, previous]);
 
   const byProject: SliceDatum[] = useMemo(
     () =>
@@ -166,11 +170,13 @@ export function InsightsView() {
   );
 
   const tasksPerDay = spanOf(range) > 0
-    ? Math.round((summary.completedCount / spanOf(range)) * 10) / 10
+    ? Math.round(summary.completedCount / spanOf(range))
     : 0;
 
   const tasksLabel = (count: number) => t('metrics.tasks', { count });
   const completedDelta = summary.completedCount - previous.length;
+  const showHeatmap = period === 'quarter' || period === 'year'
+    || (period === 'custom' && spanOf(range) >= 89);
 
   /* Every selected day is loaded, including a full year. The grid can scroll
      horizontally rather than hiding the longest and most useful timeframe. */
@@ -276,17 +282,21 @@ export function InsightsView() {
         <div className="bento dashboard-bento">
           <h2 className="dashboard-group-label">{t('insights.dashboardSummary')}</h2>
           <section className="card w4 metric-card">
+            <Icon name="check" className="metric-icon" />
             <StatTile
               label={t('insights.completedTasks')}
               value={summary.completedCount}
-              hint={t('insights.storyCompared', {
-                delta: `${completedDelta > 0 ? '+' : ''}${completedDelta}`,
-                previous: previous.length,
-              })}
+              hint={<span className="metric-comparison">
+                <strong className={`compare-delta${completedDelta > 0 ? ' up' : completedDelta < 0 ? ' down' : ''}`}>
+                  {completedDelta > 0 ? '+' : ''}{completedDelta}
+                </strong>
+                <span>{t('insights.previousCount', { count: previous.length })}</span>
+              </span>}
             />
           </section>
 
           <section className="card w4 metric-card">
+            <Icon name="calendar" className="metric-icon" />
             <StatTile
               label={t('insights.tasksPerDay')}
               value={tasksPerDay}
@@ -295,6 +305,7 @@ export function InsightsView() {
           </section>
 
           <section className="card w4 metric-card">
+            <Icon name="clock" className="metric-icon" />
             <StatTile
               label={t('insights.completedTime')}
               value={formatDuration(summary.completedMinutes, locale)}
@@ -312,7 +323,7 @@ export function InsightsView() {
             <ChartCard
               title={t(`insights.per_${grain}` as TranslationKey)}
               subtitle={t('insights.perBucketHint')}
-              span={12}
+              span={6}
               trailing={grainOptions.length > 1 ? (
                 <div className="segmented small chart-grain" aria-label={t('insights.granularity')}>
                   {grainOptions.map((option) => (
@@ -339,7 +350,23 @@ export function InsightsView() {
             </ChartCard>
           )}
 
-          {contribution.length > 0 && (
+          <ChartCard
+            title={t('insights.dayActivity')}
+            subtitle={t('insights.dayActivityHint')}
+            span={grain === null ? 12 : 6}
+          >
+            <CompareBars
+              data={byHour}
+              height={160}
+              labelEvery={1}
+              emptyLabel={t('insights.noHistory')}
+              format={tasksLabel}
+              currentLabel={t('insights.thisPeriod')}
+              previousLabel={t('insights.previousPeriod')}
+            />
+          </ChartCard>
+
+          {showHeatmap && contribution.length > 0 && (
             <ChartCard
               title={t('insights.contribution')}
               subtitle={t('insights.contributionHint')}
@@ -372,32 +399,17 @@ export function InsightsView() {
 
           <ChartCard title={t('insights.byPriority')} span={6}>
             <div className="priority-focus">
-              <Ring
-                percentage={summary.focusScore}
-                label={t('insights.focusScore')}
-                caption={t('insights.focusExplainer')}
-                color="var(--accent)"
-              />
-              <SplitBar data={byPriority} />
+              <strong className="priority-score">{summary.focusScore}%</strong>
+              <span className="stat-label">{t('insights.focusScore')}</span>
+              <p className="stat-hint">{t('insights.focusExplainer')}</p>
+              <SplitBar data={byPriority} format={(count) =>
+                `${summary.completedCount > 0 ? Math.round(count / summary.completedCount * 100) : 0}%`
+              } />
             </div>
           </ChartCard>
 
           <h2 className="dashboard-group-label">{t('insights.dashboardPatterns')}</h2>
-          <ChartCard
-            title={t('insights.dayActivity')}
-            subtitle={t('insights.dayActivityHint')}
-            span={period === 'day' ? 12 : 6}
-          >
-            <Bars
-              data={byHour}
-              height={140}
-              labelEvery={3}
-              emptyLabel={t('insights.noHistory')}
-              format={tasksLabel}
-            />
-          </ChartCard>
-
-          <ChartCard title={t('insights.byLabel')} span={6}>
+          <ChartCard title={t('insights.byLabel')} span={12}>
             <RankedBars
               data={byLabel}
               limit={7}
