@@ -244,6 +244,7 @@ export type ViewId =
   | 'project'
   | 'label'
   | 'labels'
+  | 'matrix'
   | 'insights';
 
 export type DisplayMode = 'list' | 'board' | 'focus';

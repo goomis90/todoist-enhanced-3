@@ -6,6 +6,36 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.9.0
+
+A configurable decision view, clearer Insights, and more dependable navigation
+and ordering. Developed locally and reviewed in demo mode before release.
+
+🆕 **Eisenhower Matrix.** Enable the optional sidebar view in Settings, then
+choose List or Matrix in Display. The Display menu independently controls which
+tasks are shown, which date or week buckets count as urgent, and which Todoist
+priorities count as important. By default, overdue and today are urgent, P1/P2
+are important, anytime-this-week remains visible but not urgent, and future
+dates and the Someday backlog are hidden. Classification never edits a task.
+
+🆕 **Sections in global search.** An optional setting includes accent-insensitive
+section matches with their parent project. Choosing one opens and highlights
+that section; the route survives a reload.
+
+🎨 **Insights are easier to read.** The dashboard presents completed tasks,
+average tasks per day, and completed estimated time without repeating the same
+headline. It adds a day/month trend choice where useful, time-of-day, project,
+priority and focus, top tags, and a full-year activity heatmap with a legend.
+
+🐛 **Shift-click selects a visible range of tasks.** Command-click still
+toggles individual tasks, while Command-Shift-click adds a range to the
+existing selection.
+
+🐛 **Sidebar project and section ordering is precise.** Project rows use
+before/after insertion, rightward nesting and leftward outdenting. Reordering
+stays within one sibling list and workspace, with a visible insertion line.
+Section drops now read their insertion slots correctly.
+
 ## 1.8.1
 
 A corrective pass over the task and bulk-edit pickers introduced in 1.8.0,

@@ -66,6 +66,7 @@ export function Sidebar({
   const collapsed = useStore((s) => s.prefs.sidebarCollapsed) && !sheet;
   const setPrefs = useStore((s) => s.setPrefs);
   const weekLayout = useStore((s) => s.prefs.weekLayout);
+  const eisenhowerEnabled = useStore((s) => s.prefs.eisenhowerEnabled);
   const disconnect = useStore((s) => s.disconnect);
   const draggingProjectId = useStore((s) => s.draggingProjectId);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -456,6 +457,7 @@ export function Sidebar({
           {navItem('upcoming', 'upcoming', 'nav.upcoming', counts.upcoming)}
           {navItem('someday', 'someday', 'nav.someday', counts.someday, { kind: 'someday' })}
           {navItem('review', 'check', 'nav.review', 0)}
+          {eisenhowerEnabled && navItem('matrix', 'dashboard', 'nav.matrix', 0)}
           {navItem('labels', 'tag', 'nav.labels', 0)}
         </nav>
 

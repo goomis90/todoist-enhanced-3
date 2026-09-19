@@ -1,0 +1,156 @@
+import { useEffect, useRef, useState } from 'react';
+import { Icon } from './Icon';
+import { useT } from '@/hooks/useT';
+import { useStore } from '@/store/store';
+import {
+  EISENHOWER_PRIORITIES,
+  EISENHOWER_URGENCY_RULES,
+  type EisenhowerPriority,
+  type EisenhowerUrgencyRule,
+  type MatrixLayout,
+} from '@/store/prefs';
+import type { TranslationKey } from '@/i18n';
+
+/**
+ * The matrix uses the same Display surface as every task view, while keeping
+ * its two classification rules beside its presentation. They are properties
+ * of this lens, not hidden global settings and never mutations of Todoist.
+ */
+export function EisenhowerDisplayMenu() {
+  const { t } = useT();
+  const prefs = useStore((s) => s.prefs);
+  const setPrefs = useStore((s) => s.setPrefs);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const changed = Number(prefs.eisenhowerLayout !== 'matrix')
+    + Number(prefs.eisenhowerUrgent.join('|') !== 'overdue|today')
+    + Number(prefs.eisenhowerImportant.join('|') !== '1|2')
+    + Number(prefs.eisenhowerShowFuture)
+    + Number(prefs.eisenhowerIncludeSomeday);
+
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', dismiss);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('mousedown', dismiss);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  const reset = () => setPrefs({
+    eisenhowerLayout: 'matrix',
+    eisenhowerUrgent: ['overdue', 'today'],
+    eisenhowerImportant: [1, 2],
+    eisenhowerShowFuture: false,
+    eisenhowerIncludeSomeday: false,
+  });
+
+  const toggleUrgent = (rule: EisenhowerUrgencyRule) => setPrefs({
+    eisenhowerUrgent: prefs.eisenhowerUrgent.includes(rule)
+      ? prefs.eisenhowerUrgent.filter((value) => value !== rule)
+      : EISENHOWER_URGENCY_RULES.filter((value) =>
+        value === rule || prefs.eisenhowerUrgent.includes(value)),
+  });
+  const toggleImportant = (priority: EisenhowerPriority) => setPrefs({
+    eisenhowerImportant: prefs.eisenhowerImportant.includes(priority)
+      ? prefs.eisenhowerImportant.filter((value) => value !== priority)
+      : EISENHOWER_PRIORITIES.filter((value) =>
+        value === priority || prefs.eisenhowerImportant.includes(value)),
+  });
+
+  return (
+    <div className="displaywrap" ref={ref}>
+      <button
+        className="btn"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <Icon name="sliders" />
+        {t('toolbar.display')}
+        {changed > 0 && <span className="displaycount">{changed}</span>}
+      </button>
+
+      {open && (
+        <div className="popover displaypanel anchor-right" role="dialog" aria-label={t('toolbar.display')}>
+          <div className="panelhead">
+            <h5>{t('toolbar.presentation')}</h5>
+            <button className="resetbtn" onClick={reset}>{t('toolbar.resetAll')}</button>
+          </div>
+
+          <div className="segmented">
+            {(['list', 'matrix'] as MatrixLayout[]).map((layout) => (
+              <button
+                key={layout}
+                aria-pressed={prefs.eisenhowerLayout === layout}
+                onClick={() => setPrefs({ eisenhowerLayout: layout })}
+              >
+                <Icon name={layout === 'list' ? 'list' : 'dashboard'} size="sm" />
+                <small>{t(`matrix.layout.${layout}` as TranslationKey)}</small>
+              </button>
+            ))}
+          </div>
+
+          <hr />
+          <h5>{t('matrix.visible')}</h5>
+          <div className="panelrow">
+            <span>{t('matrix.showFuture')}</span>
+            <button
+              className="switch"
+              role="switch"
+              aria-checked={prefs.eisenhowerShowFuture}
+              aria-label={t('matrix.showFuture')}
+              onClick={() => setPrefs({ eisenhowerShowFuture: !prefs.eisenhowerShowFuture })}
+            />
+          </div>
+          <div className="panelrow">
+            <span>{t('matrix.includeSomeday')}</span>
+            <button
+              className="switch"
+              role="switch"
+              aria-checked={prefs.eisenhowerIncludeSomeday}
+              aria-label={t('matrix.includeSomeday')}
+              onClick={() => setPrefs({ eisenhowerIncludeSomeday: !prefs.eisenhowerIncludeSomeday })}
+            />
+          </div>
+
+          <h5>{t('matrix.urgent')}</h5>
+          <div className="matrix-checks">
+            {EISENHOWER_URGENCY_RULES.map((rule) => (
+              <label className="checkrow" key={rule}>
+                <input
+                  type="checkbox"
+                  checked={prefs.eisenhowerUrgent.includes(rule)}
+                  onChange={() => toggleUrgent(rule)}
+                />
+                <span>{t(`matrix.urgent.${rule}` as TranslationKey)}</span>
+              </label>
+            ))}
+          </div>
+
+          <h5>{t('matrix.important')}</h5>
+          <div className="matrix-checks importance-checks">
+            {EISENHOWER_PRIORITIES.map((priority) => (
+              <label className="checkrow" key={priority}>
+                <input
+                  type="checkbox"
+                  checked={prefs.eisenhowerImportant.includes(priority)}
+                  onChange={() => toggleImportant(priority)}
+                />
+                <span>{t(`common.p${priority}` as TranslationKey)}</span>
+              </label>
+            ))}
+          </div>
+          <p className="displayhelp">{t('matrix.settings.help')}</p>
+        </div>
+      )}
+    </div>
+  );
+}

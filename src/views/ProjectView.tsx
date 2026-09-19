@@ -1,4 +1,4 @@
-import { useMemo, useState, Fragment } from 'react';
+import { useEffect, useMemo, useState, Fragment } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { SubtasksProvider } from '@/components/TaskRow';
 import { DisplayMenu } from '@/components/DisplayMenu';
@@ -21,6 +21,7 @@ import { summariseLoad } from '@/domain/load';
 
 interface ProjectViewProps {
   projectId: string;
+  revealSectionId?: string;
   onOpen: (id: string) => void;
   onInsights: () => void;
   onUnestimated: () => void;
@@ -50,7 +51,7 @@ const priorityOf = (key: string): 1 | 2 | 3 | 4 | undefined => {
 };
 
 function ProjectBody({
-  projectId, onOpen, onInsights, onUnestimated, onAddTaskTo, onProjectSheet,
+  projectId, revealSectionId, onOpen, onInsights, onUnestimated, onAddTaskTo, onProjectSheet,
 }: ProjectViewProps) {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const { t } = useT();
@@ -142,6 +143,22 @@ function ProjectBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sections, scoped, current.sort, childrenOf],
   );
+
+  useEffect(() => {
+    if (!revealSectionId || !sections.some((section) => section.id === revealSectionId)) return;
+    let cancelled = false;
+    const reveal = () => {
+      if (cancelled) return;
+      const field = document.querySelector<HTMLElement>(`[data-section-name="${CSS.escape(revealSectionId)}"]`);
+      const group = field?.closest<HTMLElement>('.group');
+      if (!group) { window.setTimeout(reveal, 30); return; }
+      group.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      group.classList.add('section-reveal');
+      window.setTimeout(() => group.classList.remove('section-reveal'), 1800);
+    };
+    window.setTimeout(reveal, 0);
+    return () => { cancelled = true; };
+  }, [revealSectionId, sections]);
 
   const boardColumns = useMemo(
     () =>

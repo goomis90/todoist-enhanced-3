@@ -22,6 +22,7 @@ import { LabelsView } from './views/LabelsView';
 import { InsightsView } from './views/InsightsView';
 import { ReviewView } from './views/ReviewView';
 import { SettingsView } from './views/SettingsView';
+import { EisenhowerView } from './views/EisenhowerView';
 import { ConnectView } from './views/ConnectView';
 import { Walkthrough } from './components/overlays/Walkthrough';
 import { Tour } from './components/overlays/Tour';
@@ -377,6 +378,8 @@ function AppShell({
           contextLabel: t('nav.inbox'),
         };
       }
+      case 'matrix':
+        return { contextItems: roots, contextLabel: t('nav.matrix') };
       default:
         return { contextItems: roots, contextLabel: t(`nav.${route.view}` as TranslationKey) };
     }
@@ -389,11 +392,15 @@ function AppShell({
 
   /* Every way out of the browse page is a navigation, so one effect closes it
      rather than each of its thirty buttons remembering to. */
-  useEffect(() => setBrowseOpen(false), [route.view, route.id, setBrowseOpen]);
+  useEffect(() => setBrowseOpen(false), [route.view, route.id, route.sectionId, setBrowseOpen]);
 
   /* A selection belongs to the page it was made on. Carrying it to the next
      one would leave a bar offering to delete tasks that are no longer shown. */
-  useEffect(() => clearSelection(), [route.view, route.id, clearSelection]);
+  useEffect(() => clearSelection(), [route.view, route.id, route.sectionId, clearSelection]);
+
+  useEffect(() => {
+    document.querySelector<HTMLElement>('.screen.active')?.scrollTo({ top: 0 });
+  }, [route.view, route.id]);
 
   /**
    * Whether the page's own heading has scrolled out of sight.
@@ -500,8 +507,11 @@ function AppShell({
             <SimpleListView kind="label" labelName={route.id} {...viewProps} />
           )}
           {route.view === 'labels' && <LabelsView />}
+          {route.view === 'matrix' && (
+            <EisenhowerView onOpen={openTask} onUnestimated={openUnestimated} />
+          )}
           {route.view === 'project' && route.id && (
-            <ProjectView projectId={route.id} {...viewProps} />
+            <ProjectView projectId={route.id} revealSectionId={route.sectionId} {...viewProps} />
           )}
           {route.view === 'review' && <ReviewView onOpen={openTask} />}
           {route.view === 'insights' && <InsightsView />}

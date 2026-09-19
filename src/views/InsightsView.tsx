@@ -4,8 +4,9 @@ import { Icon } from '@/components/Icon';
 import { DateField } from '@/components/DateField';
 import { CoffeeLine } from '@/components/CoffeeLine';
 import {
-  Bars, ChartCard, CompareBars, Donut, RankedBars, SplitBar, StatTile, seriesColor,
-  type BarDatum, type CompareDatum, type RankedDatum, type SliceDatum,
+  Bars, ChartCard, CompareBars, ContributionGrid, Donut, RankedBars, Ring, SplitBar,
+  StatTile, seriesColor, type BarDatum, type CompareDatum, type ContributionDatum,
+  type RankedDatum, type SliceDatum,
 } from '@/components/charts';
 import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
@@ -83,9 +84,11 @@ export function InsightsView() {
 
   const intl = locale === 'fr' ? 'fr-FR' : 'en-GB';
 
-  /* How this range is worth cutting up.
-     A single day has no series of days in it; a year has too many to read. */
-  const grain = granularityOf(spanOf(range));
+  /* Short ranges read day by day, years month by month, and a quarter gives
+     the reader both useful resolutions instead of choosing for them. */
+  const grainOptions = granularitiesOf(spanOf(range));
+  const [grainChoice, setGrainChoice] = useState<Grain>('day');
+  const grain = grainOptions.includes(grainChoice) ? grainChoice : (grainOptions[0] ?? null);
 
   /* Each bucket of the range, with the matching bucket of the range before
      it drawn as a dot. Both series share one axis; never two scales. */
@@ -109,36 +112,12 @@ export function InsightsView() {
 
     return buckets.map((at, index) => ({
       key: bucketKey(at, grain),
-      label: bucketLabel(at, grain, intl),
+      label: bucketLabel(at, grain, intl, spanOf(range) <= 14),
       value: current.get(bucketKey(at, grain)) ?? 0,
       previous: before[index] ? (earlier.get(bucketKey(before[index], grain)) ?? 0) : 0,
       current: bucketKey(at, grain) === nowKey,
     }));
   }, [completed, previous, range, grain, intl]);
-
-  /* One calendar week, starting on the day the Todoist account does, so the
-     axis reads M T W T F S S rather than "the last seven days". For a week it
-     is the week itself; for a month, the week its last day falls in, which is
-     this week while the month is the current one. */
-  const weekActivity: BarDatum[] = useMemo(() => {
-    const today = startOfDay(new Date());
-    const todayKey = format(today, 'yyyy-MM-dd');
-    const counts = countByDay(completed);
-    const anchor = period === 'week' ? range.since : startOfDay(range.until < today ? range.until : today);
-    const back = (anchor.getDay() - (startDay % 7) + 7) % 7;
-    const first = new Date(anchor.getTime() - back * 86_400_000);
-
-    return Array.from({ length: 7 }, (_, offset) => {
-      const day = new Date(first.getTime() + offset * 86_400_000);
-      const key = format(day, 'yyyy-MM-dd');
-      return {
-        key,
-        label: new Intl.DateTimeFormat(intl, { weekday: 'narrow' }).format(day),
-        value: counts.get(key) ?? 0,
-        current: key === todayKey,
-      };
-    });
-  }, [completed, intl, startDay, period, range]);
 
   const byHour: BarDatum[] = useMemo(
     () =>
@@ -186,11 +165,28 @@ export function InsightsView() {
     [summary.byLabel, t],
   );
 
-  const perActiveDay = summary.activeDays > 0
-    ? Math.round((summary.completedCount / summary.activeDays) * 10) / 10
+  const tasksPerDay = spanOf(range) > 0
+    ? Math.round((summary.completedCount / spanOf(range)) * 10) / 10
     : 0;
 
   const tasksLabel = (count: number) => t('metrics.tasks', { count });
+  const completedDelta = summary.completedCount - previous.length;
+
+  /* Every selected day is loaded, including a full year. The grid can scroll
+     horizontally rather than hiding the longest and most useful timeframe. */
+  const contribution: ContributionDatum[] = useMemo(() => {
+    const counts = countByDay(completed);
+    const days: ContributionDatum[] = [];
+    for (let at = startOfDay(range.since); at <= range.until; at = new Date(at.getTime() + 86_400_000)) {
+      const key = format(at, 'yyyy-MM-dd');
+      days.push({
+        key,
+        label: new Intl.DateTimeFormat(intl, { day: 'numeric', month: 'short' }).format(at),
+        value: counts.get(key) ?? 0,
+      });
+    }
+    return days;
+  }, [completed, range, intl]);
 
   return (
     <div className="page wide">
@@ -278,73 +274,26 @@ export function InsightsView() {
 
       {!loading && tab === 'overview' && (
         <div className="bento">
-          <section className="card w12 summary">
-            <div className="summary-head">
-              <h3>{t('insights.summary')}</h3>
-              <strong>
-                {t('insights.completedShare', { percentage: summary.progressPercentage })}
-              </strong>
-            </div>
-            <div className="summary-stats">
-              <div className="sstat completed">
-                <Icon name="check" size="sm" />
-                <strong>{summary.completedCount}</strong>
-                <span>{t('insights.statCompleted')}</span>
-              </div>
-              <div className="sstat active">
-                <Icon name="tasks" size="sm" />
-                <strong>{summary.activeCount}</strong>
-                <span>{t('insights.statActive')}</span>
-              </div>
-              <div className="sstat streak">
-                <Icon name="trend" size="sm" />
-                <strong>{summary.currentStreak}</strong>
-                <span>{t('insights.statStreak', { count: summary.currentStreak })}</span>
-              </div>
-            </div>
-          </section>
-
-          <section className={`card focuscardv ${period === 'week' || period === 'month' ? 'w4' : 'w6'}`}>
-            <h3>{t('insights.focusScore')}</h3>
-            <p className="hero">{summary.focusScore}%</p>
-            <SplitBar data={byPriority} />
-            <p className="psub">{t('insights.focusExplainer')}</p>
-          </section>
-
-          {/* Past a month the current week is a footnote, not a headline. */}
-          {(period === 'week' || period === 'month') && (
-            <ChartCard
-              title={t('insights.weekActivity')}
-              subtitle={t('insights.completedTasks')}
-              span={8}
-              trailing={<span className="kpi-label">{summary.completedCount}</span>}
-            >
-              <Bars
-                data={weekActivity}
-                height={150}
-                emptyLabel={t('insights.noHistory')}
-                format={tasksLabel}
-              />
-            </ChartCard>
-          )}
-
-          <section className="card w3">
+          <section className="card w4 metric-card">
             <StatTile
               label={t('insights.completedTasks')}
               value={summary.completedCount}
-              hint={t('insights.activeDays') + ' · ' + summary.activeDays}
+              hint={t('insights.storyCompared', {
+                delta: `${completedDelta > 0 ? '+' : ''}${completedDelta}`,
+                previous: previous.length,
+              })}
             />
           </section>
 
-          <section className="card w3">
+          <section className="card w4 metric-card">
             <StatTile
               label={t('insights.tasksPerDay')}
-              value={perActiveDay}
+              value={tasksPerDay}
               hint={t('insights.tasksPerDayHint')}
             />
           </section>
 
-          <section className="card w3">
+          <section className="card w4 metric-card">
             <StatTile
               label={t('insights.completedTime')}
               value={formatDuration(summary.completedMinutes, locale)}
@@ -356,26 +305,25 @@ export function InsightsView() {
             />
           </section>
 
-          <section className="card w3">
-            <StatTile
-              label={t('insights.coverage')}
-              value={`${summary.estimateCoverage}%`}
-              hint={
-                t('insights.remaining') + ' · '
-                + formatDuration(
-                  roots.reduce((acc, i) => acc + (estimateOf(i) ?? 0), 0),
-                  locale,
-                )
-              }
-            />
-          </section>
-
           {/* A single day has no series of days inside it. */}
           {grain !== null && (
             <ChartCard
               title={t(`insights.per_${grain}` as TranslationKey)}
               subtitle={t('insights.perBucketHint')}
               span={12}
+              trailing={grainOptions.length > 1 ? (
+                <div className="segmented small chart-grain" aria-label={t('insights.granularity')}>
+                  {grainOptions.map((option) => (
+                    <button
+                      key={option}
+                      aria-pressed={grain === option}
+                      onClick={() => setGrainChoice(option)}
+                    >
+                      <small>{t(`insights.grain.${option}` as TranslationKey)}</small>
+                    </button>
+                  ))}
+                </div>
+              ) : undefined}
             >
               <CompareBars
                 data={perBucket}
@@ -385,6 +333,25 @@ export function InsightsView() {
                 format={(value) => String(value)}
                 currentLabel={t('insights.thisPeriod')}
                 previousLabel={t('insights.previousPeriod')}
+              />
+            </ChartCard>
+          )}
+
+          {contribution.length > 0 && (
+            <ChartCard
+              title={t('insights.contribution')}
+              subtitle={t('insights.contributionHint')}
+              span={12}
+            >
+              <ContributionGrid
+                data={contribution}
+                emptyLabel={t('insights.noHistory')}
+                summary={t('insights.contributionSummary', {
+                  active: summary.activeDays,
+                  total: contribution.length,
+                })}
+                lessLabel={t('insights.lessActivity')}
+                moreLabel={t('insights.moreActivity')}
               />
             </ChartCard>
           )}
@@ -401,12 +368,15 @@ export function InsightsView() {
           </ChartCard>
 
           <ChartCard title={t('insights.byPriority')} span={6}>
-            <Donut
-              data={byPriority}
-              total={`${summary.focusScore}%`}
-              caption={t('insights.focusScore')}
-              emptyLabel={t('insights.noHistory')}
-            />
+            <div className="priority-focus">
+              <Ring
+                percentage={summary.focusScore}
+                label={t('insights.focusScore')}
+                caption={t('insights.focusExplainer')}
+                color="var(--accent)"
+              />
+              <SplitBar data={byPriority} />
+            </div>
           </ChartCard>
 
           <ChartCard
@@ -444,7 +414,7 @@ export function InsightsView() {
 
 /* ------------------------------------------------------------------ */
 
-type Grain = 'day' | 'week' | 'month';
+type Grain = 'day' | 'month';
 
 /**
  * The unit a range of so many days is read in.
@@ -453,11 +423,11 @@ type Grain = 'day' | 'week' | 'month';
  * by day is ninety bars nobody can tell apart, and a year is three hundred
  * and sixty-five.
  */
-function granularityOf(days: number): Grain | null {
-  if (days <= 1) return null;
-  if (days <= 62) return 'day';
-  if (days <= 200) return 'week';
-  return 'month';
+function granularitiesOf(days: number): Grain[] {
+  if (days <= 1) return [];
+  if (days <= 31) return ['day'];
+  if (days <= 180) return ['day', 'month'];
+  return ['month'];
 }
 
 /** The start of every bucket the range touches, in order. */
@@ -471,11 +441,6 @@ function bucketsOf(range: Range, grain: Grain): Date[] {
 
 const startOfGrain = (at: Date, grain: Grain): Date => {
   if (grain === 'month') return new Date(at.getFullYear(), at.getMonth(), 1);
-  if (grain === 'week') {
-    const monday = new Date(at);
-    monday.setDate(at.getDate() - ((at.getDay() + 6) % 7));
-    return startOfDay(monday);
-  }
   return startOfDay(at);
 };
 
@@ -485,17 +450,17 @@ const bucketKey = (at: Date, grain: Grain): string =>
 function shiftBucket(from: Date, grain: Grain, by: number): Date {
   const at = startOfGrain(from, grain);
   if (grain === 'month') return new Date(at.getFullYear(), at.getMonth() + by, 1);
-  return new Date(at.getTime() + by * (grain === 'week' ? 7 : 1) * 86_400_000);
+  return new Date(at.getTime() + by * 86_400_000);
 }
 
-function bucketLabel(at: Date, grain: Grain, intl: string): string {
+function bucketLabel(at: Date, grain: Grain, intl: string, weekday = false): string {
   if (grain === 'month') {
     return new Intl.DateTimeFormat(intl, { month: 'short' }).format(at);
   }
-  if (grain === 'week') {
-    return new Intl.DateTimeFormat(intl, { day: 'numeric', month: 'short' }).format(at);
-  }
-  return new Intl.DateTimeFormat(intl, { day: 'numeric' }).format(at);
+  return new Intl.DateTimeFormat(
+    intl,
+    weekday ? { weekday: 'short' } : { day: 'numeric', month: 'short' },
+  ).format(at);
 }
 
 function countByDay(items: CompletedItem[]): Map<string, number> {

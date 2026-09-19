@@ -229,6 +229,61 @@ export function Ring({ percentage, label, caption, color }: RingProps) {
 
 /* ------------------------------------------------------------------ */
 
+export interface ContributionDatum {
+  key: string;
+  label: string;
+  value: number;
+}
+
+/**
+ * Activity consistency across a fully loaded period.
+ *
+ * The colour is deliberately one hue at four intensities: it encodes amount,
+ * not quality. Every day is keyboard reachable and named with its exact count,
+ * while the sentence beneath explains the pattern without requiring hover.
+ */
+export function ContributionGrid({
+  data, emptyLabel, summary, lessLabel = 'Less', moreLabel = 'More',
+}: {
+  data: ContributionDatum[];
+  emptyLabel: string;
+  summary: string;
+  lessLabel?: string;
+  moreLabel?: string;
+}) {
+  if (data.length === 0) return <p className="chart-empty">{emptyLabel}</p>;
+  const max = Math.max(1, ...data.map((day) => day.value));
+  return (
+    <div className="contribution">
+      <div className="contribution-grid" role="img" aria-label={summary}>
+        {data.map((day) => {
+          const level = day.value === 0 ? 0 : Math.max(1, Math.ceil((day.value / max) * 4));
+          return (
+            <button
+              key={day.key}
+              className={`contribution-day level-${level}`}
+              aria-label={`${day.label}: ${day.value}`}
+              title={`${day.label} · ${day.value}`}
+            />
+          );
+        })}
+      </div>
+      <div className="contribution-foot">
+        <p className="chart-summary">{summary}</p>
+        <div className="contribution-legend" aria-label={`${lessLabel} – ${moreLabel}`}>
+          <span>{lessLabel}</span>
+          {[0, 1, 2, 3, 4].map((level) => (
+            <i key={level} className={`contribution-day level-${level}`} />
+          ))}
+          <span>{moreLabel}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
 interface CardProps {
   title: string;
   subtitle?: string;

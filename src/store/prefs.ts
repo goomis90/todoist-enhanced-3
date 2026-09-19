@@ -73,6 +73,28 @@ export const isHomeView = (value: unknown): value is HomeView =>
 export const WEEK_LAYOUTS = ['unified', 'splitWithToday', 'split'] as const;
 export type WeekLayout = (typeof WEEK_LAYOUTS)[number];
 
+export const MATRIX_LAYOUTS = ['list', 'matrix'] as const;
+export type MatrixLayout = (typeof MATRIX_LAYOUTS)[number];
+
+export const EISENHOWER_URGENCY_RULES = [
+  'overdue', 'today', 'tomorrow', 'after-tomorrow', 'next-seven', 'week',
+] as const;
+export type EisenhowerUrgencyRule = (typeof EISENHOWER_URGENCY_RULES)[number];
+
+export const EISENHOWER_PRIORITIES = [1, 2, 3, 4] as const;
+export type EisenhowerPriority = (typeof EISENHOWER_PRIORITIES)[number];
+
+export const isMatrixLayout = (value: unknown): value is MatrixLayout =>
+  typeof value === 'string' && (MATRIX_LAYOUTS as readonly string[]).includes(value);
+
+const isEisenhowerUrgencyRule = (value: unknown): value is EisenhowerUrgencyRule =>
+  typeof value === 'string'
+  && (EISENHOWER_URGENCY_RULES as readonly string[]).includes(value);
+
+const isEisenhowerPriority = (value: unknown): value is EisenhowerPriority =>
+  typeof value === 'number'
+  && (EISENHOWER_PRIORITIES as readonly number[]).includes(value);
+
 export const isWeekLayout = (value: unknown): value is WeekLayout =>
   typeof value === 'string' && (WEEK_LAYOUTS as readonly string[]).includes(value);
 
@@ -131,6 +153,20 @@ export interface Preferences {
    * not asking.
    */
   quietAfterDays: number;
+  /** Sections stay out of the global palette until explicitly requested. */
+  includeSectionsInSearch: boolean;
+  /** The Matrix is an optional decision lens, never a default data mutation. */
+  eisenhowerEnabled: boolean;
+  /** The Matrix remembers its own presentation independently of task views. */
+  eisenhowerLayout: MatrixLayout;
+  /** Independent date/week buckets that count as urgent. */
+  eisenhowerUrgent: EisenhowerUrgencyRule[];
+  /** Displayed Todoist priorities that count as important. */
+  eisenhowerImportant: EisenhowerPriority[];
+  /** Whether tasks dated after today are included in the matrix. */
+  eisenhowerShowFuture: boolean;
+  /** Whether the undated Someday backlog is included in the matrix. */
+  eisenhowerIncludeSomeday: boolean;
 }
 
 export const defaultPreferences = (locale: Locale): Preferences => ({
@@ -153,6 +189,13 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
   weekLayout: 'unified',
   weekLabel: DEFAULT_WEEK_LABEL,
   quietAfterDays: 14,
+  includeSectionsInSearch: false,
+  eisenhowerEnabled: false,
+  eisenhowerLayout: 'matrix',
+  eisenhowerUrgent: ['overdue', 'today'],
+  eisenhowerImportant: [1, 2],
+  eisenhowerShowFuture: false,
+  eisenhowerIncludeSomeday: false,
 });
 
 /**
@@ -195,6 +238,19 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
     quietAfterDays: Number.isFinite(s.quietAfterDays) && (s.quietAfterDays as number) > 0
       ? Math.round(s.quietAfterDays as number)
       : base.quietAfterDays,
+    includeSectionsInSearch: s.includeSectionsInSearch === true,
+    eisenhowerEnabled: s.eisenhowerEnabled === true,
+    eisenhowerLayout: isMatrixLayout(s.eisenhowerLayout)
+      ? s.eisenhowerLayout
+      : base.eisenhowerLayout,
+    eisenhowerUrgent: Array.isArray(s.eisenhowerUrgent)
+      ? s.eisenhowerUrgent.filter(isEisenhowerUrgencyRule)
+      : base.eisenhowerUrgent,
+    eisenhowerImportant: Array.isArray(s.eisenhowerImportant)
+      ? s.eisenhowerImportant.filter(isEisenhowerPriority)
+      : base.eisenhowerImportant,
+    eisenhowerShowFuture: s.eisenhowerShowFuture === true,
+    eisenhowerIncludeSomeday: s.eisenhowerIncludeSomeday === true,
     views: s.views ?? {},
   };
 }

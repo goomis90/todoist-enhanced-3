@@ -5,27 +5,34 @@ export interface Route {
   view: ViewId;
   /** Project or label id, when the view needs one. */
   id?: string;
+  /** A project section to reveal after navigation from global search. */
+  sectionId?: string;
 }
 
 function parse(hash: string): Route {
   const raw = hash.replace(/^#\/?/, '');
   if (!raw) return { view: 'week' };
-  const [view, id] = raw.split('/');
+  const [path, query = ''] = raw.split('?');
+  const [view, id] = path.split('/');
   // The dashboard is a tab of the insights page; an old link still lands there.
   if (view === 'dashboard') return { view: 'insights' };
   const known: ViewId[] = [
     'inbox', 'week', 'today', 'upcoming', 'someday', 'review',
-    'settings', 'project', 'label', 'labels', 'insights',
+    'settings', 'project', 'label', 'labels', 'matrix', 'insights',
   ];
   if (!known.includes(view as ViewId)) return { view: 'week' };
-  return id ? { view: view as ViewId, id } : { view: view as ViewId };
+  const sectionId = view === 'project' ? new URLSearchParams(query).get('section') ?? undefined : undefined;
+  return id ? { view: view as ViewId, id, sectionId } : { view: view as ViewId };
 }
 
 export const routeKey = (route: Route): string =>
   route.id ? `${route.view}:${route.id}` : route.view;
 
-export function navigate(view: ViewId, id?: string): void {
-  window.location.hash = id ? `#/${view}/${id}` : `#/${view}`;
+export function navigate(view: ViewId, id?: string, options?: { sectionId?: string }): void {
+  const base = id ? `#/${view}/${id}` : `#/${view}`;
+  window.location.hash = options?.sectionId
+    ? `${base}?section=${encodeURIComponent(options.sectionId)}`
+    : base;
 }
 
 /** The current destination, kept in the address bar so Back works in the PWA. */

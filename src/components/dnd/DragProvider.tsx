@@ -10,6 +10,9 @@ import {
   type DropTarget,
 } from '@/domain/dnd';
 import { formatDayOrName } from '@/domain/dates';
+import {
+  relativePositionFromCenters, reorderAtSlot, reorderRelative,
+} from '@/domain/order';
 import { useT } from '@/hooks/useT';
 import { siblingOrder } from '@/store/selectors';
 import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
@@ -71,7 +74,7 @@ const dragKind = (id: string): 'subtask' | 'section' | 'project' | 'tag' | 'task
 
 const dropKind = (id: string): 'subtask' | 'slot' | 'project' | 'tag' | 'target' =>
   (id.startsWith('subtask:') ? 'subtask'
-    : id.startsWith('slot:') ? 'slot'
+    : id.startsWith('slot:') || id.startsWith('section-slot:') ? 'slot'
       : id.startsWith('project-row:') ? 'project'
         : id.startsWith(TAG_DROP_PREFIX) ? 'tag' : 'target');
 
@@ -103,6 +106,37 @@ const collisionsForKind: CollisionDetection = (args) => {
      both; the row is the narrower, deliberate answer. */
   const rows = hits.filter((c) => decodeRowTarget(String(c.id)) !== null);
   if (rows.length) return rows;
+
+  const nearestVertical = (choices: typeof hits) => {
+    const pointer = args.pointerCoordinates;
+    if (!pointer) return choices;
+    return [...choices].sort((a, b) => {
+      const aRect = args.droppableRects.get(a.id);
+      const bRect = args.droppableRects.get(b.id);
+      const aDistance = aRect ? Math.abs(pointer.y - (aRect.top + aRect.height / 2)) : Infinity;
+      const bDistance = bRect ? Math.abs(pointer.y - (bRect.top + bRect.height / 2)) : Infinity;
+      const distance = aDistance - bDistance;
+      if (distance !== 0) return distance;
+      /* The exact centre is the common mouse target. On a tie, taking the
+         upper seam makes dragging the lower sibling onto the upper one do the
+         unsurprising thing instead of producing the unchanged order. */
+      return String(a.id).endsWith(':before') ? -1 : 1;
+    }).slice(0, 1);
+  };
+
+  if (dragKind(String(args.active.id)) === 'section') {
+    const positions = hits.filter((c) => String(c.id).startsWith('section-slot:'));
+    if (positions.length) return nearestVertical(positions);
+  }
+
+  /* A project has one stable target: its whole row. The position is derived
+     from the dragged row's centre at release. This avoids competing nested
+     droppables, which made a project appear to land but left the order
+     unchanged. Moving right still turns the same target into nesting. */
+  if (dragKind(String(args.active.id)) === 'project') {
+    const projectRows = hits.filter((c) => String(c.id).startsWith('project-row:'));
+    if (projectRows.length) return nearestVertical(projectRows);
+  }
 
   /* A row is picked up by a handle drawn outside it, in the gutter, so a task
      dragged straight down the list is carried by a pointer that is beside
@@ -287,7 +321,10 @@ export function DragProvider({ children }: { children: ReactNode }) {
     const id = String(event.active.id);
     if (id.startsWith('section:')) return;
     setNesting(event.delta.x >= NEST_THRESHOLD_PX);
-    setOutdenting(id.startsWith(SUBTASK_DRAG_PREFIX) && event.delta.x <= -NEST_THRESHOLD_PX);
+    setOutdenting(
+      (id.startsWith(SUBTASK_DRAG_PREFIX) || id.startsWith('project-row:'))
+      && event.delta.x <= -NEST_THRESHOLD_PX,
+    );
   }
 
   async function onDragEnd(event: DragEndEvent) {
@@ -312,6 +349,28 @@ export function DragProvider({ children }: { children: ReactNode }) {
         return;
       }
     }
+    /* The matching Todoist gesture for a nested project: pull it left one
+       indentation level. It lands immediately after its former parent, which
+       keeps the branch together instead of throwing the project to the end of
+       an unrelated list. This also works when the pointer finishes in empty
+       sidebar space. */
+    if (activeId.startsWith('project-row:') && pulledOut) {
+      const from = activeId.slice('project-row:'.length);
+      const project = snapshot.projects[from];
+      const formerParentId = project?.parent_id ?? null;
+      if (project && formerParentId) {
+        const nextParentId = snapshot.projects[formerParentId]?.parent_id ?? null;
+        await nestProject(from, nextParentId);
+        const current = useStore.getState().snapshot;
+        const siblings = siblingOrder(current, from);
+        if (siblings.includes(formerParentId)) {
+          await reorderProjects(reorderRelative(
+            siblings, from, formerParentId, 'after',
+          ));
+        }
+      }
+      return;
+    }
     /* Pressed and held on a sidebar project and let go without moving. On a
        phone that is the gesture for "tell me about this one", and it is the
        same press that would have carried the row off had the finger gone on
@@ -332,8 +391,29 @@ export function DragProvider({ children }: { children: ReactNode }) {
        task and none of the task rules apply to it. */
     if (activeId.startsWith('section:')) {
       const overId = String(event.over.id);
+      const from = activeId.slice('section:'.length);
+      const sectionPosition = overId.match(/^section-slot:(.+):(before|after)$/);
+      if (sectionPosition) {
+        const siblings = Object.values(snapshot.sections)
+          .filter((section) => section.project_id === snapshot.sections[from]?.project_id
+            && !section.is_archived && !section.is_deleted)
+          .sort((a, b) => a.section_order - b.section_order)
+          .map((section) => section.id);
+        const next = reorderRelative(
+          siblings, from, sectionPosition[1], sectionPosition[2] as 'before' | 'after',
+        );
+        await moveSection(from, next.indexOf(from));
+        return;
+      }
       if (!overId.startsWith('slot:')) return;
-      await moveSection(activeId.slice('section:'.length), Number(overId.split(':')[2]));
+      const all = Object.values(snapshot.sections)
+        .filter((section) => section.project_id === snapshot.sections[from]?.project_id
+          && !section.is_archived && !section.is_deleted)
+        .sort((a, b) => a.section_order - b.section_order)
+        .map((section) => section.id);
+      const rawSlot = Number(overId.split(':')[1]);
+      const next = reorderAtSlot(all, from, rawSlot);
+      await moveSection(from, next.indexOf(from));
       return;
     }
 
@@ -427,9 +507,6 @@ export function DragProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      /* A sidebar row is two things at once: somewhere to file a task, and a
-         position in a list. While a project is in flight only the second
-         reading applies, so a landing on either id means the same place. */
       const over = overId.startsWith('project-row:')
         ? overId.slice('project-row:'.length)
         : decodeTarget(overId)?.kind === 'project'
@@ -446,11 +523,18 @@ export function DragProvider({ children }: { children: ReactNode }) {
       }
 
       const siblings = siblingOrder(snapshot, from);
-      const at = siblings.indexOf(from);
-      const to = siblings.indexOf(over);
-      if (at < 0 || to < 0) return;
-      const next = [...siblings];
-      next.splice(to, 0, ...next.splice(at, 1));
+      if (!siblings.includes(from) || !siblings.includes(over)) return;
+      const translated = event.active.rect.current.translated;
+      const activeMiddle = translated ? translated.top + translated.height / 2 : null;
+      const overMiddle = event.over.rect.top + event.over.rect.height / 2;
+      const fromIndex = siblings.indexOf(from);
+      const overIndex = siblings.indexOf(over);
+      const position = relativePositionFromCenters(
+        fromIndex, overIndex, activeMiddle, overMiddle,
+      );
+      const next = reorderRelative(
+        siblings, from, over, position,
+      );
       await reorderProjects(next);
       return;
     }
@@ -760,7 +844,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
             preview the pointer held nothing and the only sign anything was
             happening was the row going faint behind it. */}
         {draggingProjectRow && (
-          <div className="dragoverlay project">
+          <div className={`dragoverlay project${outdenting ? ' outdent' : ''}`}>
             <span className="hash" style={markerStyle(draggingProjectRow.color)}>#</span>
             {draggingProjectRow.name}
           </div>

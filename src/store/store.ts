@@ -17,6 +17,7 @@ import { toApiDate } from '@/domain/dates';
 import type { RecurrenceReading } from '@/domain/recurrence';
 import { detectLocale, translate, type Locale } from '@/i18n';
 import { dropMutation, moveArgs, type DropTarget } from '@/domain/dnd';
+import { patchParent } from '@/domain/order';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import {
   defaultPreferences, hydratePreferences, viewPrefs as readViewPrefs,
@@ -272,7 +273,11 @@ interface AppState {
    * components deep inside a view.
    */
   selection: string[];
+  /** The endpoint the next Shift selection starts from. */
+  selectionAnchor: string | null;
   toggleSelection: (id: string) => void;
+  setSelectionAnchor: (id: string) => void;
+  selectRange: (ids: string[], additive: boolean) => void;
   clearSelection: () => void;
   /** The section currently in flight, so the slots between sections can open up. */
   draggingSectionId: string | null;
@@ -329,6 +334,7 @@ export const useStore = create<AppState>((set, get) => ({
   draggingProjectId: null,
   draggingTag: null,
   selection: [],
+  selectionAnchor: null,
   demo: false,
 
   async init() {
@@ -1100,6 +1106,7 @@ export const useStore = create<AppState>((set, get) => ({
       /* A folder is a perfectly good parent — holding projects is the whole of
          what a folder is — but it cannot itself be filed inside something. */
       if (!parent || project.is_folder) return;
+      if ((parent.workspace_id ?? null) !== (project.workspace_id ?? null)) return;
       for (let at: string | null = parentId; at; at = projects[at]?.parent_id ?? null) {
         if (at === id) return;
       }
@@ -1107,12 +1114,8 @@ export const useStore = create<AppState>((set, get) => ({
 
     const before = project.parent_id ?? null;
     const patch = (to: string | null) => (snapshot: Snapshot): Snapshot => {
-      const current = snapshot.projects[id];
-      if (!current) return snapshot;
-      return {
-        ...snapshot,
-        projects: { ...snapshot.projects, [id]: { ...current, parent_id: to } },
-      };
+      if (!snapshot.projects[id]) return snapshot;
+      return { ...snapshot, projects: patchParent(snapshot.projects, id, to) };
     };
 
     /* Todoist reads a missing parent_id as "leave it where it is" and an
@@ -1465,11 +1468,24 @@ export const useStore = create<AppState>((set, get) => ({
       selection: current.includes(id)
         ? current.filter((other) => other !== id)
         : [...current, id],
+      selectionAnchor: id,
     });
   },
 
+  setSelectionAnchor(id) {
+    if (get().selectionAnchor !== id) set({ selectionAnchor: id });
+  },
+
+  selectRange(ids, additive) {
+    if (ids.length === 0) return;
+    const next = additive ? [...new Set([...get().selection, ...ids])] : ids;
+    set({ selection: next, selectionAnchor: ids[ids.length - 1] });
+  },
+
   clearSelection() {
-    if (get().selection.length > 0) set({ selection: [] });
+    if (get().selection.length > 0 || get().selectionAnchor) {
+      set({ selection: [], selectionAnchor: null });
+    }
   },
 
   setDragging(id) {

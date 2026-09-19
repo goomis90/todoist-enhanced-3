@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import { useStore } from '@/store/store';
 
 interface ProjectRowSortableProps {
@@ -78,16 +78,23 @@ export function ProjectRowSortable({
     id, disabled: !sortable || taskDragging,
   });
   const nesting = useStore((s) => s.nesting);
+  const { active, over } = useDndContext();
 
   if (!sortable) return <div className={`navrow${className}`}>{children}</div>;
 
   const landing = isOver && !isDragging && !taskDragging;
+  const translated = active?.rect.current.translated;
+  const overMiddle = over ? over.rect.top + over.rect.height / 2 : null;
+  const activeMiddle = translated ? translated.top + translated.height / 2 : null;
+  const position = landing && !nesting
+    ? (activeMiddle !== null && overMiddle !== null && activeMiddle > overMiddle ? 'after' : 'before')
+    : null;
 
   return (
     <div
       ref={(node) => { setNodeRef(node); setDropRef(node); rowRef.current = node; }}
       {...{ [projectRowAttr]: projectId }}
-      className={`navrow sortable${isDragging ? ' lifting' : ''}${landing ? (nesting ? ' nesting' : ' landing') : ''}${className}`}
+      className={`navrow sortable${isDragging ? ' lifting' : ''}${landing ? (nesting ? ' nesting' : ` drop-${position}`) : ''}${className}`}
       {...attributes}
       {...listeners}
     >

@@ -982,6 +982,22 @@
 .summary-head{display:flex;align-items:baseline;justify-content:space-between;
   gap:var(--s2) var(--s4);flex-wrap:wrap}
 .summary-head strong{font-size:var(--fs-16);font-weight:700;color:var(--accent-dark)}
+.dashboard-story{overflow:hidden;position:relative}
+.dashboard-story::after{
+  content:"";position:absolute;right:-54px;bottom:-76px;width:210px;height:210px;
+  border:42px solid var(--accent-tint);border-radius:50%;opacity:.72;pointer-events:none;
+}
+.dashboard-story .summary-head{align-items:flex-start;position:relative;z-index:1}
+.dashboard-story .story-value{
+  margin:12px 0 0;font-size:54px;font-weight:700;letter-spacing:-.055em;line-height:.95;
+  color:var(--text);font-variant-numeric:tabular-nums;
+}
+.dashboard-story .story-label{margin-top:7px;color:var(--muted);font-size:var(--fs-14)}
+.dashboard-story .summary-head > strong{
+  padding:5px 9px;border-radius:var(--r-full);background:var(--surface);
+  border:1px solid var(--border);font-size:var(--fs-12);font-variant-numeric:tabular-nums;
+}
+.dashboard-story .summary-head > strong.down{color:var(--muted)}
 .summary-stats{
   display:flex;flex-wrap:wrap;gap:var(--s3) var(--s6);margin-top:var(--s4);
 }
@@ -1001,6 +1017,42 @@
   font-variant-numeric:tabular-nums;
 }
 .focuscardv .psub{margin-top:0}
+.focuscardv .ringstat{align-items:flex-start}
+.focuscardv .ring{width:88px;height:88px}
+.focuscardv .ringtext{display:grid;gap:4px;padding-top:8px}
+
+.contribution{display:grid;gap:var(--s3)}
+.contribution-grid{
+  display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);
+  grid-auto-columns:12px;gap:4px;align-content:start;overflow-x:auto;padding:2px;
+}
+.contribution-day{
+  width:12px;height:12px;border-radius:3px;background:var(--c-track);
+  box-shadow:inset 0 0 0 1px var(--border);cursor:default;
+}
+.contribution-day.level-1{background:var(--accent-tint);box-shadow:none}
+.contribution-day.level-2{background:var(--accent-soft);box-shadow:none}
+.contribution-day.level-3{background:var(--accent);box-shadow:none}
+.contribution-day.level-4{background:var(--accent-dark);box-shadow:none}
+.contribution-day:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.chart-summary{margin:0;color:var(--muted);font-size:var(--fs-12);line-height:1.45}
+.metric-card{padding:24px;min-height:132px;display:flex;align-items:center}
+.metric-card .stat{width:100%}
+.metric-card .stat strong{
+  font-size:40px;line-height:1;letter-spacing:-.045em;font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.priority-focus{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(220px,1.2fr);gap:28px;align-items:center}
+.contribution-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.contribution-legend{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:var(--fs-11)}
+.contribution-legend .contribution-day{display:block;flex:0 0 12px}
+.chart-grain{width:auto;flex:0 0 auto}
+
+@media (max-width:700px){
+  .priority-focus{grid-template-columns:1fr}
+  .metric-card{min-height:112px}
+  .metric-card .stat strong{font-size:34px}
+}
 
 /* ---------- Logbook ---------- */
 /* Day headings carry the same weight as a section heading in any other view;
@@ -2118,6 +2170,65 @@
   content:"";position:absolute;left:4px;right:4px;bottom:-1px;height:2px;
   border-radius:1px;background:var(--accent);
 }
+.navrow.drop-before::after,.navrow.drop-after::after{
+  content:"";position:absolute;z-index:4;left:4px;right:4px;height:2px;
+  border-radius:1px;background:var(--accent);pointer-events:none;
+}
+.navrow.drop-before::after{top:-1px}
+.navrow.drop-after::after{bottom:-1px}
+
+/* A section is a whole block, so either half of the block names the seam the
+   section will occupy. The targets do not intercept clicks on tasks. */
+.group.has-section-slots{position:relative}
+.section-position{position:absolute;z-index:3;left:0;right:0;height:50%;pointer-events:none}
+.section-position.before{top:0}
+.section-position.after{bottom:0}
+.section-position.over::after{
+  content:"";position:absolute;left:0;right:0;height:3px;border-radius:2px;background:var(--accent);
+}
+.section-position.before.over::after{top:-2px}
+.section-position.after.over::after{bottom:-2px}
+
+/* ---------- Search destinations and the optional Eisenhower view ---------- */
+.group.section-reveal{
+  border-radius:var(--r-md);
+  animation:section-reveal 1.8s ease-out;
+}
+@keyframes section-reveal{
+  0%,28%{box-shadow:0 0 0 3px var(--accent);background:var(--accent-wash)}
+  100%{box-shadow:0 0 0 0 transparent;background:transparent}
+}
+
+.matrix-note{
+  display:flex;align-items:flex-start;gap:8px;max-width:76ch;margin:var(--s4) 0 0;
+  padding:10px 12px;border-radius:var(--r-md);background:var(--subtle);
+  color:var(--muted);font-size:var(--fs-12);line-height:1.5;
+}
+.matrix-note .ic{flex:0 0 auto;margin-top:1px;color:var(--faint)}
+.matrix-rules-grid{grid-template-columns:1fr}
+.matrix-checks{display:grid;gap:1px}
+.matrix-checks.importance-checks{grid-template-columns:repeat(4,1fr);gap:4px}
+.matrix-checks.importance-checks .checkrow{justify-content:center;padding-inline:2px}
+.displayhelp{margin:var(--s3) 0 0;color:var(--faint);font-size:var(--fs-11);line-height:1.45}
+.eisenhower-page .phead{flex-wrap:nowrap;align-items:center}
+.eisenhower-page .phead-text{flex:1 1 auto}
+.eisenhower-page .pactions{
+  flex:0 0 auto;min-width:max-content;margin-left:auto;justify-content:flex-end;
+}
+.eisenhower-list,.eisenhower-grid{margin-top:var(--s5)}
+.eisenhower-list{display:grid;gap:var(--s5)}
+.eisenhower-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4)}
+.quadrant{
+  min-width:0;padding:var(--s4);border:1px solid var(--border);
+  border-radius:var(--r-lg);background:var(--surface);box-shadow:0 1px 2px var(--sh-hair);
+}
+.eisenhower-list .quadrant{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.eisenhower-grid .group{margin:0}
+.eisenhower-grid .task{max-width:100%}
+@media (max-width:760px){
+  .eisenhower-grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.group.section-reveal{animation:none;box-shadow:0 0 0 3px var(--accent)}}
 
 /* ---------- The review's three figures ---------- */
 /* One card each. Three numbers in one card read as a banner rather than as

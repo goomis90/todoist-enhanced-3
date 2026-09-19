@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Icon } from './Icon';
 import { DraggableTask } from './dnd/DraggableTask';
 import { Droppable } from './dnd/Droppable';
@@ -7,6 +7,7 @@ import type { DropTarget, RowOrder } from '@/domain/dnd';
 import { RowListContext } from './dnd/RowList';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
+import { TaskRow } from './TaskRow';
 import { formatDuration, effectiveEstimate } from '@/domain/estimates';
 import type { Item } from '@/domain/types';
 
@@ -39,12 +40,14 @@ interface TaskGroupProps {
   sectionId?: string;
   onRename?: (name: string) => void;
   onDelete?: () => void;
+  /** Decision views can reuse rows while explicitly forbidding drag semantics. */
+  draggable?: boolean;
 }
 
 export function TaskGroup({
   title, items, childrenOf, onOpen, tint, actions,
   showProject = true, defaultCollapsed = false, dropTarget, onAddTask, accent,
-  sectionId, onRename, onDelete, reorderable, viewKey, keepWhenEmpty = false,
+  sectionId, onRename, onDelete, reorderable, viewKey, keepWhenEmpty = false, draggable = true,
 }: TaskGroupProps) {
   const { t, locale } = useT();
   const dragging = useStore((s) => s.draggingTaskId !== null);
@@ -67,11 +70,12 @@ export function TaskGroup({
 
   const body = (isOver: boolean) => (
     <section
-      className={`${className}${isOver ? ' dropping' : ''}`}
+      className={`${className}${sectionId ? ' has-section-slots' : ''}${isOver ? ' dropping' : ''}`}
       /* The tour points at these by name rather than by class, so renaming a
          class cannot silently leave it highlighting the wrong thing. */
       data-tour={mark === 'quick' ? 'quick' : undefined}
     >
+      {sectionId && <SectionDropSlots id={sectionId} />}
       {/* A section just created has no name yet, and it is the heading that
           carries the field you name it in. */}
       {(title || sectionId) && (
@@ -125,8 +129,16 @@ export function TaskGroup({
       )}
 
       {!collapsed &&
-        items.map((item) => (
+        items.map((item) => draggable ? (
           <DraggableTask
+            key={item.id}
+            item={item}
+            childrenOf={childrenOf}
+            onOpen={onOpen}
+            showProject={showProject}
+          />
+        ) : (
+          <TaskRow
             key={item.id}
             item={item}
             childrenOf={childrenOf}
@@ -170,6 +182,29 @@ export function TaskGroup({
           seams between them are its destinations. */}
       {({ isOver }) => wrapped(isOver && dragging)}
     </Droppable>
+  );
+}
+
+/** The upper and lower halves of a real section are explicit reorder targets. */
+function SectionDropSlots({ id }: { id: string }) {
+  const dragging = useStore((s) => s.draggingSectionId);
+  const disabled = !dragging || dragging === id;
+  const before = useDroppable({ id: `section-slot:${id}:before`, disabled });
+  const after = useDroppable({ id: `section-slot:${id}:after`, disabled });
+
+  return (
+    <>
+      <span
+        ref={before.setNodeRef}
+        className={`section-position before${before.isOver ? ' over' : ''}`}
+        aria-hidden="true"
+      />
+      <span
+        ref={after.setNodeRef}
+        className={`section-position after${after.isOver ? ' over' : ''}`}
+        aria-hidden="true"
+      />
+    </>
   );
 }
 

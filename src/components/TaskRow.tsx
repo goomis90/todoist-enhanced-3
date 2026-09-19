@@ -68,6 +68,9 @@ export function TaskRow({
   const toggleTask = useStore((s) => s.toggleTask);
   const picked = useStore((s) => s.selection.includes(item.id));
   const toggleSelection = useStore((s) => s.toggleSelection);
+  const selectionAnchor = useStore((s) => s.selectionAnchor);
+  const setSelectionAnchor = useStore((s) => s.setSelectionAnchor);
+  const selectRange = useStore((s) => s.selectRange);
   const showSubtasks = useContext(ShowSubtasks);
 
   const phone = usePhoneBehaviour();
@@ -102,6 +105,33 @@ export function TaskRow({
   const deadline = deadlineDate(item);
   const late = isOverdue(item);
   const project = snapshot.projects[item.project_id];
+
+  /**
+   * The DOM is the final truth about range order.
+   *
+   * Views may filter, sort, group and collapse their rows after the snapshot
+   * has been read. Reading the rows that are actually mounted guarantees a
+   * Shift range cannot pick a hidden group, another page, or a collapsed
+   * subtask. The same function serves pointer and keyboard selection.
+   */
+  const pickRange = (additive: boolean) => {
+    const visible = [...document.querySelectorAll<HTMLElement>('.screen.active [data-task-id]')]
+      .map((row) => row.dataset.taskId)
+      .filter((id): id is string => Boolean(id));
+    const ids = [...new Set(visible)];
+    const from = selectionAnchor ? ids.indexOf(selectionAnchor) : -1;
+    const to = ids.indexOf(item.id);
+    if (from < 0 || to < 0) {
+      selectRange([item.id], additive);
+      return;
+    }
+    const start = Math.min(from, to);
+    const end = Math.max(from, to);
+    const range = ids.slice(start, end + 1);
+    /* The clicked endpoint, not the bottom of an upward range, becomes the
+       next anchor. `selectRange` uses the final id, so reverse when needed. */
+    selectRange(to < from ? [...range].reverse() : range, additive);
+  };
 
   // Estimate labels are shown as a duration, never as an ordinary tag.
   const visibleLabels = item.labels.filter((l) => !l.toLowerCase().startsWith('est-'));
@@ -144,6 +174,11 @@ export function TaskRow({
            the same gesture every file list has used for thirty years, and the
            only one that does not cost the plain click its meaning. */
         onClick={(e) => {
+          if (e.shiftKey) {
+            e.preventDefault();
+            pickRange(e.metaKey || e.ctrlKey);
+            return;
+          }
           if (e.metaKey || e.ctrlKey) {
             e.preventDefault();
             toggleSelection(item.id);
@@ -153,12 +188,15 @@ export function TaskRow({
              answered the press. The click the browser sends afterwards is not
              a second instruction to open the task. */
           if (gesture.justGestured()) return;
+          setSelectionAnchor(item.id);
           onOpen(item.id);
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
+            if (e.shiftKey) { pickRange(e.metaKey || e.ctrlKey); return; }
             if (e.metaKey || e.ctrlKey) { toggleSelection(item.id); return; }
+            setSelectionAnchor(item.id);
             onOpen(item.id);
           }
         }}

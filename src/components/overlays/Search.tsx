@@ -5,6 +5,7 @@ import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
 import { navigate } from '@/hooks/useRoute';
 import { markerStyle } from '@/domain/colors';
+import { useStore } from '@/store/store';
 
 interface SearchProps {
   open: boolean;
@@ -45,6 +46,8 @@ interface Hit {
 export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
   const { t } = useT();
   const { snapshot, items } = useData();
+  const includeSections = useStore((s) => s.prefs.includeSectionsInSearch);
+  const eisenhowerEnabled = useStore((s) => s.prefs.eisenhowerEnabled);
   const [query, setQuery] = useState('');
   const [cursor, setCursor] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -77,6 +80,10 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
         run: go(() => navigate('someday')) },
       { key: 'go-review', icon: 'check', title: t('nav.review'),
         run: go(() => navigate('review')) },
+      ...(eisenhowerEnabled ? [{
+        key: 'go-matrix', icon: 'dashboard' as const, title: t('nav.matrix'),
+        run: go(() => navigate('matrix')),
+      }] : []),
       { key: 'go-labels', icon: 'tag', title: t('nav.labels'),
         run: go(() => navigate('labels')) },
       { key: 'go-dashboard', icon: 'trend', title: t('nav.dashboard'),
@@ -86,7 +93,7 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
       { key: 'go-settings', icon: 'settings', title: t('nav.settings'),
         run: go(() => navigate('settings')) },
     ];
-  }, [t, onClose]);
+  }, [t, onClose, eisenhowerEnabled]);
 
   const hits: Hit[] = useMemo(() => {
     const go = (run: () => void) => () => { run(); onClose(); };
@@ -117,6 +124,42 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
         run: go(() => onOpen(item.id)),
       }));
 
+    const sections = includeSections
+      ? Object.values(snapshot.sections)
+        .filter((section) => {
+          const parent = snapshot.projects[section.project_id];
+          return !section.is_archived && !section.is_deleted
+            && parent && !parent.is_archived && !parent.is_deleted
+            && fold(section.name).includes(q);
+        })
+        .sort((a, b) => {
+          const aExact = fold(a.name) === q ? 0 : 1;
+          const bExact = fold(b.name) === q ? 0 : 1;
+          return aExact - bExact || a.section_order - b.section_order;
+        })
+        .slice(0, 6)
+        .map((section, index): Hit => {
+          const parent = snapshot.projects[section.project_id];
+          return {
+            key: `section-${section.id}`,
+            heading: index === 0 ? t('search.sections') : undefined,
+            icon: 'section',
+            title: section.name,
+            detail: parent?.name ?? '',
+            /* Resolve again on selection. A stale palette falls back to the
+               parent project instead of manufacturing a broken destination. */
+            run: go(() => {
+              const current = snapshot.sections[section.id];
+              navigate(
+                'project',
+                current?.project_id ?? section.project_id,
+                current ? { sectionId: current.id } : undefined,
+              );
+            }),
+          };
+        })
+      : [];
+
     const projects = Object.values(snapshot.projects)
       .filter((p) => !p.is_archived && !p.is_deleted && fold(p.name).includes(q))
       .slice(0, 6)
@@ -139,8 +182,8 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
         run: go(() => navigate('label', label.name)),
       }));
 
-    return [...places, ...tasks, ...projects, ...labels];
-  }, [query, items, snapshot, onOpen, onClose, t, destinations]);
+    return [...places, ...sections, ...tasks, ...projects, ...labels];
+  }, [query, items, snapshot, includeSections, onOpen, onClose, t, destinations]);
 
   // A new query invalidates wherever the cursor was.
   useEffect(() => { setCursor(0); }, [query]);
@@ -174,7 +217,7 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
         <Icon name="search" />
         <input
           type="search"
-          placeholder={t('search.placeholder')}
+          placeholder={t(includeSections ? 'search.placeholderWithSections' : 'search.placeholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
