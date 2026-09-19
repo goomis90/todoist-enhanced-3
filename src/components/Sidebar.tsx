@@ -291,7 +291,7 @@ export function Sidebar({
             onPressHold={(node) => setRowMenu(menuOpen ? null : { key: rowKey, anchor: node })}
           >
             <button
-              className={`navitem${isOver ? ' dropping' : ''}`}
+              className={`navitem${children.length > 0 && count === 0 ? ' folderitem' : ''}${isOver ? ' dropping' : ''}`}
               style={depth > 0 ? { paddingLeft: `${8 + depth * 16}px` } : undefined}
               aria-current={route.view === 'project' && route.id === project.id ? 'page' : undefined}
               /* A press that has just been held is a press that has just done
@@ -301,7 +301,7 @@ export function Sidebar({
               onClick={() => { if (!dragClock.justEnded()) navigate('project', project.id); }}
             >
               {children.length > 0 && count === 0
-                ? <Icon name="folder" size="sm" className="navfoldericon" style={markerStyle(project.color, false)} />
+                ? <Icon name="project" />
                 : <span className="hash" style={markerStyle(project.color)}>#</span>}
               <span className="label">{project.name}</span>
             </button>

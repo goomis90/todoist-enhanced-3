@@ -5,7 +5,7 @@ export type IconName =
   | 'arrow-left' | 'arrow-right' | 'bars' | 'bell' | 'board' | 'calendar'
   | 'caret' | 'caret-up' | 'check' | 'clock' | 'close' | 'coffee' | 'comment'
   | 'dashboard' | 'deadline' | 'drag' | 'edit' | 'export' | 'external'
-  | 'filter' | 'flag' | 'folder' | 'group' | 'inbox' | 'list' | 'logout' | 'menu' | 'more'
+  | 'filter' | 'flag' | 'group' | 'inbox' | 'list' | 'logout' | 'menu' | 'more'
   | 'plus' | 'project' | 'repeat' | 'search' | 'settings' | 'sidebar'
   | 'section' | 'sliders' | 'someday' | 'sort' | 'stack' | 'star' | 'subtask'
   | 'tag' | 'tasks'

@@ -2185,7 +2185,6 @@
 }
 .navrow .project-drop-slot.before{top:-6px}
 .navrow .project-drop-slot.after{bottom:-6px}
-.navrow .navitem .navfoldericon{width:20px;height:20px;flex:0 0 20px;color:var(--marker)}
 .chart-note{margin:14px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 
 /* A section is a whole block, so either half of the block names the seam the
@@ -2444,11 +2443,12 @@
 .dashboard-bento .stat-value{overflow-wrap:anywhere}
 .dashboard-bento .stat-hint{color:var(--muted);margin-top:4px}
 .dashboard-bento .chead-row{flex-wrap:wrap}
-.dashboard-bento .donutplot{width:152px;height:152px}
-.dashboard-bento .donut{grid-template-columns:152px minmax(0,1fr)}
-.dashboard-bento .donuttrack,.dashboard-bento .donutarc{stroke-width:15}
-.dashboard-bento .donutarc{stroke-linecap:round}
-.dashboard-bento .donutcentre strong{font-size:var(--fs-26)}
+.dashboard-bento .barslot .bar{max-width:40px;margin-inline:auto}
+.dashboard-bento .focus-metric{display:flex;flex-direction:column;padding-right:24px}
+.dashboard-bento .focus-metric .stat{padding-right:44px}
+.dashboard-bento .focus-metric .split{margin-top:auto;padding-top:12px}
+.dashboard-bento .focus-metric .legend.inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px}
+.dashboard-bento .focus-metric .legend.inline li{font-size:11px}
 .dashboard-bento .priority-focus{display:grid;grid-template-columns:1fr;gap:5px;align-content:start}
 .dashboard-bento .priority-score{font-size:42px;line-height:1.05;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .dashboard-bento .priority-focus .stat-hint{margin:3px 0 12px;max-width:42ch}
@@ -2463,7 +2463,6 @@
 @media (max-width:720px){
   .dashboard-bento .dashboard-group-label{margin-top:15px}
   .dashboard-bento .metric-card{min-height:0}
-  .dashboard-bento .donut{grid-template-columns:1fr;justify-items:start}
 }
 @media (min-width:721px) and (max-width:1080px){
   .dashboard-bento > .card.w6:has(.chart-plot.compare){grid-column:1 / -1}
