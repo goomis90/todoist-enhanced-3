@@ -263,6 +263,7 @@ export function Sidebar({
 
     const rowKey = `${keyPrefix}${project.id}`;
     const count = counts.byProject.get(project.id) ?? 0;
+    const folderLike = children.length > 0 && count === 0;
     const menuOpen = rowMenu?.key === rowKey;
     const childrenOpen = openFolders[project.id] ?? true;
 
@@ -285,13 +286,13 @@ export function Sidebar({
           <ProjectRowSortable
             projectId={project.id}
             sortable={keyPrefix === ''}
-            className={menuOpen ? ' menuopen' : ''}
+            className={`${folderLike ? ' folderlike' : ''}${menuOpen ? ' menuopen' : ''}`}
             /* Held under a finger, the row itself is the anchor: the button
                this menu usually hangs from is not on the page on a phone. */
             onPressHold={(node) => setRowMenu(menuOpen ? null : { key: rowKey, anchor: node })}
           >
             <button
-              className={`navitem${children.length > 0 && count === 0 ? ' folderitem' : ''}${isOver ? ' dropping' : ''}`}
+              className={`navitem${folderLike ? ' folderitem' : ''}${isOver ? ' dropping' : ''}`}
               style={depth > 0 ? { paddingLeft: `${8 + depth * 16}px` } : undefined}
               aria-current={route.view === 'project' && route.id === project.id ? 'page' : undefined}
               /* A press that has just been held is a press that has just done
@@ -300,7 +301,7 @@ export function Sidebar({
                  instruction to go to the project. */
               onClick={() => { if (!dragClock.justEnded()) navigate('project', project.id); }}
             >
-              {children.length > 0 && count === 0
+              {folderLike
                 ? <Icon name="project" />
                 : <span className="hash" style={markerStyle(project.color)}>#</span>}
               <span className="label">{project.name}</span>
@@ -328,7 +329,7 @@ export function Sidebar({
                 drawn: nested projects simply were not in the sidebar. */}
             {children.length > 0 && (
               <button
-                className="navtwist"
+                className={`navtwist${folderLike ? ' foldertoggle' : ''}`}
                 aria-expanded={childrenOpen}
                 aria-label={project.name}
                 onClick={() => setOpenFolders((prev) => ({ ...prev, [project.id]: !childrenOpen }))}

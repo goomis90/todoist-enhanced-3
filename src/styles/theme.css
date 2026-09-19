@@ -1515,6 +1515,10 @@
 }
 .navtwist:hover{background:var(--hover);color:var(--text)}
 .navtwist .ic{width:12px;height:12px}
+.navrow.folderlike .navitem{padding-right:62px}
+.navrow.folderlike .navend{right:34px}
+.navtwist.foldertoggle{left:auto;right:8px;width:24px;height:24px}
+.navtwist.foldertoggle .ic{width:14px;height:14px}
 /* The gutter only exists where the sidebar has room for it. */
 .side-group{padding-left:14px}
 .side-group .side-head{margin-left:-14px}
@@ -2185,7 +2189,6 @@
 }
 .navrow .project-drop-slot.before{top:-6px}
 .navrow .project-drop-slot.after{bottom:-6px}
-.chart-note{margin:14px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 
 /* A section is a whole block, so either half of the block names the seam the
    section will occupy. The targets do not intercept clicks on tasks. */
@@ -2443,6 +2446,7 @@
 .dashboard-bento .stat-value{overflow-wrap:anywhere}
 .dashboard-bento .stat-hint{color:var(--muted);margin-top:4px}
 .dashboard-bento .chead-row{flex-wrap:wrap}
+.dashboard-bento .donut{align-items:start}
 .dashboard-bento .barslot .bar{max-width:40px;margin-inline:auto}
 .dashboard-bento .focus-metric{display:flex;flex-direction:column;padding-right:24px}
 .dashboard-bento .focus-metric .stat{padding-right:44px}

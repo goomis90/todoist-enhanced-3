@@ -423,7 +423,6 @@ export function InsightsView() {
               otherLabel={t('insights.otherTags')}
               emptyLabel={t('insights.noHistory')}
             />
-            <p className="chart-note">{t('insights.tagShareNote')}</p>
           </ChartCard>
         </div>
       )}

@@ -6,6 +6,32 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.10.0
+
+A calmer Insights dashboard, faster subtask editing, and more reliable nested
+project navigation.
+
+🆕 **Edit or delete subtasks in task detail.** Rename a subtask inline, cancel
+with Escape, or delete it with confirmation without leaving its parent task.
+
+🎨 **Insights put the comparison first.** Completed tasks, tasks per day,
+completed estimated time, and focus score share a four-card summary with
+previous-period changes. Activity charts show only the selected period and
+identify the busiest day and hour. Project and tag breakdowns sit side by side
+with matching donut spacing; the heatmap appears from a quarter onward.
+
+🎨 **Empty parent projects read like folders.** A project with children but no
+tasks of its own uses the same folder marker and right-side disclosure as a
+Todoist folder, while its project page remains accessible.
+
+🐛 **Uncompletable tasks stay uncompletable.** The Todoist `* ` marker remains
+in stored content but no longer appears in list titles; completion is also
+guarded at the action level, not just by hiding the checkbox.
+
+🐛 **Nested projects can move to first place in either direction.** Dropping a
+child on the seam above its first sibling now reorders within that parent,
+including when the pointer lands on the parent's row.
+
 ## 1.9.0
 
 A configurable decision view, clearer Insights, and more dependable navigation
