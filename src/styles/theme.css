@@ -2407,3 +2407,10 @@
   box-shadow:var(--sh-lg);pointer-events:none;
 }
 .dragoverlay.outdent{box-shadow:inset 3px 0 0 var(--accent),var(--sh-lg)}
+/* Even a stale completed snapshot must not paint a checkbox back onto a
+   Todoist note: the done-row rules otherwise outrank `.check.nocheck`. */
+.task.done .check.nocheck,.tcard.done .check.nocheck,
+.reviewrow.done .check.nocheck,.reviewrow.done .check.p1.nocheck,
+.reviewrow.done .check.p2.nocheck,.reviewrow.done .check.p3.nocheck{
+  border-color:transparent;background:transparent;
+}
