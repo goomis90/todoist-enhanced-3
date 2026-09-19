@@ -2424,6 +2424,13 @@
 .dashboard-bento .stat-value{overflow-wrap:anywhere}
 .dashboard-bento .stat-hint{color:var(--muted);margin-top:4px}
 .dashboard-bento .chead-row{flex-wrap:wrap}
+/* Even a stale completed snapshot must not paint a checkbox back onto a
+   Todoist note: the done-row rules otherwise outrank `.check.nocheck`. */
+.task.done .check.nocheck,.tcard.done .check.nocheck,
+.reviewrow.done .check.nocheck,.reviewrow.done .check.p1.nocheck,
+.reviewrow.done .check.p2.nocheck,.reviewrow.done .check.p3.nocheck{
+  border-color:transparent;background:transparent;
+}
 @media (max-width:720px){
   .dashboard-bento .dashboard-group-label{margin-top:15px}
   .dashboard-bento .metric-card{min-height:0}
