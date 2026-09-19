@@ -282,6 +282,10 @@ export const en = {
 
   /* Insights */
   'insights.title': 'Insights',
+  'insights.dashboardSummary': 'At a glance',
+  'insights.dashboardActivity': 'Activity over time',
+  'insights.dashboardFocus': 'Where the work went',
+  'insights.dashboardPatterns': 'Patterns',
   'insights.openFull': 'Open full insights',
   'insights.behindSchedule': 'Behind schedule',
   'insights.progress': 'Progress',

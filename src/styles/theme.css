@@ -2407,3 +2407,24 @@
   box-shadow:var(--sh-lg);pointer-events:none;
 }
 .dragoverlay.outdent{box-shadow:inset 3px 0 0 var(--accent),var(--sh-lg)}
+
+/* Dashboard experiment: one summary, then activity, distribution and patterns.
+   Scoped to Insights so Review and the other chart surfaces are unchanged. */
+.dashboard-bento{gap:14px 16px}
+.dashboard-bento .dashboard-group-label{
+  grid-column:1 / -1;margin:20px 0 1px;
+  color:var(--muted);font-size:var(--fs-13);font-weight:650;letter-spacing:-.01em;
+}
+.dashboard-bento .dashboard-group-label:first-child{margin-top:0}
+.dashboard-bento .card{min-width:0;box-shadow:none;border:1px solid var(--border)}
+.dashboard-bento .metric-card{align-items:flex-start;min-height:138px;padding:22px 24px}
+.dashboard-bento .metric-card:first-of-type{
+  background:var(--accent-wash);border-color:var(--accent-tint);
+}
+.dashboard-bento .stat-value{overflow-wrap:anywhere}
+.dashboard-bento .stat-hint{color:var(--muted);margin-top:4px}
+.dashboard-bento .chead-row{flex-wrap:wrap}
+@media (max-width:720px){
+  .dashboard-bento .dashboard-group-label{margin-top:15px}
+  .dashboard-bento .metric-card{min-height:0}
+}

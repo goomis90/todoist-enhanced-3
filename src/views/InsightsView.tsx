@@ -273,7 +273,8 @@ export function InsightsView() {
       {loading && <p className="empty">{t('insights.loading')}</p>}
 
       {!loading && tab === 'overview' && (
-        <div className="bento">
+        <div className="bento dashboard-bento">
+          <h2 className="dashboard-group-label">{t('insights.dashboardSummary')}</h2>
           <section className="card w4 metric-card">
             <StatTile
               label={t('insights.completedTasks')}
@@ -305,6 +306,7 @@ export function InsightsView() {
             />
           </section>
 
+          <h2 className="dashboard-group-label">{t('insights.dashboardActivity')}</h2>
           {/* A single day has no series of days inside it. */}
           {grain !== null && (
             <ChartCard
@@ -356,6 +358,7 @@ export function InsightsView() {
             </ChartCard>
           )}
 
+          <h2 className="dashboard-group-label">{t('insights.dashboardFocus')}</h2>
           <ChartCard title={t('insights.byProject')} span={6}>
             <Donut
               data={byProject}
@@ -379,6 +382,7 @@ export function InsightsView() {
             </div>
           </ChartCard>
 
+          <h2 className="dashboard-group-label">{t('insights.dashboardPatterns')}</h2>
           <ChartCard
             title={t('insights.dayActivity')}
             subtitle={t('insights.dayActivityHint')}

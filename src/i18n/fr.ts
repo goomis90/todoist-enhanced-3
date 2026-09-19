@@ -284,6 +284,10 @@ export const fr: Record<TranslationKey, string> = {
 
   /* Insights */
   'insights.title': 'Analyses',
+  'insights.dashboardSummary': 'En un regard',
+  'insights.dashboardActivity': 'Activité dans le temps',
+  'insights.dashboardFocus': 'Répartition du travail',
+  'insights.dashboardPatterns': 'Habitudes',
   'insights.openFull': 'Ouvrir les analyses complètes',
   'insights.behindSchedule': 'En retard',
   'insights.progress': 'Progression',
