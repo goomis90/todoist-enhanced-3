@@ -301,7 +301,7 @@ export function Sidebar({
               onClick={() => { if (!dragClock.justEnded()) navigate('project', project.id); }}
             >
               {children.length > 0 && count === 0
-                ? <Icon name="project" size="sm" className="navfoldericon" style={markerStyle(project.color, false)} />
+                ? <Icon name="folder" size="sm" className="navfoldericon" style={markerStyle(project.color, false)} />
                 : <span className="hash" style={markerStyle(project.color)}>#</span>}
               <span className="label">{project.name}</span>
             </button>

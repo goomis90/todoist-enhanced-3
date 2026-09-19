@@ -519,6 +519,18 @@ export function DragProvider({ children }: { children: ReactNode }) {
           : null;
       if (!over || from === over) return;
 
+      /* The seam above the first nested row visually belongs to its folder.
+         Dropping a child there must move it to the start of that folder, not
+         silently hit a non-sibling parent row. This also works after the
+         children have already been reordered once. */
+      if (snapshot.projects[from]?.parent_id === over) {
+        const siblings = siblingOrder(snapshot, from);
+        if (siblings.length > 1 && siblings[0] !== from) {
+          await reorderProjects([from, ...siblings.filter((id) => id !== from)]);
+        }
+        return;
+      }
+
       /* Dragged out to the right: the row it landed on becomes its parent.
          A folder needs no such gesture — putting projects inside it is the
          only thing a folder is for, so landing on one is enough. */

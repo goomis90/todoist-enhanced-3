@@ -2186,6 +2186,7 @@
 .navrow .project-drop-slot.before{top:-6px}
 .navrow .project-drop-slot.after{bottom:-6px}
 .navrow .navitem .navfoldericon{width:20px;height:20px;flex:0 0 20px;color:var(--marker)}
+.chart-note{margin:14px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 
 /* A section is a whole block, so either half of the block names the seam the
    section will occupy. The targets do not intercept clicks on tasks. */

@@ -4,9 +4,9 @@ import { Icon } from '@/components/Icon';
 import { DateField } from '@/components/DateField';
 import { CoffeeLine } from '@/components/CoffeeLine';
 import {
-  ChartCard, CompareBars, ContributionGrid, Donut, RankedBars, SplitBar,
+  ChartCard, CompareBars, ContributionGrid, Donut, SplitBar,
   StatTile, seriesColor, type CompareDatum, type ContributionDatum,
-  type RankedDatum, type SliceDatum,
+  type SliceDatum,
 } from '@/components/charts';
 import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
@@ -158,13 +158,13 @@ export function InsightsView() {
     [summary.priorities, t],
   );
 
-  const byLabel: RankedDatum[] = useMemo(
+  const byLabel: SliceDatum[] = useMemo(
     () =>
-      summary.byLabel.map((entry, index) => ({
-        key: entry.untagged ? '__none__' : entry.label,
-        label: entry.untagged ? t('insights.noLabel') : `@${entry.label}`,
+      summary.byLabel.filter((entry) => !entry.untagged).map((entry, index) => ({
+        key: entry.label,
+        label: `@${entry.label}`,
         value: entry.count,
-        color: entry.untagged ? 'var(--faint)' : seriesColor(index),
+        color: seriesColor(index),
       })),
     [summary.byLabel, t],
   );
@@ -410,12 +410,15 @@ export function InsightsView() {
 
           <h2 className="dashboard-group-label">{t('insights.dashboardPatterns')}</h2>
           <ChartCard title={t('insights.byLabel')} span={12}>
-            <RankedBars
+            <Donut
               data={byLabel}
-              limit={7}
-              otherLabel={t('insights.otherProjects')}
+              limit={6}
+              total={byLabel.reduce((sum, entry) => sum + entry.value, 0)}
+              caption={t('insights.tagUses')}
+              otherLabel={t('insights.otherTags')}
               emptyLabel={t('insights.noHistory')}
             />
+            <p className="chart-note">{t('insights.tagShareNote')}</p>
           </ChartCard>
         </div>
       )}
