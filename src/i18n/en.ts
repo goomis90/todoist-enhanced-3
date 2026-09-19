@@ -219,6 +219,8 @@ export const en = {
   'detail.whereItIs': 'Where this task is',
   'detail.reorderSubtask': 'Drag to reorder',
   'detail.addSubtask': 'Add subtask',
+  'detail.editSubtask': 'Edit subtask title',
+  'detail.deleteSubtask': 'Delete subtask',
   'detail.comments': 'Comments',
   'detail.noComments': 'No comments yet.',
   'detail.reminders': 'Reminders',

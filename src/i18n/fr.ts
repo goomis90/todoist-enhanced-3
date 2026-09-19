@@ -221,6 +221,8 @@ export const fr: Record<TranslationKey, string> = {
   'detail.whereItIs': 'Où se trouve cette tâche',
   'detail.reorderSubtask': 'Glisser pour réordonner',
   'detail.addSubtask': 'Ajouter une sous-tâche',
+  'detail.editSubtask': 'Modifier le titre de la sous-tâche',
+  'detail.deleteSubtask': 'Supprimer la sous-tâche',
   'detail.comments': 'Commentaires',
   'detail.noComments': 'Aucun commentaire.',
   'detail.reminders': 'Rappels',

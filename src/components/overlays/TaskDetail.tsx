@@ -133,6 +133,101 @@ function SubtaskRow({ id, children }: { id: string; children: React.ReactNode })
   );
 }
 
+function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) => void }) {
+  const { t } = useT();
+  const updateTask = useStore((s) => s.updateTask);
+  const toggleTask = useStore((s) => s.toggleTask);
+  const removeTask = useStore((s) => s.removeTask);
+  const confirm = useConfirm();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(child.content);
+  const editRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!editing) setDraft(child.content);
+  }, [child.content, editing]);
+
+  const stopEditing = () => {
+    setEditing(false);
+    requestAnimationFrame(() => editRef.current?.focus());
+  };
+  const save = () => {
+    const content = draft.trim();
+    if (!content) { inputRef.current?.focus(); return; }
+    if (content !== child.content) void updateTask(child.id, { content });
+    stopEditing();
+  };
+  const deleteSubtask = async () => {
+    const ok = await confirm({
+      title: t('task.deleteTitle'),
+      body: t('task.deleteConfirm', { name: child.content }),
+      confirmLabel: t('task.delete'),
+      destructive: true,
+    });
+    if (ok) {
+      await removeTask(child.id);
+      document.querySelector<HTMLElement>('.detail-section .addline')?.focus();
+    } else editRef.current?.focus();
+  };
+
+  return (
+    <SubtaskRow id={child.id}>
+      {isUncompletable(child) ? (
+        <span className={`check p${toDisplayPriority(child.priority)} nocheck`} aria-hidden="true" />
+      ) : (
+        <span
+          className={`check p${toDisplayPriority(child.priority)}`}
+          role="checkbox"
+          aria-checked={child.checked}
+          aria-label={t('task.complete')}
+          tabIndex={0}
+          onClick={() => void toggleTask(child.id)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              void toggleTask(child.id);
+            }
+          }}
+        ><Icon name="check" /></span>
+      )}
+      {editing ? (
+        <input
+          ref={inputRef}
+          className="textfield subtaskedit"
+          autoFocus
+          value={draft}
+          aria-label={t('detail.editSubtask')}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            event.stopPropagation();
+            if (event.key === 'Enter') { event.preventDefault(); save(); }
+            if (event.key === 'Escape') { event.preventDefault(); stopEditing(); }
+          }}
+        />
+      ) : (
+        <button className="subtasktitle" onClick={() => onOpen(child.id)}>
+          <span style={child.checked ? { textDecoration: 'line-through', color: 'var(--faint)' } : undefined}>
+            {child.content}
+          </span>
+        </button>
+      )}
+      <span className="subtaskactions">
+        {editing ? (
+          <button className="subtaskaction" onClick={save}>{t('common.save')}</button>
+        ) : (
+          <button ref={editRef} className="subtaskaction" aria-label={t('detail.editSubtask')} onClick={() => setEditing(true)}>
+            <Icon name="edit" size="sm" />
+          </button>
+        )}
+        <button className="subtaskaction danger" aria-label={t('detail.deleteSubtask')} onClick={() => void deleteSubtask()}>
+          {t('task.delete')}
+        </button>
+      </span>
+    </SubtaskRow>
+  );
+}
+
 /**
  * The full task.
  *
@@ -672,32 +767,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               )}
             </h3>
 
-            {subtasks.map((child) => (
-              <SubtaskRow id={child.id} key={child.id}>
-                {isUncompletable(child) ? (
-                  <span
-                    className={`check p${toDisplayPriority(child.priority)} nocheck`}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <span
-                    className={`check p${toDisplayPriority(child.priority)}`}
-                    role="checkbox"
-                    aria-checked={child.checked}
-                    aria-label={t('task.complete')}
-                    tabIndex={0}
-                    onClick={() => void toggleTask(child.id)}
-                  >
-                    <Icon name="check" />
-                  </span>
-                )}
-                <button className="subtasktitle" onClick={() => onOpen(child.id)}>
-                  <span style={child.checked ? { textDecoration: 'line-through', color: 'var(--faint)' } : undefined}>
-                    {child.content}
-                  </span>
-                </button>
-              </SubtaskRow>
-            ))}
+            {subtasks.map((child) => <EditableSubtask child={child} onOpen={onOpen} key={child.id} />)}
 
             {addingSubtask ? (
               <input

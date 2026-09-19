@@ -9,7 +9,7 @@ import {
 } from '@/api/commands';
 import * as idb from '@/db/idb';
 import {
-  emptySnapshot, setWeekLabel, toTodoistPriority,
+  emptySnapshot, isUncompletable, setWeekLabel, toTodoistPriority,
   type DisplayPriority, type Item, type Snapshot, type ViewPrefs,
 } from '@/domain/types';
 import { withEstimate } from '@/domain/estimates';
@@ -616,7 +616,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   async toggleTask(id) {
     const item = get().snapshot.items[id];
-    if (!item) return;
+    if (!item || isUncompletable(item)) return;
     const checked = !item.checked;
     const cmd = checked ? completeItem(id) : uncompleteItem(id);
     await get().apply([cmd], (snapshot) => patchItem(snapshot, id, { checked }));
