@@ -11,7 +11,7 @@ import { useStore } from '@/store/store';
 import { useConfirm } from '@/components/overlays/Confirm';
 import { viewPrefs } from '@/store/prefs';
 import { applyFilters, rootItems, sortItems } from '@/store/selectors';
-import { anytimeItems, bucketOf, groupWeek, weekItems } from '@/domain/views';
+import { anytimeItems, bucketOf, groupWeek, groupWeekPersonal, weekItems } from '@/domain/views';
 import { summariseLoad, weeklyCapacity } from '@/domain/load';
 import { toApiDate } from '@/domain/dates';
 import { dueForDate } from '@/domain/recurrence';
@@ -97,6 +97,15 @@ function WeekBody({
     [scoped, prefs.showQuickGroup],
   );
 
+  /* Today's own alternative grouping: only ever computed on the Today page,
+     never on My week — a personal priority/routine split describes a day,
+     not a week that already has its own fixed order. */
+  const personal = scope === 'today' && current.group === 'personal';
+  const personalGroups = useMemo(
+    () => (personal ? groupWeekPersonal(scoped, new Date(), prefs.showQuickGroup) : null),
+    [personal, scoped, prefs.showQuickGroup],
+  );
+
   /* Today is measured against today's hours, not the week's. A day page
      showing "12 % of capacity" would be describing a week it does not draw. */
   const capacity = scope === 'today'
@@ -174,6 +183,34 @@ function WeekBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, scope]);
 
+  /* Same shape as weekColumns, for the Personal grouping: overdue and quick
+     unchanged, "Today" replaced by four boards. */
+  const personalWeekColumns = useMemo(() => {
+    if (!personalGroups) return [];
+    const today = toApiDate(new Date());
+    const columns = [
+      { id: 'overdue', title: t('group.overdue'), items: personalGroups.overdue },
+      ...(prefs.showQuickGroup
+        ? [{ id: 'quick', title: t('group.quick'), items: personalGroups.quick,
+            dropTarget: { kind: 'quick' as const } }]
+        : []),
+      { id: 'p1', title: t('common.p1'), items: personalGroups.p1,
+        onAddTask: () => onAddTaskTo({ date: today, priority: 1 }) },
+      { id: 'p2', title: t('common.p2'), items: personalGroups.p2,
+        onAddTask: () => onAddTaskTo({ date: today, priority: 2 }) },
+      { id: 'p3', title: t('common.p3'), items: personalGroups.p3,
+        onAddTask: () => onAddTaskTo({ date: today, priority: 3 }) },
+      { id: 'routines', title: t('group.routines'), items: personalGroups.routines },
+      { id: 'timed', title: t('group.timed'), items: personalGroups.timed },
+    ];
+    return columns
+      .filter((column) => column.items.length > 0 || 'dropTarget' in column)
+      .map((column) => ({
+        ...column, items: sortItems(column.items, current.sort, childrenOf, 'day', snapshot),
+      }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personalGroups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, onAddTaskTo]);
+
   return (
     <div className="page">
       <PageHeader
@@ -183,7 +220,11 @@ function WeekBody({
             <DisplayMenu
               viewKey={viewKey}
               modes={['list', 'board']}
-              groups={['none', 'project', 'priority', 'label', 'estimate']}
+              groups={
+                scope === 'today'
+                  ? ['none', 'personal', 'project', 'priority', 'label', 'estimate']
+                  : ['none', 'project', 'priority', 'label', 'estimate']
+              }
             />
             <button className="btn accent" onClick={onInsights}>
               <Icon name="trend" />
@@ -196,7 +237,7 @@ function WeekBody({
       />
 
 
-      {current.mode === 'list' && current.group === 'none' ? (
+      {current.mode === 'list' && (current.group === 'none' || current.group === 'personal') ? (
         <div className="mode">
           {scope !== 'anytime' && (
           <>
@@ -236,24 +277,71 @@ function WeekBody({
             />
           )}
 
-          <TaskGroup
-            title={t('group.untimed')}
-            items={sortedGroup(groups.untimed)}
-            childrenOf={childrenOf}
-            onOpen={onOpen}
-            reorderable={byHand}
-            viewKey={viewKey}
-            dropTarget={{ kind: 'today' }}
-            onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
-          />
+          {personal && personalGroups ? (
+            <>
+              <TaskGroup
+                title={t('common.p1')}
+                items={sortedGroup(personalGroups.p1)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                onAddTask={() => onAddTaskTo({ ...placementFor({ kind: 'today' }), priority: 1 })}
+              />
+              <TaskGroup
+                title={t('common.p2')}
+                items={sortedGroup(personalGroups.p2)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                onAddTask={() => onAddTaskTo({ ...placementFor({ kind: 'today' }), priority: 2 })}
+              />
+              <TaskGroup
+                title={t('common.p3')}
+                items={sortedGroup(personalGroups.p3)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                onAddTask={() => onAddTaskTo({ ...placementFor({ kind: 'today' }), priority: 3 })}
+              />
+              <TaskGroup
+                title={t('group.routines')}
+                items={sortedGroup(personalGroups.routines)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+              />
+              <TaskGroup
+                title={t('group.timed')}
+                items={personalGroups.timed}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
+              />
+            </>
+          ) : (
+            <>
+              <TaskGroup
+                title={t('group.untimed')}
+                items={sortedGroup(groups.untimed)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                dropTarget={{ kind: 'today' }}
+                onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
+              />
 
-          <TaskGroup
-            title={t('group.timed')}
-            items={groups.timed}
-            childrenOf={childrenOf}
-            onOpen={onOpen}
-            onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
-          />
+              <TaskGroup
+                title={t('group.timed')}
+                items={groups.timed}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
+              />
+            </>
+          )}
           </>
           )}
 
@@ -284,7 +372,9 @@ function WeekBody({
           /* Only when nothing else was asked for: a board grouped by project
              is a board of projects, not of the week's buckets. */
           boardColumns={
-            current.mode === 'board' && current.group === 'none' ? weekColumns : undefined
+            current.mode === 'board' && (current.group === 'none' || current.group === 'personal')
+              ? (personal ? personalWeekColumns : weekColumns)
+              : undefined
           }
           addToGroup={(key) => {
             const place = addToGroupFor(current.group, key);
