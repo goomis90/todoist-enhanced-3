@@ -278,7 +278,9 @@ export type GroupKey =
   | 'section'
   | 'priority'
   | 'label'
-  | 'estimate';
+  | 'estimate'
+  /** Today's own priority/routine split — only ever offered on the Today page. */
+  | 'personal';
 
 export type SortKey =
   | 'manual'

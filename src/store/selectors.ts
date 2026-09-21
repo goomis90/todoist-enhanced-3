@@ -236,8 +236,21 @@ export function groupItems(
         break;
       case 'label': {
         const own = item.labels.filter((l) => !l.startsWith('est-'));
-        if (own.length === 0) push('none', labels.noLabel, item);
-        else for (const label of own) push(label, label, item);
+        if (own.length === 0) {
+          push('none', labels.noLabel, item);
+          break;
+        }
+        // A task with several labels shows up only once, under whichever of
+        // its labels sits highest on the Tags list (lowest item_order) —
+        // not once per label. Reuses the same name-keyed lookup the bucket
+        // ordering below already builds (labelOrder), since snapshot.labels
+        // is keyed by id while a task's own labels are names.
+        const primary = own.reduce((best, current) => {
+          const bestOrder = labelOrder?.get(best.toLowerCase()) ?? Number.POSITIVE_INFINITY;
+          const currentOrder = labelOrder?.get(current.toLowerCase()) ?? Number.POSITIVE_INFINITY;
+          return currentOrder < bestOrder ? current : best;
+        });
+        push(primary, primary, item);
         break;
       }
       case 'estimate': {

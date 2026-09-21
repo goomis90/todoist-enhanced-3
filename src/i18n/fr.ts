@@ -106,6 +106,8 @@ export const fr: Record<TranslationKey, string> = {
   'group.untimed': 'Aujourd’hui',
   'group.timed': 'Avec horaire',
   'group.anytime': 'Cette semaine, sans jour précis',
+  'group.routines': 'Routines',
+  'group.personal': 'Personnel',
   'section.scheduled': 'Planifiées',
   'section.available': 'Disponibles',
   'group.noSection': 'Sans section',

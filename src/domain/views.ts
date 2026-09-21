@@ -1,4 +1,4 @@
-import { SYSTEM_LABELS, weekLabel, type Bucket, type Item } from './types';
+import { SYSTEM_LABELS, toDisplayPriority, weekLabel, type Bucket, type Item } from './types';
 import { estimateOf } from './estimates';
 import { dueDate, hasTime, isFuture, isOverdue, isToday } from './dates';
 
@@ -48,6 +48,57 @@ export interface WeekGroups {
   untimed: Item[];
   timed: Item[];
   anytime: Item[];
+}
+
+/** The Personal layout for Today: priority and routine split out from the plain "today" bucket. */
+export interface PersonalTodayGroups {
+  overdue: Item[];
+  quick: Item[];
+  p1: Item[];
+  p2: Item[];
+  p3: Item[];
+  routines: Item[];
+  timed: Item[];
+}
+
+/**
+ * Same shape of pull-out as groupWeek — overdue stays one lump bucket, quick
+ * is pulled out first regardless of priority — but what groupWeek leaves as
+ * one "Today" bucket is split further: a task with a specific time is a fixed
+ * appointment and goes to Scheduled today, same as in the default layout, so
+ * it stays reviewable by time rather than getting buried among routines you
+ * could do right now. Only an untimed recurring task counts as a routine.
+ * What's left is sorted into P1/P2/P3 — P3 also catching P4 and unprioritised
+ * tasks, so nothing here is dropped for lack of its own board.
+ */
+export function groupWeekPersonal(items: Item[], now = new Date(), showQuickGroup = true): PersonalTodayGroups {
+  const groups: PersonalTodayGroups = {
+    overdue: [], quick: [], p1: [], p2: [], p3: [], routines: [], timed: [],
+  };
+
+  for (const item of items) {
+    const bucket = bucketOf(item, now);
+    if (bucket === 'overdue') {
+      groups.overdue.push(item);
+    } else if (bucket === 'today') {
+      if (showQuickGroup && isQuick(item)) groups.quick.push(item);
+      else if (hasTime(item.due)) groups.timed.push(item);
+      else if (item.due?.is_recurring) groups.routines.push(item);
+      else {
+        const p = toDisplayPriority(item.priority);
+        if (p === 1) groups.p1.push(item);
+        else if (p === 2) groups.p2.push(item);
+        else groups.p3.push(item);
+      }
+    }
+  }
+
+  const byTime = (a: Item, b: Item) =>
+    (dueDate(a)?.getTime() ?? 0) - (dueDate(b)?.getTime() ?? 0);
+  groups.timed.sort(byTime);
+  groups.overdue.sort(byTime);
+
+  return groups;
 }
 
 /**
