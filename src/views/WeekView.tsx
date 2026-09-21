@@ -70,6 +70,10 @@ function WeekBody({
   const { snapshot, items, childrenOf } = useData();
   const prefs = useStore((s) => s.prefs);
   const updateTask = useStore((s) => s.updateTask);
+  /* Board columns hide when empty, same as list groups — except while a task
+     is actually being dragged, when an empty Quick/Today column has to stay
+     put to be a place to drop it. Matches TaskGroup's own dragging check. */
+  const dragging = useStore((s) => s.draggingTaskId !== null);
   const toast = useStore((s) => s.toast);
   const confirm = useConfirm();
   /* Two pages, two sets of display preferences: a filter set on Today has no
@@ -176,12 +180,12 @@ function WeekBody({
     const columns =
       scope === 'today' ? today : scope === 'anytime' ? anytime : [...today, ...anytime];
     return columns
-      .filter((column) => column.items.length > 0 || column.dropTarget)
+      .filter((column) => column.items.length > 0 || (column.dropTarget && dragging))
       .map((column) => ({
         ...column, items: sortItems(column.items, current.sort, childrenOf, 'day', snapshot),
       }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, scope]);
+  }, [groups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, scope, dragging]);
 
   /* Same shape as weekColumns, for the Personal grouping: overdue and quick
      unchanged, "Today" replaced by four boards. */
@@ -204,12 +208,12 @@ function WeekBody({
       { id: 'timed', title: t('group.timed'), items: personalGroups.timed },
     ];
     return columns
-      .filter((column) => column.items.length > 0 || 'dropTarget' in column)
+      .filter((column) => column.items.length > 0 || ('dropTarget' in column && column.dropTarget && dragging))
       .map((column) => ({
         ...column, items: sortItems(column.items, current.sort, childrenOf, 'day', snapshot),
       }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personalGroups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, onAddTaskTo]);
+  }, [personalGroups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, onAddTaskTo, dragging]);
 
   return (
     <div className="page">
