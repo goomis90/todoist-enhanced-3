@@ -105,6 +105,7 @@ export const en = {
   'group.timed': 'Scheduled today',
   'group.anytime': 'Anytime this week',
   'group.routines': 'Routines',
+  'group.deadline': 'Deadline today',
   'group.personal': 'Personal',
   'section.scheduled': 'Scheduled',
   'section.available': 'Available',

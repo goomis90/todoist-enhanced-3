@@ -17,7 +17,7 @@ interface TaskGroupProps {
   childrenOf: (id: string) => Item[];
   onOpen: (id: string) => void;
   /** Extra visual weight for Behind schedule and Quick. */
-  tint?: 'late' | 'quick';
+  tint?: 'late' | 'quick' | 'deadline';
   actions?: ReactNode;
   showProject?: boolean;
   defaultCollapsed?: boolean;
@@ -33,7 +33,7 @@ interface TaskGroupProps {
   /** Stays on the page with nothing in it, so the line that fills it is there. */
   keepWhenEmpty?: boolean;
   /** An accent for the sections that carry meaning: late, and quick. */
-  accent?: 'late' | 'quick';
+  accent?: 'late' | 'quick' | 'deadline';
   /** When set, the whole group accepts tasks dropped onto it. */
   dropTarget?: DropTarget;
   /** A real section can be renamed, moved and deleted; a derived grouping cannot. */
@@ -66,7 +66,7 @@ export function TaskGroup({
 
   // The meaning stays in the heading's colour rather than a panel behind it.
   const mark = accent ?? tint;
-  const className = `group${mark === 'late' ? ' accent-late' : mark === 'quick' ? ' accent-quick' : ''}`;
+  const className = `group${mark === 'late' ? ' accent-late' : mark === 'quick' ? ' accent-quick' : mark === 'deadline' ? ' accent-deadline' : ''}`;
 
   const body = (isOver: boolean) => (
     <section
