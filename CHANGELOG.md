@@ -6,6 +6,15 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.12.1
+
+A small follow-up to simplify where the cross-device settings marker lives.
+
+🎨 **The settings task now lives in Inbox.** Enhanced no longer creates a
+dedicated project for `* Enhanced for Todoist settings`. If the marker already
+exists in another project, the next settings sync moves it to Inbox; an old
+project left empty is not deleted automatically.
+
 ## 1.12.0
 
 A safer recurring-task engine, cross-device settings, complete onboarding and

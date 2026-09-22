@@ -7,7 +7,7 @@ import { estimateOf, effectiveEstimate } from '@/domain/estimates';
 import { dueDate } from '@/domain/dates';
 import { hasLabel, isOpen } from '@/domain/views';
 import type { RowOrder } from '@/domain/dnd';
-import { PREFERENCES_PROJECT_NAME, PREFERENCES_TASK_CONTENT } from './prefs';
+import { PREFERENCES_TASK_CONTENT } from './prefs';
 
 /**
  * The workspace filter's stand-in for "My projects".
@@ -339,8 +339,7 @@ export interface WorkspaceGroup {
  */
 export function projectTree(snapshot: Snapshot): WorkspaceGroup[] {
   const visible = Object.values(snapshot.projects).filter(
-    (p) => !p.is_archived && !p.is_deleted && !p.inbox_project
-      && p.name !== PREFERENCES_PROJECT_NAME,
+    (p) => !p.is_archived && !p.is_deleted && !p.inbox_project,
   );
 
   const nodes = new Map<string, ProjectNode>(

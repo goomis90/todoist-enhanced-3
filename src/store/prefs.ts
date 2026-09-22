@@ -7,7 +7,6 @@ import { DATE_FORMATS, type DateFormat } from '@/domain/dates';
 
 /** The Todoist task whose description is the canonical cross-device copy. */
 export const PREFERENCES_TASK_CONTENT = '* Enhanced for Todoist settings';
-export const PREFERENCES_PROJECT_NAME = 'Enhanced for Todoist';
 
 /** The views that make sense as a landing page: no view that needs an id. */
 export const HOME_VIEWS = [

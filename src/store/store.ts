@@ -21,7 +21,7 @@ import { patchParent } from '@/domain/order';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import {
   defaultPreferences, hydratePreferences, viewPrefs as readViewPrefs,
-  PREFERENCES_PROJECT_NAME, PREFERENCES_TASK_CONTENT,
+  PREFERENCES_TASK_CONTENT,
   type Preferences,
 } from './prefs';
 
@@ -568,29 +568,15 @@ export const useStore = create<AppState>((set, get) => ({
     creatingPreferencesTask = true;
     try {
       const description = JSON.stringify(get().prefs, null, 2);
-      const snapshot = get().snapshot;
-      let project = Object.values(snapshot.projects).find(
-        (candidate) => !candidate.is_deleted && !candidate.is_archived
-          && candidate.name === PREFERENCES_PROJECT_NAME,
-      );
-      if (!project) {
-        const projectId = await get().createProject(
-          PREFERENCES_PROJECT_NAME,
-          'charcoal',
-          null,
-          null,
-          { description: 'Private Enhanced settings. Keep this project to sync preferences across devices.' },
-        );
-        project = get().snapshot.projects[projectId];
-      }
-      if (!project) return;
+      const inbox = get().snapshot.user?.inbox_project_id;
+      if (!inbox) return;
 
       const marker = Object.values(get().snapshot.items).find(
         (item) => !item.is_deleted && item.content === PREFERENCES_TASK_CONTENT,
       );
       if (marker) {
-        if (marker.project_id !== project.id) {
-          await get().moveTask(marker.id, { project_id: project.id });
+        if (marker.project_id !== inbox) {
+          await get().moveTask(marker.id, { project_id: inbox });
         }
         if (marker.description !== description) {
           await get().updateTask(marker.id, { description });
@@ -599,7 +585,7 @@ export const useStore = create<AppState>((set, get) => ({
         await get().createTask({
           content: PREFERENCES_TASK_CONTENT,
           description,
-          project_id: project.id,
+          project_id: inbox,
         });
       }
     } finally {

@@ -8,7 +8,6 @@ import { markerStyle } from '@/domain/colors';
 import { toDisplayPriority, toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import type { DropTarget } from '@/domain/dnd';
 import { matchesSearch } from '@/domain/search';
-import { PREFERENCES_PROJECT_NAME } from '@/store/prefs';
 
 /**
  * One button in the bar, and the panel it opens.
@@ -125,8 +124,7 @@ export function BulkBar() {
   };
 
   const projects = Object.values(snapshot.projects)
-    .filter((p) => !p.is_archived && !p.is_deleted && !p.is_folder
-      && p.name !== PREFERENCES_PROJECT_NAME)
+    .filter((p) => !p.is_archived && !p.is_deleted && !p.is_folder)
     .sort((a, b) => a.child_order - b.child_order);
   const sections = Object.values(snapshot.sections)
     .filter((section) => !section.is_archived && !section.is_deleted)
