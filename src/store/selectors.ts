@@ -7,6 +7,7 @@ import { estimateOf, effectiveEstimate } from '@/domain/estimates';
 import { dueDate } from '@/domain/dates';
 import { hasLabel, isOpen } from '@/domain/views';
 import type { RowOrder } from '@/domain/dnd';
+import { PREFERENCES_PROJECT_NAME, PREFERENCES_TASK_CONTENT } from './prefs';
 
 /**
  * The workspace filter's stand-in for "My projects".
@@ -39,6 +40,7 @@ export const makeChildrenOf =
 /** Every open task, with tasks living in archived projects left out. */
 export function openItems(snapshot: Snapshot): Item[] {
   return Object.values(snapshot.items).filter((item) => {
+    if (item.content === PREFERENCES_TASK_CONTENT) return false;
     if (!isOpen(item)) return false;
     const project = snapshot.projects[item.project_id];
     return !project || (!project.is_archived && !project.is_deleted);
@@ -337,7 +339,8 @@ export interface WorkspaceGroup {
  */
 export function projectTree(snapshot: Snapshot): WorkspaceGroup[] {
   const visible = Object.values(snapshot.projects).filter(
-    (p) => !p.is_archived && !p.is_deleted && !p.inbox_project,
+    (p) => !p.is_archived && !p.is_deleted && !p.inbox_project
+      && p.name !== PREFERENCES_PROJECT_NAME,
   );
 
   const nodes = new Map<string, ProjectNode>(
