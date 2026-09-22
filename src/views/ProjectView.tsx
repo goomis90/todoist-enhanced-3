@@ -18,6 +18,7 @@ import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
 import { applyFilters, rootItems, sortItems } from '@/store/selectors';
 import { summariseLoad } from '@/domain/load';
+import { readProjectIcon, stripProjectIcon, withProjectIcon } from '@/domain/projectIcons';
 
 interface ProjectViewProps {
   projectId: string;
@@ -102,8 +103,27 @@ function ProjectBody({
 
   const project = snapshot.projects[projectId];
 
+  /*
+   * A completed task is not a section of its own — it belongs wherever its
+   * own properties already put an open one: no section is the loose block
+   * above the sections, a real section is that section, P1 is the P1 column.
+   * So rather than a separate list, it's folded in here, upstream of every
+   * grouping below, and comes out the other side sitting where it belongs.
+   *
+   * Todoist keeps a completed task in `snapshot.items` (checked, but
+   * otherwise intact — see ReviewView's own DoneRow), which is what makes
+   * this possible without a second fetch.
+   */
   const scoped = useMemo(() => {
-    const roots = rootItems(items).filter((i) => i.project_id === projectId);
+    const openRoots = rootItems(items).filter((i) => i.project_id === projectId);
+    const roots = current.filters.showCompleted
+      ? [
+          ...openRoots,
+          ...Object.values(snapshot.items).filter(
+            (i) => i.project_id === projectId && i.checked && !i.is_deleted && !i.parent_id,
+          ),
+        ]
+      : openRoots;
     return applyFilters(roots, current.filters, snapshot, childrenOf);
   }, [items, projectId, current.filters, snapshot, childrenOf]);
 
@@ -206,9 +226,14 @@ function ProjectBody({
         }
         subtitle={
           <EditableDescription
-            value={project.description ?? ''}
+            value={stripProjectIcon(project.description)}
             placeholder={t('project.editDescription')}
-            onCommit={(next) => void updateProjectFields(projectId, { description: next })}
+            /* An icon chosen from the project sheet rides on the end of the
+               same field (see domain/projectIcons.ts) — editing the visible
+               text here must not carry it off. */
+            onCommit={(next) => void updateProjectFields(projectId, {
+              description: withProjectIcon(next, readProjectIcon(project.description)),
+            })}
           />
         }
         actions={
@@ -217,6 +242,8 @@ function ProjectBody({
               viewKey={viewKey}
               modes={['list', 'board']}
               groups={['none', 'scheduled', 'priority', 'label', 'estimate', 'day']}
+              completedToggle
+              showWorkspaces={false}
             />
             <button className="btn accent" onClick={onInsights}>
               <Icon name="trend" />

@@ -149,7 +149,7 @@ export function TaskRow({
     <>
       <div
         ref={(node) => { setRowRef(node); dragRef?.(node); }}
-        className={`task${settling ? ' done settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}${gesture.className}`}
+        className={`task${item.checked || settling ? ' done' : ''}${settling ? ' settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}${gesture.className}`}
         role="button"
         tabIndex={0}
         /* The row the keyboard is on is the row that has focus, so the walk
