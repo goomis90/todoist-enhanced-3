@@ -284,7 +284,8 @@ export type SortKey =
   | 'manual'
   | 'priority'
   | 'due'
-  | 'added'
+  | 'added-desc'
+  | 'added-asc'
   | 'alphabetical'
   | 'estimate-asc'
   | 'estimate-desc'
@@ -299,6 +300,8 @@ export interface ViewFilters {
   estimated: boolean | null;
   includeScheduled: boolean;
   showSubtasks: boolean;
+  /** A project page only: also lists the project's completed tasks. */
+  showCompleted: boolean;
 }
 
 export const defaultFilters = (): ViewFilters => ({
@@ -309,6 +312,7 @@ export const defaultFilters = (): ViewFilters => ({
   estimated: null,
   includeScheduled: true,
   showSubtasks: true,
+  showCompleted: false,
 });
 
 export interface ViewPrefs {

@@ -121,7 +121,13 @@ interface AppState {
   setLocale: (locale: Locale) => void;
 
   /* Mutations */
-  apply: (commands: Command[], optimistic: (snapshot: Snapshot) => Snapshot) => Promise<void>;
+  /**
+   * Returns the id each temp id it sent resolved to — empty in demo mode, in
+   * offline mode, and on refusal, where nothing was ever assigned one.
+   */
+  apply: (
+    commands: Command[], optimistic: (snapshot: Snapshot) => Snapshot,
+  ) => Promise<Record<string, string>>;
   /**
    * Whether the first-run dialog is up.
    *
@@ -210,7 +216,12 @@ interface AppState {
    */
   nestProject: (id: string, parentId: string | null) => Promise<void>;
   skipOccurrence: (id: string) => Promise<void>;
-  /** Creates a project, in a workspace when one is named and personal when not. */
+  /**
+   * Creates a project, in a workspace when one is named and personal when
+   * not. Returns the id it ends up under once the round trip settles — the
+   * temp id it was optimistically created with, resolved to Todoist's real
+   * one where a sync happened at all.
+   */
   createProject: (
     name: string,
     color: string,
@@ -219,7 +230,7 @@ interface AppState {
     anchor?: { siblingId: string; position: 'above' | 'below' } | null,
     /** The rest of what the sheet asks for, so creating and editing match. */
     extra?: { description?: string; favourite?: boolean },
-  ) => Promise<void>;
+  ) => Promise<string>;
   /** Puts a project out of sight without destroying it. Todoist keeps the tasks. */
   archiveProject: (id: string) => Promise<void>;
   /** Deletes a project and everything in it. Todoist holds it for seven days. */
@@ -493,7 +504,7 @@ export const useStore = create<AppState>((set, get) => ({
     if (get().demo) {
       // A demo account is a sandbox: changes show, and stop there.
       set({ snapshot: after });
-      return;
+      return {};
     }
 
     set({ snapshot: after });
@@ -504,7 +515,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     if (!navigator.onLine) {
       set({ syncState: 'offline' });
-      return;
+      return {};
     }
 
     try {
@@ -541,7 +552,9 @@ export const useStore = create<AppState>((set, get) => ({
         set({ snapshot: before });
         schedulePersist(before);
         get().toast(explainFailure(failures[0].error, get().prefs.locale));
+        return {};
       }
+      return mapping;
     } catch (error) {
       if (error instanceof ApiError && error.isRefusal) {
         /* Todoist refused the change outright. The screen must not keep it,
@@ -558,6 +571,7 @@ export const useStore = create<AppState>((set, get) => ({
         // Network trouble: the change stays queued and goes out on the next sync.
         set({ syncState: 'offline' });
       }
+      return {};
     }
   },
 
@@ -1181,7 +1195,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     commands.unshift({ type: 'project_add', uuid: newUuid(), args, temp_id: tempId });
 
-    await get().apply(commands, (current) => ({
+    const mapping = await get().apply(commands, (current) => ({
       ...current,
       projects: {
         ...current.projects,
@@ -1196,6 +1210,7 @@ export const useStore = create<AppState>((set, get) => ({
         },
       },
     }));
+    return mapping[tempId] ?? tempId;
   },
 
   async archiveProject(id) {

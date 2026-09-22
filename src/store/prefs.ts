@@ -167,6 +167,8 @@ export interface Preferences {
   eisenhowerShowFuture: boolean;
   /** Whether the undated Someday backlog is included in the matrix. */
   eisenhowerIncludeSomeday: boolean;
+  /** Narrows the matrix to one workspace's projects; null is every workspace. */
+  eisenhowerWorkspace: string | null;
 }
 
 export const defaultPreferences = (locale: Locale): Preferences => ({
@@ -196,6 +198,7 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
   eisenhowerImportant: [1, 2],
   eisenhowerShowFuture: false,
   eisenhowerIncludeSomeday: false,
+  eisenhowerWorkspace: null,
 });
 
 /**
@@ -251,6 +254,7 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
       : base.eisenhowerImportant,
     eisenhowerShowFuture: s.eisenhowerShowFuture === true,
     eisenhowerIncludeSomeday: s.eisenhowerIncludeSomeday === true,
+    eisenhowerWorkspace: typeof s.eisenhowerWorkspace === 'string' ? s.eisenhowerWorkspace : null,
     views: s.views ?? {},
   };
 }

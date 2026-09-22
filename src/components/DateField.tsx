@@ -37,6 +37,15 @@ interface DateFieldProps {
   searchable?: boolean;
   /** Open as soon as the field is mounted, for a menu whose button is already the trigger. */
   openOnMount?: boolean;
+  /**
+   * False where the field sits beside its own Today / Tomorrow / Next week
+   * shortcuts (the row's own schedule menu): showing the current date on the
+   * button too means a task due today reads "Today … Today", the second one
+   * looking like a second shortcut rather than the "pick another day" button
+   * it is. The button still opens on the date already picked either way —
+   * only the closed face stops repeating it.
+   */
+  showValue?: boolean;
 }
 
 /** The shortcuts, because most dates a person picks are one of these four. */
@@ -57,7 +66,7 @@ const SHORTCUTS = [
  */
 export function DateField({
   value, onChange, label, placeholder, min, max, clearable = true, searchable = true,
-  openOnMount = false,
+  openOnMount = false, showValue = true,
 }: DateFieldProps) {
   const { t, locale } = useT();
   const dateFormat = useStore((s) => s.prefs.dateFormat);
@@ -312,7 +321,7 @@ export function DateField({
       <button
         type="button"
         ref={buttonRef}
-        className={`fselect-face${open ? ' open' : ''}${value ? '' : ' empty'}`}
+        className={`fselect-face${open ? ' open' : ''}${value && showValue ? '' : ' empty'}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={label}
@@ -324,7 +333,7 @@ export function DateField({
               wants: "17 sept. 2026" is a date you have to work out is
               tomorrow. Everything further off is written out in the order the
               settings ask for. */}
-          {selected ? formatDayOrName(selected, locale, dateFormat) : (placeholder ?? label)}
+          {selected && showValue ? formatDayOrName(selected, locale, dateFormat) : (placeholder ?? label)}
         </span>
         <Icon name="caret" size="sm" />
       </button>

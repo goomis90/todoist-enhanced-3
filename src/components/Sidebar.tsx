@@ -9,6 +9,8 @@ import { projectCounts, projectTree, rootItems, type ProjectNode } from '@/store
 import { anytimeItems, bucketOf, hasLabel, somedayItems, upcomingItems, weekItems } from '@/domain/views';
 import { markerStyle, avatarUrl } from '@/domain/colors';
 import { firstName, karmaStanding } from '@/domain/karma';
+import { readProjectIcon } from '@/domain/projectIcons';
+import { ProjectIcon } from './ProjectIconPicker';
 import type { ViewId } from '@/domain/types';
 import type { DropTarget } from '@/domain/dnd';
 import type { TranslationKey } from '@/i18n';
@@ -266,6 +268,7 @@ export function Sidebar({
     const folderLike = children.length > 0 && count === 0;
     const menuOpen = rowMenu?.key === rowKey;
     const childrenOpen = openFolders[project.id] ?? true;
+    const customIcon = readProjectIcon(project.description);
 
     const row = (
       <Droppable
@@ -303,7 +306,13 @@ export function Sidebar({
             >
               {folderLike
                 ? <Icon name="project" />
-                : <span className="hash" style={markerStyle(project.color)}>#</span>}
+                : (
+                  <span className="hash" style={markerStyle(project.color)}>
+                    {customIcon
+                      ? <ProjectIcon iconId={customIcon} size="sm" style={{ color: 'inherit' }} />
+                      : '#'}
+                  </span>
+                )}
               <span className="label">{project.name}</span>
             </button>
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
+import { PERSONAL_WORKSPACE } from '@/store/selectors';
 import {
   EISENHOWER_PRIORITIES,
   EISENHOWER_URGENCY_RULES,
@@ -20,13 +21,16 @@ export function EisenhowerDisplayMenu() {
   const { t } = useT();
   const prefs = useStore((s) => s.prefs);
   const setPrefs = useStore((s) => s.setPrefs);
+  const snapshot = useStore((s) => s.snapshot);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const workspaces = Object.values(snapshot.workspaces);
   const changed = Number(prefs.eisenhowerLayout !== 'matrix')
     + Number(prefs.eisenhowerUrgent.join('|') !== 'overdue|today')
     + Number(prefs.eisenhowerImportant.join('|') !== '1|2')
     + Number(prefs.eisenhowerShowFuture)
-    + Number(prefs.eisenhowerIncludeSomeday);
+    + Number(prefs.eisenhowerIncludeSomeday)
+    + Number(prefs.eisenhowerWorkspace !== null);
 
   useEffect(() => {
     if (!open) return;
@@ -50,6 +54,7 @@ export function EisenhowerDisplayMenu() {
     eisenhowerImportant: [1, 2],
     eisenhowerShowFuture: false,
     eisenhowerIncludeSomeday: false,
+    eisenhowerWorkspace: null,
   });
 
   const toggleUrgent = (rule: EisenhowerUrgencyRule) => setPrefs({
@@ -120,6 +125,38 @@ export function EisenhowerDisplayMenu() {
               onClick={() => setPrefs({ eisenhowerIncludeSomeday: !prefs.eisenhowerIncludeSomeday })}
             />
           </div>
+
+          {/* "My projects" isn't a workspace Todoist hands back — it's the
+              absence of one — so this has nothing to offer it against until
+              the account has added a real workspace. */}
+          {workspaces.length > 0 && (
+            <>
+              <h5>{t('filter.workspaces')}</h5>
+              <div className="segmented small">
+                <button
+                  aria-pressed={prefs.eisenhowerWorkspace === null}
+                  onClick={() => setPrefs({ eisenhowerWorkspace: null })}
+                >
+                  <small>{t('filter.any')}</small>
+                </button>
+                <button
+                  aria-pressed={prefs.eisenhowerWorkspace === PERSONAL_WORKSPACE}
+                  onClick={() => setPrefs({ eisenhowerWorkspace: PERSONAL_WORKSPACE })}
+                >
+                  <small>{t('nav.myProjects')}</small>
+                </button>
+                {workspaces.map((workspace) => (
+                  <button
+                    key={workspace.id}
+                    aria-pressed={prefs.eisenhowerWorkspace === workspace.id}
+                    onClick={() => setPrefs({ eisenhowerWorkspace: workspace.id })}
+                  >
+                    <small>{workspace.name}</small>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           <h5>{t('matrix.urgent')}</h5>
           <div className="matrix-checks">

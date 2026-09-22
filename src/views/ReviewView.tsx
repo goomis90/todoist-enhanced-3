@@ -633,22 +633,43 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
   function DoneRow({ done }: { done: CompletedItem }) {
     const project = snapshot.projects[done.project_id];
     const priority = toDisplayPriority(done.priority ?? 1);
+    /* Todoist keeps a completed task in the same `items` the sync API always
+       returns — checked, but otherwise intact with its due date, deadline and
+       description — so opening it here reaches the real task, not a summary,
+       and edits through it go through the same item_update every open task
+       uses. Only a task old enough to have aged out of that collection falls
+       back to plain text. */
+    const taskId = done.task_id ?? done.id;
+    const live = snapshot.items[taskId];
+    const body = (
+      <>
+        <span className="ttitle">{done.content}</span>
+        <span className="meta">
+          <span>{formatRelativeDay(new Date(done.completed_at), locale)}</span>
+          {project && !project.inbox_project && (
+            <span className="proj" style={markerStyle(project.color, false)}>
+              #{project.name}
+            </span>
+          )}
+        </span>
+      </>
+    );
     return (
       <div className="reviewrow done">
         {/* A tick, not a line through it. This is a record of work, and a
             review is no place to read your own week crossed out. */}
         <span className={`check done p${priority}`} aria-hidden="true"><Icon name="check" /></span>
-        <span className="reviewname as-text">
-          <span className="ttitle">{done.content}</span>
-          <span className="meta">
-            <span>{formatRelativeDay(new Date(done.completed_at), locale)}</span>
-            {project && !project.inbox_project && (
-              <span className="proj" style={markerStyle(project.color, false)}>
-                #{project.name}
-              </span>
-            )}
-          </span>
-        </span>
+        {live ? (
+          <button
+            className="reviewname"
+            title={t('task.editComplete')}
+            onClick={() => onOpen(taskId)}
+          >
+            {body}
+          </button>
+        ) : (
+          <span className="reviewname as-text">{body}</span>
+        )}
       </div>
     );
   }

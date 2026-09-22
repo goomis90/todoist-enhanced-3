@@ -4,7 +4,7 @@ import { Select } from './Select';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
-import { countActiveFilters } from '@/store/selectors';
+import { countActiveFilters, PERSONAL_WORKSPACE } from '@/store/selectors';
 import {
   defaultViewPrefs, type DisplayMode, type DisplayPriority,
   type GroupKey, type SortKey,
@@ -16,6 +16,14 @@ interface DisplayMenuProps {
   viewKey: string;
   modes: DisplayMode[];
   groups: GroupKey[];
+  /** A project page only: offers to also list the project's completed tasks. */
+  completedToggle?: boolean;
+  /**
+   * False on a single project's own page: every task there already shares
+   * that one project's workspace, so narrowing by workspace has nothing to
+   * narrow. Everywhere else draws from more than one project and keeps it.
+   */
+  showWorkspaces?: boolean;
 }
 
 const MODE_ICON: Record<DisplayMode, IconName> = {
@@ -31,7 +39,9 @@ const MODE_ICON: Record<DisplayMode, IconName> = {
  * "Display" button rather than a row of separate ones, and the count on the
  * button says how many choices differ from the defaults.
  */
-export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
+export function DisplayMenu({
+  viewKey, modes, groups, completedToggle = false, showWorkspaces = true,
+}: DisplayMenuProps) {
   const { t } = useT();
   const prefs = useStore((s) => s.prefs);
   const setViewPrefs = useStore((s) => s.setViewPrefs);
@@ -59,7 +69,8 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
   }, [open]);
 
   const sorts: SortKey[] = [
-    'manual', 'priority', 'due', 'added', 'alphabetical', 'estimate-asc', 'estimate-desc', 'label',
+    'manual', 'priority', 'due', 'added-desc', 'added-asc', 'alphabetical',
+    'estimate-asc', 'estimate-desc', 'label',
   ];
 
   // How many settings this view carries beyond the defaults.
@@ -70,6 +81,7 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
     (current.mode !== base.mode ? 1 : 0);
 
   const tags = Object.values(snapshot.labels).filter((l) => !l.name.startsWith('est-'));
+  const workspaces = Object.values(snapshot.workspaces);
 
   const toggleIn = <T,>(list: T[], value: T): T[] =>
     list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
@@ -198,6 +210,40 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
             ))}
           </div>
 
+          {/* "My projects" isn't a workspace Todoist hands back — it's the
+              absence of one — so there is nothing to offer this against
+              until the account has added a real one. From that point on
+              there are always at least two places a task can be: personal,
+              or that workspace. */}
+          {showWorkspaces && workspaces.length > 0 && (
+            <>
+              <h5>{t('filter.workspaces')}</h5>
+              <div className="segmented small">
+                <button
+                  aria-pressed={current.filters.workspaces.length === 0}
+                  onClick={() => setFilters({ workspaces: [] })}
+                >
+                  <small>{t('filter.any')}</small>
+                </button>
+                <button
+                  aria-pressed={current.filters.workspaces[0] === PERSONAL_WORKSPACE}
+                  onClick={() => setFilters({ workspaces: [PERSONAL_WORKSPACE] })}
+                >
+                  <small>{t('nav.myProjects')}</small>
+                </button>
+                {workspaces.map((workspace) => (
+                  <button
+                    key={workspace.id}
+                    aria-pressed={current.filters.workspaces[0] === workspace.id}
+                    onClick={() => setFilters({ workspaces: [workspace.id] })}
+                  >
+                    <small>{workspace.name}</small>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
           <hr />
           <div className="panelrow">
             <span>{t('filter.includeScheduled')}</span>
@@ -219,6 +265,18 @@ export function DisplayMenu({ viewKey, modes, groups }: DisplayMenuProps) {
               onClick={() => setFilters({ showSubtasks: !current.filters.showSubtasks })}
             />
           </div>
+          {completedToggle && (
+            <div className="panelrow">
+              <span>{t('filter.showCompleted')}</span>
+              <button
+                className="switch"
+                role="switch"
+                aria-checked={current.filters.showCompleted}
+                aria-label={t('filter.showCompleted')}
+                onClick={() => setFilters({ showCompleted: !current.filters.showCompleted })}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
