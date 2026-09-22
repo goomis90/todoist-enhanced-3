@@ -581,6 +581,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
                 label={t('task.schedule')}
                 placeholder={t('task.pickDate')}
                 searchable={false}
+                showValue={false}
                 onChange={(next) => {
                   if (!next) { schedule(null); return; }
                   const day = new Date(`${next}T00:00:00`);

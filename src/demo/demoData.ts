@@ -26,6 +26,8 @@ function makeRandom(seed: number) {
 interface Copy {
   person: string;
   email: string;
+  /** Todoist accounts get one of these at most; "My projects" (personal) isn't one. */
+  workspace: string;
   projects: {
     inbox: string;
     personal: string;
@@ -47,6 +49,7 @@ const COPY: Record<Locale, Copy> = {
   fr: {
     person: 'Camille Durand',
     email: 'camille@demo.test',
+    workspace: 'Studio Camille',
     projects: {
       inbox: 'Boîte de réception',
       personal: 'Perso',
@@ -107,6 +110,7 @@ const COPY: Record<Locale, Copy> = {
   en: {
     person: 'Robin Hale',
     email: 'robin@demo.test',
+    workspace: 'Robin Studio',
     projects: {
       inbox: 'Inbox',
       personal: 'Personal',
@@ -184,16 +188,26 @@ export function buildDemoSnapshot(locale: Locale = 'en', seed = 20260914): Snaps
     };
   };
 
+  /* One workspace — Todoist's own limit on a non-Business account — for the
+     client work, so there is something for a workspace filter to narrow.
+     "Perso" and "Logement" carry no `workspace_id` at all: My projects is
+     the absence of a workspace, not a workspace of its own, and Inbox never
+     joins one either. */
+  const workspaces = {
+    'ws-pro': { id: 'ws-pro', name: copy.workspace, logo_big: null },
+  };
+
   addProject('inbox', copy.projects.inbox, 'charcoal', 0, { inbox_project: true });
   addProject('personal', copy.projects.personal, 'orange', 1, { is_favorite: true });
   addProject('home', copy.projects.home, 'green', 2, { description: copy.projects.homeDescription });
   addProject('site', copy.projects.site, 'blue', 3, {
     is_favorite: true,
     description: copy.projects.siteDescription,
+    workspace_id: 'ws-pro',
   });
-  addProject('clients', copy.projects.clients, 'grey', 4, { is_folder: true });
-  addProject('client-a', copy.projects.clientA, 'grape', 5, { parent_id: 'clients' });
-  addProject('client-b', copy.projects.clientB, 'teal', 6, { parent_id: 'clients' });
+  addProject('clients', copy.projects.clients, 'grey', 4, { is_folder: true, workspace_id: 'ws-pro' });
+  addProject('client-a', copy.projects.clientA, 'grape', 5, { parent_id: 'clients', workspace_id: 'ws-pro' });
+  addProject('client-b', copy.projects.clientB, 'teal', 6, { parent_id: 'clients', workspace_id: 'ws-pro' });
 
   const sections: Record<string, Section> = {};
   ['s-todo', 's-doing', 's-review'].forEach((id, index) => {
@@ -346,6 +360,7 @@ export function buildDemoSnapshot(locale: Locale = 'en', seed = 20260914): Snaps
     projects,
     sections,
     labels,
+    workspaces,
     user,
     syncToken: 'demo',
     syncedAt: Date.now(),

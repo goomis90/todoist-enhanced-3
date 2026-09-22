@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Overlay } from './Overlay';
 import { Icon } from '../Icon';
 import { Select } from '../Select';
+import { ProjectIcon, ProjectIconGrid } from '../ProjectIconPicker';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { colorValue, markerStyle } from '@/domain/colors';
+import { readProjectIcon, stripProjectIcon, withProjectIcon } from '@/domain/projectIcons';
 import type { TranslationKey } from '@/i18n';
 
 /** Todoist's own project palette, in Todoist's own order. */
@@ -56,6 +58,7 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
   const [favourite, setFavourite] = useState(false);
   const [destination, setDestination] = useState(PERSONAL);
   const [saving, setSaving] = useState(false);
+  const [icon, setIcon] = useState<string | null>(null);
 
   const workspaces = useMemo(
     () => Object.values(snapshot.workspaces).sort((a, b) => a.name.localeCompare(b.name)),
@@ -70,7 +73,8 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
       const project = snapshot.projects[target.projectId];
       setName(project?.name ?? '');
       setColor(project?.color ?? 'charcoal');
-      setDescription(project?.description ?? '');
+      setDescription(stripProjectIcon(project?.description));
+      setIcon(readProjectIcon(project?.description));
       setFavourite(project?.is_favorite ?? false);
       setDestination(project?.workspace_id ?? PERSONAL);
       return;
@@ -78,6 +82,7 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
     setName('');
     setColor('charcoal');
     setDescription('');
+    setIcon(null);
     setFavourite(false);
     setDestination(target.workspaceId ?? PERSONAL);
     // Reading the project once, on opening, is the point: later edits are ours.
@@ -96,11 +101,16 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
     if (!name.trim() || saving || !target) return;
     setSaving(true);
 
+    // The chosen icon rides as a marker on the end of the description —
+    // real Todoist data, so it reaches the account this way whichever of
+    // the two calls below is the one making the request.
+    const finalDescription = withProjectIcon(description, icon);
+
     if (target.mode === 'edit') {
       await updateProjectFields(target.projectId, {
         name: name.trim(),
         color,
-        description,
+        description: finalDescription,
         is_favorite: favourite,
       });
     } else {
@@ -109,7 +119,7 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
         color,
         destination === PERSONAL ? null : destination,
         target.anchor ?? null,
-        { description, favourite },
+        { description: finalDescription, favourite },
       );
     }
     onClose();
@@ -134,7 +144,9 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
       <div className="sheet-body projectform">
         {/* The marker the sidebar will show, updating as the fields do. */}
         <div className="projectpreview">
-          <span className="hash" style={markerStyle(color)}>#</span>
+          <span className="hash" style={markerStyle(color)}>
+            {icon ? <ProjectIcon iconId={icon} size="sm" style={{ color: 'inherit' }} /> : '#'}
+          </span>
           <span className="projectpreview-name">{name.trim() || t('project.name')}</span>
           {favourite && (
             <Icon name="star" size="sm" className="projectpreview-star" />
@@ -194,6 +206,12 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="formfield">
+          <span className="fieldlabel">{t('project.icon')}</span>
+          <ProjectIconGrid value={icon} onPick={setIcon} />
+          <p className="menuhint">{t('project.iconHint')}</p>
         </div>
 
         {/* Only worth asking when there is somewhere else for it to go, and

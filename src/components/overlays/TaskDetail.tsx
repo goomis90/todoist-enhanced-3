@@ -285,6 +285,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const createTask = useStore((s) => s.createTask);
   const moveTask = useStore((s) => s.moveTask);
   const setRecurrence = useStore((s) => s.setRecurrence);
+  const skipOccurrence = useStore((s) => s.skipOccurrence);
   const naturalDates = useStore((s) => s.prefs.naturalDates);
   const toast = useStore((s) => s.toast);
   const confirm = useConfirm();
@@ -641,7 +642,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
       <div className="detail-body" ref={panelRef}>
         <div className="detail-main">
-          <div className="detail-headline">
+          <div className={`detail-headline${item.checked ? ' done' : ''}`}>
             {isUncompletable(item) ? (
               <span className={`check p${priority} nocheck`} aria-hidden="true" />
             ) : (
@@ -846,6 +847,20 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                 });
               }}
             />
+            {/* The row's own schedule menu has offered this for a while
+                (TaskActions.tsx) — closing the panel to reach it, just to skip
+                one occurrence of the task already open, was the gap. */}
+            {item.due?.is_recurring && (
+              <button
+                type="button"
+                className="proplink"
+                title={t('task.nextOccurrenceHint')}
+                onClick={() => void skipOccurrence(item.id)}
+              >
+                <Icon name="repeat" size="sm" />
+                {t('task.nextOccurrence')}
+              </button>
+            )}
           </div>
 
           <div className="prop" data-prop="deadline">

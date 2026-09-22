@@ -11,7 +11,7 @@ import {
 } from '@/domain/eisenhower';
 import { summariseLoad } from '@/domain/load';
 import { bucketOf } from '@/domain/views';
-import { rootItems } from '@/store/selectors';
+import { PERSONAL_WORKSPACE, rootItems } from '@/store/selectors';
 import { useStore } from '@/store/store';
 import type { TranslationKey } from '@/i18n';
 
@@ -22,12 +22,13 @@ interface EisenhowerViewProps {
 
 export function EisenhowerView({ onOpen, onUnestimated }: EisenhowerViewProps) {
   const { t } = useT();
-  const { items, childrenOf } = useData();
+  const { snapshot, items, childrenOf } = useData();
   const layout = useStore((s) => s.prefs.eisenhowerLayout);
   const urgentRules = useStore((s) => s.prefs.eisenhowerUrgent);
   const importantPriorities = useStore((s) => s.prefs.eisenhowerImportant);
   const showFuture = useStore((s) => s.prefs.eisenhowerShowFuture);
   const includeSomeday = useStore((s) => s.prefs.eisenhowerIncludeSomeday);
+  const workspaceFilter = useStore((s) => s.prefs.eisenhowerWorkspace);
   const weekLabel = useStore((s) => s.prefs.weekLabel);
   const roots = useMemo(() => rootItems(items), [items]);
   const visibleItems = useMemo(() => {
@@ -36,9 +37,14 @@ export function EisenhowerView({ onOpen, onUnestimated }: EisenhowerViewProps) {
       const bucket = bucketOf(item, now);
       if (!showFuture && bucket === 'upcoming') return false;
       if (!includeSomeday && bucket === 'someday') return false;
+      if (workspaceFilter) {
+        const workspaceId = snapshot.projects[item.project_id]?.workspace_id ?? null;
+        const bucket = workspaceId ?? PERSONAL_WORKSPACE;
+        if (bucket !== workspaceFilter) return false;
+      }
       return true;
     });
-  }, [roots, showFuture, includeSomeday]);
+  }, [roots, showFuture, includeSomeday, workspaceFilter, snapshot.projects]);
   const load = useMemo(
     () => summariseLoad(visibleItems, childrenOf, null),
     [visibleItems, childrenOf],

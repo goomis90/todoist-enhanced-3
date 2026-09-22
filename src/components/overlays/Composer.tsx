@@ -385,9 +385,27 @@ export function Composer({
         <div className="composer-subs">
           <span className="fieldlabel">{t('detail.subtasks')}</span>
           {subtasks.map((content, index) => (
-            <div className="composer-sub" key={`${content}-${index}`}>
+            <div className="composer-sub" key={index}>
               <span className="check p4" aria-hidden="true" />
-              <span>{content}</span>
+              <input
+                value={content}
+                aria-label={t('detail.subtasks')}
+                onChange={(e) => {
+                  const { value } = e.target;
+                  setSubtasks((prev) => prev.map((s, i) => (i === index ? value : s)));
+                }}
+                onBlur={() => setSubtasks((prev) => {
+                  const trimmed = prev[index]?.trim();
+                  if (!trimmed) return prev.filter((_, i) => i !== index);
+                  return trimmed === prev[index] ? prev : prev.map((s, i) => (i === index ? trimmed : s));
+                })}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  (e.target as HTMLInputElement).blur();
+                }}
+              />
               <button
                 className="iconbtn"
                 aria-label={t('common.cancel')}
