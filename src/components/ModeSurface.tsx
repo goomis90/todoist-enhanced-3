@@ -40,6 +40,8 @@ interface ModeSurfaceProps {
     onAddTask?: () => void;
     /** A day column knows its capacity, and shows its load against it. */
     capacityMinutes?: number | null;
+    /** Same meaning as TaskGroup's accent: a callout wash for the whole column. */
+    accent?: 'late' | 'quick' | 'deadline';
   }>;
 }
 
@@ -184,8 +186,9 @@ function BoardSurface(props: ModeSurfaceProps) {
           ].filter((part): part is string => part !== null);
           // An empty column has nothing to measure; "0 %" under it is noise.
           if (column.items.length === 0) parts.length = 0;
+          const accentClass = column.accent ? ` accent-${column.accent}` : '';
           const body = (isOver: boolean) => (
-            <section className={`col${isOver ? ' dropping' : ''}`}>
+            <section className={`col${isOver ? ' dropping' : ''}${accentClass}`}>
             <div className="chead">
               <div className="chead-title">
                 <strong>{column.title}</strong>

@@ -84,11 +84,16 @@ function WeekBody({
   const scoped = useMemo(() => {
     const roots = rootItems(items);
     const now = new Date();
+    const todayStr = toApiDate(now);
     const inScope =
       scope === 'today'
         ? roots.filter((i) => {
             const bucket = bucketOf(i, now);
-            return bucket === 'overdue' || bucket === 'today';
+            // Widened on purpose: a task can carry today's deadline while due
+            // next week (or never), and would otherwise never reach the page
+            // at all — groupWeek/groupWeekPersonal decide from here which
+            // bucket it actually lands in.
+            return bucket === 'overdue' || bucket === 'today' || i.deadline?.date === todayStr;
           })
         : scope === 'anytime'
           ? anytimeItems(roots, now)
@@ -97,8 +102,8 @@ function WeekBody({
   }, [items, current.filters, snapshot, childrenOf, scope]);
 
   const groups = useMemo(
-    () => groupWeek(scoped, new Date(), prefs.showQuickGroup),
-    [scoped, prefs.showQuickGroup],
+    () => groupWeek(scoped, new Date(), prefs.showQuickGroup, scope === 'today'),
+    [scoped, prefs.showQuickGroup, scope],
   );
 
   /* Today's own alternative grouping: only ever computed on the Today page,
@@ -106,7 +111,7 @@ function WeekBody({
      not a week that already has its own fixed order. */
   const personal = scope === 'today' && current.group === 'personal';
   const personalGroups = useMemo(
-    () => (personal ? groupWeekPersonal(scoped, new Date(), prefs.showQuickGroup) : null),
+    () => (personal ? groupWeekPersonal(scoped, new Date(), prefs.showQuickGroup, true) : null),
     [personal, scoped, prefs.showQuickGroup],
   );
 
@@ -164,10 +169,13 @@ function WeekBody({
      today are neither, so an empty one is just noise. */
   const weekColumns = useMemo(() => {
     const today = [
-      { id: 'overdue', title: t('group.overdue'), items: groups.overdue },
+      { id: 'overdue', title: t('group.overdue'), items: groups.overdue, accent: 'late' as const },
       ...(prefs.showQuickGroup
         ? [{ id: 'quick', title: t('group.quick'), items: groups.quick,
-            dropTarget: { kind: 'quick' as const } }]
+            dropTarget: { kind: 'quick' as const }, accent: 'quick' as const }]
+        : []),
+      ...(scope === 'today'
+        ? [{ id: 'deadline', title: t('group.deadline'), items: groups.deadline, accent: 'deadline' as const }]
         : []),
       { id: 'untimed', title: t('group.untimed'), items: groups.untimed,
         dropTarget: { kind: 'today' as const } },
@@ -193,11 +201,12 @@ function WeekBody({
     if (!personalGroups) return [];
     const today = toApiDate(new Date());
     const columns = [
-      { id: 'overdue', title: t('group.overdue'), items: personalGroups.overdue },
+      { id: 'overdue', title: t('group.overdue'), items: personalGroups.overdue, accent: 'late' as const },
       ...(prefs.showQuickGroup
         ? [{ id: 'quick', title: t('group.quick'), items: personalGroups.quick,
-            dropTarget: { kind: 'quick' as const } }]
+            dropTarget: { kind: 'quick' as const }, accent: 'quick' as const }]
         : []),
+      { id: 'deadline', title: t('group.deadline'), items: groups.deadline, accent: 'deadline' as const },
       { id: 'p1', title: t('common.p1'), items: personalGroups.p1,
         onAddTask: () => onAddTaskTo({ date: today, priority: 1 }) },
       { id: 'p2', title: t('common.p2'), items: personalGroups.p2,
@@ -213,7 +222,7 @@ function WeekBody({
         ...column, items: sortItems(column.items, current.sort, childrenOf, 'day', snapshot),
       }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personalGroups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, onAddTaskTo, dragging]);
+  }, [personalGroups, groups.deadline, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, onAddTaskTo, dragging]);
 
   return (
     <div className="page">
@@ -278,6 +287,21 @@ function WeekBody({
               accent="quick"
               dropTarget={{ kind: 'quick' }}
               onAddTask={() => onAddTaskTo(placementFor({ kind: 'quick' }))}
+            />
+          )}
+
+          {/* Deadline is its own field, independent of due date — a task can
+              carry it while due next week, so this reads from every root
+              item, not just what's already scoped to today/overdue. Today
+              page only: a week-wide deadline callout would just repeat
+              itself seven times over. */}
+          {scope === 'today' && (
+            <TaskGroup
+              title={t('group.deadline')}
+              items={sortedGroup(groups.deadline)}
+              childrenOf={childrenOf}
+              onOpen={onOpen}
+              accent="deadline"
             />
           )}
 
