@@ -21,6 +21,7 @@ import {
 import { markerStyle } from '@/domain/colors';
 import { toDisplayPriority, type CompletedItem } from '@/domain/types';
 import type { TranslationKey } from '@/i18n';
+import { byChildOrder } from '@/domain/orderKey';
 
 type Tab = 'overview' | 'logbook';
 type LogGroup = 'day' | 'project' | 'priority';
@@ -590,7 +591,7 @@ function Logbook({ completed }: { completed: CompletedItem[] }) {
 
   const projects = Object.values(snapshot.projects)
     .filter((p) => !p.is_deleted && !p.is_folder)
-    .sort((a, b) => a.child_order - b.child_order);
+    .sort(byChildOrder);
 
   return (
     <>
