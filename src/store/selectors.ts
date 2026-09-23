@@ -392,6 +392,24 @@ export function projectTree(snapshot: Snapshot): WorkspaceGroup[] {
     .sort((a, b) => (a.workspaceId === null ? -1 : b.workspaceId === null ? 1 : 0));
 }
 
+/**
+ * The sidebar's project order, flattened: every real project (not a folder —
+ * nothing lives directly in one), workspace by workspace, depth first. What
+ * Planning's project boards and its project filter both read, so the two
+ * always agree on order and on which projects exist.
+ */
+export function orderedProjects(snapshot: Snapshot): Project[] {
+  const out: Project[] = [];
+  const walk = (nodes: ProjectNode[]) => {
+    for (const node of nodes) {
+      if (!node.project.is_folder) out.push(node.project);
+      walk(node.children);
+    }
+  };
+  for (const group of projectTree(snapshot)) walk(group.roots);
+  return out;
+}
+
 /** How many open tasks each project holds, for the sidebar counters. */
 export function projectCounts(items: Item[]): Map<string, number> {
   const counts = new Map<string, number>();

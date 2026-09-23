@@ -269,7 +269,9 @@ export type ViewId =
   | 'label'
   | 'labels'
   | 'matrix'
-  | 'insights';
+  | 'insights'
+  /** Today plus every project, each its own board/group, side by side. */
+  | 'planning';
 
 export type DisplayMode = 'list' | 'board' | 'focus';
 

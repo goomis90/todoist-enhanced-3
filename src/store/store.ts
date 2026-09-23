@@ -1342,14 +1342,16 @@ export const useStore = create<AppState>((set, get) => ({
       return { ...snapshot, items: { ...snapshot.items, [id]: { ...current, ...fields } } };
     };
 
-    if (mutation.update) {
-      await get().apply([updateItem(id, mutation.update)], patch(mutation.update));
-    } else if (mutation.move) {
-      // One destination, and a move to a project or a section lands at its top level.
-      await get().apply(
-        [moveItem(id, moveArgs(mutation.move))],
-        patch({ ...mutation.move, parent_id: null }),
-      );
+    // See DragProvider's own drop handler for why this is no longer an
+    // either/or: a Planning-view drop can carry both at once.
+    const commands: Command[] = [];
+    if (mutation.update) commands.push(updateItem(id, mutation.update));
+    if (mutation.move) commands.push(moveItem(id, moveArgs(mutation.move)));
+    if (commands.length > 0) {
+      await get().apply(commands, patch({
+        ...(mutation.update ?? {}),
+        ...(mutation.move ? { ...mutation.move, parent_id: null } : {}),
+      }));
     }
 
     /* A move is undone by a move, the same way DragProvider undoes a drop:

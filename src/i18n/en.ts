@@ -4,6 +4,7 @@ export const en = {
   'nav.week': 'My week',
   'nav.upcoming': 'Upcoming',
   'nav.someday': 'Someday',
+  'nav.planning': 'Planning',
   'nav.dashboard': 'Dashboard',
   'nav.insights': 'Insights',
   'nav.settings': 'Settings',

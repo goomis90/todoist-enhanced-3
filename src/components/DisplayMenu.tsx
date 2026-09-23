@@ -4,12 +4,12 @@ import { Select } from './Select';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
-import { countActiveFilters, PERSONAL_WORKSPACE } from '@/store/selectors';
+import { countActiveFilters, orderedProjects, PERSONAL_WORKSPACE } from '@/store/selectors';
 import {
   defaultViewPrefs, type DisplayMode, type DisplayPriority,
   type GroupKey, type SortKey,
 } from '@/domain/types';
-import { markerStyle } from '@/domain/colors';
+import { markerStyle, colorValue } from '@/domain/colors';
 import type { TranslationKey } from '@/i18n';
 
 interface DisplayMenuProps {
@@ -24,6 +24,14 @@ interface DisplayMenuProps {
    * narrow. Everywhere else draws from more than one project and keeps it.
    */
   showWorkspaces?: boolean;
+  /**
+   * Planning only, for now: a page drawing from every project at once is the
+   * one place picking a handful of them out of a long list earns its own
+   * row, rather than living inside "workspaces" (which only ever narrows to
+   * one at a time) or being left for `projects` in ViewFilters to sit unread,
+   * as it has until now.
+   */
+  showProjects?: boolean;
 }
 
 const MODE_ICON: Record<DisplayMode, IconName> = {
@@ -40,7 +48,7 @@ const MODE_ICON: Record<DisplayMode, IconName> = {
  * button says how many choices differ from the defaults.
  */
 export function DisplayMenu({
-  viewKey, modes, groups, completedToggle = false, showWorkspaces = true,
+  viewKey, modes, groups, completedToggle = false, showWorkspaces = true, showProjects = false,
 }: DisplayMenuProps) {
   const { t } = useT();
   const prefs = useStore((s) => s.prefs);
@@ -82,6 +90,7 @@ export function DisplayMenu({
 
   const tags = Object.values(snapshot.labels).filter((l) => !l.name.startsWith('est-'));
   const workspaces = Object.values(snapshot.workspaces);
+  const projectOptions = showProjects ? orderedProjects(snapshot) : [];
 
   const toggleIn = <T,>(list: T[], value: T): T[] =>
     list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
@@ -171,6 +180,25 @@ export function DisplayMenu({
               </button>
             ))}
           </div>
+
+          {showProjects && projectOptions.length > 0 && (
+            <>
+              <h5>{t('filter.projects')}</h5>
+              <div className="chiprow scroll">
+                {projectOptions.map((project) => (
+                  <button
+                    key={project.id}
+                    className="chip"
+                    aria-pressed={current.filters.projects.includes(project.id)}
+                    onClick={() => setFilters({ projects: toggleIn(current.filters.projects, project.id) })}
+                  >
+                    <span className="flagdot" style={{ background: colorValue(project.color) }} />
+                    {project.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {tags.length > 0 && (
             <>
