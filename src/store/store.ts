@@ -105,7 +105,7 @@ function schedulePreferencesWrite(get: () => AppState) {
   if (preferencesWriteTimer) window.clearTimeout(preferencesWriteTimer);
   preferencesWriteTimer = window.setTimeout(() => {
     preferencesWriteTimer = null;
-    void get().ensurePreferencesTask();
+    void get().ensurePreferencesTask(true);
   }, 300);
 }
 
@@ -279,7 +279,11 @@ interface AppState {
   setViewPrefs: (viewKey: string, patch: Partial<ViewPrefs>) => void;
   setLocale: (locale: Locale) => void;
   /** Creates or updates the hidden Todoist task that is canonical for preferences. */
-  ensurePreferencesTask: () => Promise<void>;
+  /**
+   * Writes the settings to their Inbox comment. `localChange` says the call
+   * follows a change made here, which then wins over a comment found late.
+   */
+  ensurePreferencesTask: (localChange?: boolean) => Promise<void>;
   beginTourPreview: () => void;
   endTourPreview: () => void;
 
@@ -890,7 +894,7 @@ export const useStore = create<AppState>((set, get) => ({
    * most recently written. An account that still has the settings task from
    * 1.12 gets the comment and loses the task.
    */
-  async ensurePreferencesTask() {
+  async ensurePreferencesTask(localChange = false) {
     if (!get().connected || get().demo || creatingPreferencesTask || tourSnapshotBackup) return;
     creatingPreferencesTask = true;
     try {
@@ -908,7 +912,10 @@ export const useStore = create<AppState>((set, get) => ({
           set({ snapshot: { ...get().snapshot, notes } });
           snapshot = get().snapshot;
           comments = settingsComments(snapshot);
-          const canonical = remotePreferences(snapshot, get().prefs);
+          /* Found after the fact. If this call follows a change made here,
+             that change is what gets written; otherwise the comment is the
+             account's settings and this device takes them. */
+          const canonical = localChange ? null : remotePreferences(snapshot, get().prefs);
           if (canonical) {
             setWeekLabel(canonical.weekLabel);
             set({ prefs: canonical });
