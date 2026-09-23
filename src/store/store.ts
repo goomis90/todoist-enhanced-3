@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { auth } from '@/api/auth';
 import { ApiError, NotConnectedError } from '@/api/client';
-import { applySync, sync } from '@/api/sync';
+import { applySync, applyWrite, sync } from '@/api/sync';
 import {
   sendCommands, command, type Command,
   addItem, completeItem, deleteItem, moveItem, newUuid, reorderItems,
@@ -168,6 +168,14 @@ interface AppState {
   draggingTaskId: string | null;
   /** True while a made-up account is loaded; nothing is sent to Todoist. */
   demo: boolean;
+  /**
+   * Every temporary id Todoist has resolved this session, to the real one.
+   *
+   * Things created before Todoist answered are drawn under a temporary id, and
+   * a panel or an address may still be holding it when the answer lands —
+   * after reconnecting, most of all. They look the real one up here.
+   */
+  resolvedIds: Record<string, string>;
 
   /* Lifecycle */
   init: () => Promise<void>;
@@ -395,6 +403,94 @@ function explainFailure(error: string, locale: Locale): string {
     : `${said} — this is a limit on your Todoist account or workspace, not on this app. The change was not saved.`;
 }
 
+/**
+ * What to say when Todoist refused some of a batch.
+ *
+ * All of it refused reads as before. Part of it refused says how much was
+ * kept, so a bulk edit that half worked is not mistaken for one that did
+ * nothing or one that did everything.
+ */
+function explainFailures(
+  failures: Array<{ error: string }>,
+  total: number,
+  locale: Locale,
+): string {
+  const reason = explainFailure(failures[0].error, locale);
+  const saved = total - failures.length;
+  if (saved <= 0) return reason;
+  return locale === 'fr'
+    ? `${saved} modification${saved > 1 ? 's' : ''} sur ${total} enregistrée${saved > 1 ? 's' : ''}. ${reason}`
+    : `${saved} of ${total} changes saved. ${reason}`;
+}
+
+/** The collection a command acts on, read from its type. */
+function collectionOf(type: string): 'items' | 'projects' | 'sections' | 'labels' | 'notes' | null {
+  if (type.startsWith('item_')) return 'items';
+  if (type.startsWith('project_')) return 'projects';
+  if (type.startsWith('section_')) return 'sections';
+  if (type.startsWith('label_')) return 'labels';
+  if (type.startsWith('note_')) return 'notes';
+  return null;
+}
+
+/** Every id a command changes, whatever shape its arguments take. */
+function idsTouchedBy(cmd: Command): string[] {
+  const args = cmd.args as Record<string, unknown>;
+  const ids: string[] = [];
+  if (typeof args.id === 'string') ids.push(args.id);
+  for (const key of ['items', 'projects', 'sections']) {
+    const list = args[key];
+    if (Array.isArray(list)) {
+      for (const entry of list) {
+        if (entry && typeof (entry as { id?: unknown }).id === 'string') ids.push((entry as { id: string }).id);
+      }
+    }
+  }
+  for (const key of ['ids_to_orders', 'id_order_mapping']) {
+    const map = args[key];
+    if (map && typeof map === 'object') ids.push(...Object.keys(map));
+  }
+  return ids;
+}
+
+/**
+ * Takes back, on screen, exactly what Todoist refused.
+ *
+ * A refused change used to roll the whole screen back to before the batch,
+ * the accepted part with it. Now each refused command gives back only the
+ * objects it touched, as they were before, and a refused creation takes its
+ * placeholder away. Everything Todoist accepted stays as Todoist returned it.
+ */
+function revertRefused(
+  current: Snapshot,
+  before: Snapshot,
+  commands: Command[],
+  failures: Array<{ uuid: string }>,
+): Snapshot {
+  const refused = new Set(failures.map((failure) => failure.uuid));
+  const next: Snapshot = {
+    ...current,
+    items: { ...current.items },
+    projects: { ...current.projects },
+    sections: { ...current.sections },
+    labels: { ...current.labels },
+    notes: { ...current.notes },
+  };
+  for (const cmd of commands) {
+    if (!refused.has(cmd.uuid)) continue;
+    const collection = collectionOf(cmd.type);
+    if (!collection) continue;
+    const target = next[collection] as Record<string, unknown>;
+    const was = before[collection] as Record<string, unknown>;
+    if (cmd.temp_id) delete target[cmd.temp_id];
+    for (const id of idsTouchedBy(cmd)) {
+      if (was[id]) target[id] = was[id];
+      else delete target[id];
+    }
+  }
+  return next;
+}
+
 export const useStore = create<AppState>((set, get) => ({
   ready: false,
   connected: false,
@@ -415,6 +511,7 @@ export const useStore = create<AppState>((set, get) => ({
   selection: [],
   selectionAnchor: null,
   demo: false,
+  resolvedIds: {},
 
   async init() {
     const [storedPrefs, snapshot, queue] = await Promise.all([
@@ -493,6 +590,7 @@ export const useStore = create<AppState>((set, get) => ({
       prefs: defaultPreferences(get().prefs.locale),
       pendingCount: 0,
       syncState: 'idle',
+      resolvedIds: {},
     });
   },
 
@@ -507,11 +605,12 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       // Anything queued offline goes out first, so the server state the app
       // reads back already includes it and cannot overwrite it.
-      await flushQueue(get, set);
+      const stale = await flushQueue(get, set);
 
-      const token = full ? '*' : get().snapshot.syncToken;
+      const fromScratch = full || stale;
+      const token = fromScratch ? '*' : get().snapshot.syncToken;
       const response = await sync(token);
-      const snapshot = applySync(full ? emptySnapshot() : get().snapshot, response);
+      const snapshot = applySync(fromScratch ? emptySnapshot() : get().snapshot, response);
       const canonical = preferencesWriteTimer
         ? null
         : remotePreferences(snapshot, get().prefs.locale);
@@ -657,42 +756,31 @@ export const useStore = create<AppState>((set, get) => ({
     }
 
     try {
-      const { response, failures } = await sendCommands(after.syncToken, commands);
-      let merged = applySync(get().snapshot, response);
-
-      // Todoist returns the real id for each temp id it accepted. The
-      // placeholder must go, or the created task shows twice.
-      const mapping = response.temp_id_mapping ?? {};
-      const tempIds = Object.keys(mapping);
-      if (tempIds.length > 0) {
-        const items = { ...merged.items };
-        const projects = { ...merged.projects };
-        const sections = { ...merged.sections };
-        const labels = { ...merged.labels };
-        for (const tempId of tempIds) {
-          delete items[tempId];
-          delete projects[tempId];
-          // Sections and labels are created under a temp id too, and a
-          // placeholder left behind is a second copy on screen.
-          delete sections[tempId];
-          delete labels[tempId];
-        }
-        merged = { ...merged, items, projects, sections, labels };
+      const result = await sendCommands(after.syncToken, commands);
+      let merged = applyWrite(get().snapshot, result.responses, result.mapping);
+      if (result.failures.length > 0) {
+        merged = revertRefused(merged, before, commands, result.failures);
       }
 
-      set({ snapshot: merged, syncState: 'idle' });
+      set({
+        snapshot: merged,
+        syncState: result.error ? 'offline' : 'idle',
+        resolvedIds: { ...get().resolvedIds, ...result.mapping },
+      });
       schedulePersist(merged);
 
-      await idb.dequeue(commands.map((c) => c.uuid));
-      set({ pendingCount: Math.max(0, get().pendingCount - commands.length) });
+      /* Only what Todoist received leaves the queue. What the network lost
+         part-way stays, with the ids resolved so far written into it. */
+      await idb.dequeue(result.delivered);
+      if (result.undelivered.length > 0) await idb.updateQueued(result.undelivered);
+      set({ pendingCount: Math.max(0, get().pendingCount - result.delivered.length) });
 
-      if (failures.length > 0) {
-        set({ snapshot: before });
-        schedulePersist(before);
-        get().toast(explainFailure(failures[0].error, get().prefs.locale));
-        return {};
+      if (result.failures.length > 0) {
+        get().toast(explainFailures(
+          result.failures, result.delivered.length, get().prefs.locale,
+        ));
       }
-      return mapping;
+      return result.mapping;
     } catch (error) {
       if (error instanceof ApiError && error.isRefusal) {
         /* Todoist refused the change outright. The screen must not keep it,
@@ -1728,20 +1816,38 @@ function patchItem(snapshot: Snapshot, id: string, args: Record<string, unknown>
 async function flushQueue(
   get: () => AppState,
   set: (patch: Partial<AppState>) => void,
-): Promise<void> {
+): Promise<boolean> {
   const queue = await idb.readQueue();
-  if (queue.length === 0) return;
+  if (queue.length === 0) return false;
 
   const commands: Command[] = queue.map(({ queuedAt: _q, attempts: _a, ...cmd }) => cmd);
   try {
-    const { response, failures } = await sendCommands(get().snapshot.syncToken, commands);
-    const merged = applySync(get().snapshot, response);
-    set({ snapshot: merged });
-    await idb.dequeue(commands.map((c) => c.uuid));
-    set({ pendingCount: 0 });
-    if (failures.length > 0) {
-      get().toast(explainFailure(failures[0].error, get().prefs.locale));
+    const result = await sendCommands(get().snapshot.syncToken, commands);
+    let merged = applyWrite(get().snapshot, result.responses, result.mapping);
+
+    /* A refused creation takes its placeholder with it. A refused edit is
+       harder: the queue does not remember what the screen showed before it,
+       sometimes several reloads ago, so only a full read of Todoist can say
+       what was kept. */
+    let stale = false;
+    if (result.failures.length > 0) {
+      const refused = new Set(result.failures.map((failure) => failure.uuid));
+      const placeholders = commands.filter((cmd) => refused.has(cmd.uuid) && cmd.temp_id);
+      if (placeholders.length > 0) {
+        merged = revertRefused(merged, merged, placeholders, result.failures);
+      }
+      stale = commands.some((cmd) => refused.has(cmd.uuid) && !cmd.temp_id);
     }
+
+    set({ snapshot: merged, resolvedIds: { ...get().resolvedIds, ...result.mapping } });
+    await idb.dequeue(result.delivered);
+    if (result.undelivered.length > 0) await idb.updateQueued(result.undelivered);
+    set({ pendingCount: result.undelivered.length });
+    if (result.failures.length > 0) {
+      get().toast(explainFailures(result.failures, result.delivered.length, get().prefs.locale));
+    }
+    // A full read would wipe the placeholders of what is still waiting to go.
+    return stale && result.undelivered.length === 0;
   } catch (error) {
     /* A refusal will be refused again. Left in the queue it goes out on every
        sync for ever, holding a pending count that never falls and a change
@@ -1750,8 +1856,9 @@ async function flushQueue(
       await idb.dequeue(commands.map((c) => c.uuid));
       set({ pendingCount: 0 });
       get().toast(explainFailure(error.detail, get().prefs.locale));
-      return;
+      return true;
     }
     // Still unreachable; the queue is left alone and retried later.
+    return false;
   }
 }
