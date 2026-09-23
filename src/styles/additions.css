@@ -1061,6 +1061,15 @@
     visibility:visible;
     gap:0;
   }
+  /* Parked past the row's edge, the tray is still inside whatever the row
+     sits in: a group card's padding left a slice of every button showing down
+     the right of the list. It is hidden until the row moves — over the
+     desktop's hover and focus rules, which a tap on a phone also sets — and
+     hides only once the row has eased back over it. */
+  .task:not(.swiped):not(.swiping) .trow-actions{
+    visibility:hidden;
+    transition:visibility 0s linear .22s;
+  }
   /* Tapping the row opens the task, so the button that opens the task is the
      one the tray does without. */
   .trow-actions .rowact-wide{display:none}
