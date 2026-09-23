@@ -22,7 +22,8 @@ import { patchParent } from '@/domain/order';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import {
   defaultPreferences, hydratePreferences, viewPrefs as readViewPrefs,
-  PREFERENCES_TASK_CONTENT,
+  PREFERENCES_TASK_CONTENT, SETTINGS_COMMENT_MARKER,
+  mergeSynced, readSettingsComment, settingsCommentContent,
   type Preferences,
 } from './prefs';
 import { byChildOrder, bySectionOrder, keyBetween, keysInOrder } from '@/domain/orderKey';
@@ -107,16 +108,39 @@ function schedulePreferencesWrite(get: () => AppState) {
   }, 300);
 }
 
-function remotePreferences(snapshot: Snapshot, locale: Locale): Preferences | null {
-  const marker = Object.values(snapshot.items).find(
+/** The Inbox comment that holds the settings, if the account has one. */
+function settingsComment(snapshot: Snapshot) {
+  const inbox = snapshot.user?.inbox_project_id;
+  if (!inbox) return undefined;
+  return Object.values(snapshot.notes).find((note) =>
+    !note.is_deleted && note.project_id === inbox && !note.item_id
+    && note.content.startsWith(SETTINGS_COMMENT_MARKER));
+}
+
+/** The settings task of 1.12 and before, if the account still has one. */
+function legacySettingsTask(snapshot: Snapshot) {
+  return Object.values(snapshot.items).find(
     (item) => !item.is_deleted && item.content === PREFERENCES_TASK_CONTENT,
   );
-  if (!marker?.description.trim()) return null;
-  try {
-    return hydratePreferences(JSON.parse(marker.description), locale);
-  } catch {
-    return null;
+}
+
+/**
+ * The account's settings, laid over this device's.
+ *
+ * From the Inbox comment, or — on an account not moved over yet — from the
+ * old settings task. Null when the account has none, and the device's own
+ * settings are then the ones written up.
+ */
+function remotePreferences(snapshot: Snapshot, local: Preferences): Preferences | null {
+  const comment = settingsComment(snapshot);
+  let remote = comment ? readSettingsComment(comment.content) : null;
+  if (!remote) {
+    const legacy = legacySettingsTask(snapshot);
+    if (legacy?.description.trim()) {
+      try { remote = JSON.parse(legacy.description) as Partial<Preferences>; } catch { remote = null; }
+    }
   }
+  return remote ? mergeSynced(local, remote, local.locale) : null;
 }
 
 /** Demo data cannot ask Todoist to resolve recurrence, so cover the ordinary
@@ -684,12 +708,12 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const response = await sync('*');
       const snapshot = applySync(emptySnapshot(), response);
-      const canonical = remotePreferences(snapshot, get().prefs.locale);
+      const canonical = remotePreferences(snapshot, get().prefs);
       if (canonical) setWeekLabel(canonical.weekLabel);
       set({ connected: true, snapshot, prefs: canonical ?? get().prefs, syncState: 'idle' });
       void idb.saveSnapshot(snapshot);
       if (canonical) void idb.savePrefs(PREFS_KEY, canonical);
-      else window.setTimeout(() => void get().ensurePreferencesTask(), 0);
+      window.setTimeout(() => void get().ensurePreferencesTask(), 0);
       return true;
     } catch (error) {
       await auth.disconnect();
@@ -748,12 +772,14 @@ export const useStore = create<AppState>((set, get) => ({
       const snapshot = applySync(fromScratch ? emptySnapshot() : get().snapshot, response);
       const canonical = preferencesWriteTimer
         ? null
-        : remotePreferences(snapshot, get().prefs.locale);
+        : remotePreferences(snapshot, get().prefs);
       if (canonical) setWeekLabel(canonical.weekLabel);
       set({ snapshot: hidePending(snapshot), prefs: canonical ?? get().prefs, syncState: 'idle' });
       schedulePersist(snapshot);
       if (canonical) void idb.savePrefs(PREFS_KEY, canonical);
-      else window.setTimeout(() => void get().ensurePreferencesTask(), 0);
+      /* Always: writes nothing when the comment already says the same, and
+         moves an account off the old settings task the first time. */
+      window.setTimeout(() => void get().ensurePreferencesTask(), 0);
     } catch (error) {
       if (error instanceof NotConnectedError) {
         set({ connected: false, syncState: 'idle' });
@@ -821,31 +847,52 @@ export const useStore = create<AppState>((set, get) => ({
     if (get().demo) set({ snapshot: buildDemoSnapshot(locale) });
   },
 
+  /**
+   * Writes the settings to their Inbox comment, creating it the first time.
+   *
+   * Nothing is sent when the comment already says the same. An account that
+   * still has the settings task from 1.12 gets the comment and loses the
+   * task: it was only ever the app's, and it sat in the Inbox as a task.
+   */
   async ensurePreferencesTask() {
-    if (!get().connected || get().demo || creatingPreferencesTask) return;
+    if (!get().connected || get().demo || creatingPreferencesTask || tourSnapshotBackup) return;
     creatingPreferencesTask = true;
     try {
-      const description = JSON.stringify(get().prefs, null, 2);
-      const inbox = get().snapshot.user?.inbox_project_id;
+      const snapshot = get().snapshot;
+      const inbox = snapshot.user?.inbox_project_id;
       if (!inbox) return;
+      const content = settingsCommentContent(get().prefs);
+      const comment = settingsComment(snapshot);
+      const commands: Command[] = [];
+      let tempId: string | null = null;
 
-      const marker = Object.values(get().snapshot.items).find(
-        (item) => !item.is_deleted && item.content === PREFERENCES_TASK_CONTENT,
-      );
-      if (marker) {
-        if (marker.project_id !== inbox) {
-          await get().moveTask(marker.id, { project_id: inbox });
-        }
-        if (marker.description !== description) {
-          await get().updateTask(marker.id, { description });
-        }
-      } else {
-        await get().createTask({
-          content: PREFERENCES_TASK_CONTENT,
-          description,
-          project_id: inbox,
+      if (!comment) {
+        tempId = newUuid();
+        commands.push({
+          type: 'note_add', uuid: newUuid(), temp_id: tempId,
+          args: { project_id: inbox, content },
         });
+      } else if (comment.content !== content) {
+        commands.push(command('note_update', { id: comment.id, content }));
       }
+      const legacy = legacySettingsTask(snapshot);
+      if (legacy) commands.push(deleteItem(legacy.id));
+      if (commands.length === 0) return;
+
+      await get().apply(commands, (current) => {
+        const notes = { ...current.notes };
+        if (comment) notes[comment.id] = { ...comment, content };
+        else if (tempId) {
+          notes[tempId] = {
+            id: tempId, item_id: null, project_id: inbox, content,
+            posted_at: new Date().toISOString(), posted_uid: current.user?.id ?? '',
+            is_deleted: false, file_attachment: null,
+          } as Note;
+        }
+        const items = { ...current.items };
+        if (legacy) delete items[legacy.id];
+        return { ...current, notes, items };
+      });
     } finally {
       creatingPreferencesTask = false;
     }
