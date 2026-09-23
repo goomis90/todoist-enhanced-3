@@ -34,6 +34,19 @@ const PRESETS: Period[] = ['day', 'week', 'month', 'quarter', 'year'];
  * record of what was actually finished. Everything is scoped by the period
  * picked at the top, so the two tabs always describe the same window.
  */
+/**
+ * The index of the highest value, the first one on a tie, or -1 when every
+ * value is zero. The same rule the subtitles use to name the best day and
+ * hour, so the bar lit up is the one the words point at.
+ */
+function firstBest(values: number[]): number {
+  let best = -1;
+  values.forEach((value, index) => {
+    if (value > 0 && (best === -1 || value > values[best])) best = index;
+  });
+  return best;
+}
+
 export function InsightsView() {
   const { t, locale } = useT();
   const { snapshot, items } = useData();
@@ -107,19 +120,26 @@ export function InsightsView() {
     };
     const current = count(completed);
     const buckets = bucketsOf(range, grain);
+    /* Every bar in the data colour, and the best one in the accent: the
+       card's subtitle names it, and the bar it names is the one lit up. */
+    const values = buckets.map((at) => current.get(bucketKey(at, grain)) ?? 0);
+    const best = firstBest(values);
 
-    return buckets.map((at) => ({
+    return buckets.map((at, index) => ({
       key: bucketKey(at, grain),
       label: bucketLabel(at, grain, intl, spanOf(range) <= 14),
-      value: current.get(bucketKey(at, grain)) ?? 0,
-      current: true,
+      value: values[index],
+      current: index === best,
     }));
   }, [completed, range, grain, intl]);
 
-  const byHour: BarDatum[] = useMemo(() =>
-    summary.byHour.map((value, hour) => ({
-      key: String(hour), label: `${String(hour).padStart(2, '0')}h`, value, current: true,
-    })), [summary.byHour]);
+  const byHour: BarDatum[] = useMemo(() => {
+    const best = firstBest(summary.byHour);
+    return summary.byHour.map((value, hour) => ({
+      key: String(hour), label: `${String(hour).padStart(2, '0')}h`, value,
+      current: hour === best,
+    }));
+  }, [summary.byHour]);
 
   const byProject: SliceDatum[] = useMemo(
     () =>
