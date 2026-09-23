@@ -1,7 +1,7 @@
 {
   "name": "todoist-enhancements",
   "private": true,
-  "version": "1.10.0",
+  "version": "1.12.1",
   "engines": {
     "node": ">=20"
   },
@@ -22,6 +22,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "date-fns": "^4.1.0",
     "idb": "^8.0.3",
+    "lucide-react": "^1.47.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.8"

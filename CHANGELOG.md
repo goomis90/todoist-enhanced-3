@@ -6,6 +6,104 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.12.1
+
+A small follow-up to simplify where the cross-device settings marker lives.
+
+🎨 **The settings task now lives in Inbox.** Enhanced no longer creates a
+dedicated project for `* Enhanced for Todoist settings`. If the marker already
+exists in another project, the next settings sync moves it to Inbox; an old
+project left empty is not deleted automatically.
+
+## 1.12.0
+
+A safer recurring-task engine, cross-device settings, complete onboarding and
+the interaction and layout fixes validated across issues 48–56.
+
+🆕 **Settings follow the account across devices.** Enhanced reads its
+preferences from a dedicated Todoist project when one exists, creates it when
+needed, and updates the formatted settings task after every change without
+putting it in Inbox or triggering Inbox automations.
+
+🆕 **Bulk editing that understands recurrence.** Mixed selections can advance
+each recurring task to its own next occurrence while leaving one-off tasks
+alone, with the date shortcuts kept visible before the full date picker.
+
+🆕 **A complete first-run tour.** The walkthrough always uses a safe demo
+snapshot, so folders, project icons, quick tasks, subtasks, estimates and the
+review are all shown even when the connected account does not contain them.
+
+🎨 **A simpler choice for Today and My Week.** Choose either one combined My
+Week page or separate Today + My Week pages. The obsolete duplicated-today
+variant migrates automatically.
+
+🎨 **Settings and onboarding refinement.** The long settings page scrolls to
+its end, the account karma reads as progress, and the lighter coffee prompt
+lives only in Settings with the maintainer's photo, a borderless card, clearer
+copy and a visible close button.
+
+🎨 **Consistent page measures.** List headers keep the same width across
+projects, tags, views and the Eisenhower Matrix; boards and matrices alone may
+use the wider content area.
+
+🐛 **Recurring tasks advance instead of becoming stuck completed.** Completing
+or skipping now uses Todoist's recurrence-aware close operation and lets
+Todoist calculate the next date, eliminating tasks that bounced from tomorrow
+back to today or yesterday, duplicated, or remained checked and unclickable.
+
+🐛 **Keyboard bulk deletion works after modified clicks.** Cmd/Ctrl-click keeps
+the selected row focused, restoring Cmd/Ctrl+Backspace without selecting page
+text.
+
+🐛 **Keyboard completion respects a selection.** Pressing `E` with several
+tasks selected completes every selected task instead of only the focused row.
+
+## 1.11.0
+
+A searchable icon for every project, a workspace filter wherever more than
+one project is in view, and a handful of smaller fixes from testing on
+localhost.
+
+🆕 **Lucide icons throughout.** The hand-drawn glyph sprite is replaced by
+the Lucide icon set (MIT, lucide.dev) behind the same `Icon` component —
+nothing that used it had to change.
+
+🆕 **A picker for a project's own icon.** Choose from close to 300
+searchable icons instead of the default "#" marker, from either the create
+or the edit sheet, with the keyboard as well as the mouse. The choice is
+saved as a hidden marker on the end of the project's own description, so it
+is real, synced Todoist data rather than something only this browser
+remembers.
+
+🆕 **A workspace filter, wherever more than one project is in view.**
+Today, Upcoming, Someday, Inbox, Tags, This Week and the Eisenhower Matrix
+can each be narrowed to "My projects" or to one added workspace. A single
+project's own page never offers it — every task there already shares that
+project's one workspace.
+
+🆕 **Show a project's completed tasks.** A Display toggle folds them back
+into whichever grouping is already active — a section, a priority column —
+sunk to the bottom of it, rather than pulled into a list of their own.
+
+🆕 **Skip a recurring task's next occurrence from its own panel.** Was only
+reachable from the row before; the task detail view's own date field offers
+it too now.
+
+🎨 **A subtask, edited in place.** Click a committed subtask in the composer
+to fix a typo, instead of deleting it and retyping the whole thing.
+
+🎨 **Completing a task from its own open panel shows it.** The checkbox
+fills and the title strikes through immediately, the same as every list row
+already did.
+
+🎨 **Sort by date created, in either direction.** Newest-first and
+oldest-first are now two separate choices, the way the estimate sort's
+shortest- and longest-first already were.
+
+🐛 **A row's own date field stops repeating "Today."** Next to the Today /
+Tomorrow / Next week shortcuts it now always reads as a plain "Choose a
+date" instead of echoing the same relative name a second time.
+
 ## 1.10.0
 
 A calmer Insights dashboard, faster subtask editing, and more reliable nested

@@ -149,7 +149,7 @@ export function TaskRow({
     <>
       <div
         ref={(node) => { setRowRef(node); dragRef?.(node); }}
-        className={`task${settling ? ' done settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}${gesture.className}`}
+        className={`task${item.checked || settling ? ' done' : ''}${settling ? ' settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}${gesture.className}`}
         role="button"
         tabIndex={0}
         /* The row the keyboard is on is the row that has focus, so the walk
@@ -171,17 +171,22 @@ export function TaskRow({
           ...gesture.style,
         }}
         aria-selected={picked || undefined}
+        onMouseDown={(e) => {
+          if (e.shiftKey || e.metaKey || e.ctrlKey) e.preventDefault();
+        }}
         /* Cmd (or Ctrl) and a click picks the row out instead of opening it:
            the same gesture every file list has used for thirty years, and the
            only one that does not cost the plain click its meaning. */
         onClick={(e) => {
           if (e.shiftKey) {
             e.preventDefault();
+            e.currentTarget.focus({ preventScroll: true });
             pickRange(e.metaKey || e.ctrlKey);
             return;
           }
           if (e.metaKey || e.ctrlKey) {
             e.preventDefault();
+            e.currentTarget.focus({ preventScroll: true });
             toggleSelection(item.id);
             return;
           }

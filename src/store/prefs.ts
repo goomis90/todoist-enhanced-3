@@ -5,6 +5,9 @@ import { defaultConflictSettings, type ConflictSettings } from '@/domain/conflic
 import { defaultCapacity, type DailyCapacity } from '@/domain/load';
 import { DATE_FORMATS, type DateFormat } from '@/domain/dates';
 
+/** The Todoist task whose description is the canonical cross-device copy. */
+export const PREFERENCES_TASK_CONTENT = '* Enhanced for Todoist settings';
+
 /** The views that make sense as a landing page: no view that needs an id. */
 export const HOME_VIEWS = [
   'week', 'today', 'inbox', 'upcoming', 'someday', 'dashboard', 'insights', 'labels',
@@ -70,7 +73,7 @@ export const isHomeView = (value: unknown): value is HomeView =>
  * ways to draw it — a week that excludes today, or a week that still contains
  * it — so both are offered rather than one being guessed at.
  */
-export const WEEK_LAYOUTS = ['unified', 'splitWithToday', 'split'] as const;
+export const WEEK_LAYOUTS = ['unified', 'split'] as const;
 export type WeekLayout = (typeof WEEK_LAYOUTS)[number];
 
 export const MATRIX_LAYOUTS = ['list', 'matrix'] as const;
@@ -167,6 +170,8 @@ export interface Preferences {
   eisenhowerShowFuture: boolean;
   /** Whether the undated Someday backlog is included in the matrix. */
   eisenhowerIncludeSomeday: boolean;
+  /** Narrows the matrix to one workspace's projects; null is every workspace. */
+  eisenhowerWorkspace: string | null;
 }
 
 export const defaultPreferences = (locale: Locale): Preferences => ({
@@ -196,6 +201,7 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
   eisenhowerImportant: [1, 2],
   eisenhowerShowFuture: false,
   eisenhowerIncludeSomeday: false,
+  eisenhowerWorkspace: null,
 });
 
 /**
@@ -215,6 +221,7 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
   const base = defaultPreferences(locale);
   if (!stored || typeof stored !== 'object') return base;
   const s = stored as Partial<Preferences>;
+  const storedWeekLayout = (stored as Record<string, unknown>).weekLayout;
   return {
     ...base,
     ...s,
@@ -231,7 +238,9 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
     dateFormat: (DATE_FORMATS as readonly string[]).includes(s.dateFormat as string)
       ? (s.dateFormat as DateFormat)
       : base.dateFormat,
-    weekLayout: isWeekLayout(s.weekLayout) ? s.weekLayout : base.weekLayout,
+    weekLayout: storedWeekLayout === 'splitWithToday'
+      ? 'split'
+      : isWeekLayout(s.weekLayout) ? s.weekLayout : base.weekLayout,
     weekLabel: typeof s.weekLabel === 'string' && s.weekLabel.trim()
       ? s.weekLabel.trim()
       : base.weekLabel,
@@ -251,6 +260,7 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
       : base.eisenhowerImportant,
     eisenhowerShowFuture: s.eisenhowerShowFuture === true,
     eisenhowerIncludeSomeday: s.eisenhowerIncludeSomeday === true,
+    eisenhowerWorkspace: typeof s.eisenhowerWorkspace === 'string' ? s.eisenhowerWorkspace : null,
     views: s.views ?? {},
   };
 }

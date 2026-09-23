@@ -7,6 +7,17 @@ import { estimateOf, effectiveEstimate } from '@/domain/estimates';
 import { dueDate } from '@/domain/dates';
 import { hasLabel, isOpen } from '@/domain/views';
 import type { RowOrder } from '@/domain/dnd';
+import { PREFERENCES_TASK_CONTENT } from './prefs';
+
+/**
+ * The workspace filter's stand-in for "My projects".
+ *
+ * Todoist's personal space isn't a workspace at all — it's just the absence
+ * of one, `workspace_id: null` — so there is no real id to put in
+ * `filters.workspaces` for it. This is never a real Todoist id (those are
+ * numeric strings), so it can share the same array without colliding.
+ */
+export const PERSONAL_WORKSPACE = 'personal';
 
 /** Index of parent id to its children, built once per snapshot. */
 export function childIndex(snapshot: Snapshot): Map<string, Item[]> {
@@ -29,6 +40,7 @@ export const makeChildrenOf =
 /** Every open task, with tasks living in archived projects left out. */
 export function openItems(snapshot: Snapshot): Item[] {
   return Object.values(snapshot.items).filter((item) => {
+    if (item.content === PREFERENCES_TASK_CONTENT) return false;
     if (!isOpen(item)) return false;
     const project = snapshot.projects[item.project_id];
     return !project || (!project.is_archived && !project.is_deleted);
@@ -49,7 +61,8 @@ export function applyFilters(
 
     if (filters.workspaces.length > 0) {
       const workspaceId = snapshot.projects[item.project_id]?.workspace_id ?? null;
-      if (!workspaceId || !filters.workspaces.includes(workspaceId)) return false;
+      const bucket = workspaceId ?? PERSONAL_WORKSPACE;
+      if (!filters.workspaces.includes(bucket)) return false;
     }
 
     if (filters.labels.length > 0 && !filters.labels.some((l) => hasLabel(item, l))) return false;
@@ -82,6 +95,7 @@ export function countActiveFilters(filters: ViewFilters): number {
   if (filters.estimated !== null) count += 1;
   if (!filters.includeScheduled) count += 1;
   if (!filters.showSubtasks) count += 1;
+  if (filters.showCompleted) count += 1;
   return count;
 }
 
@@ -119,12 +133,25 @@ export function sortItems(
   const copy = [...items];
   const estimate = (i: Item) => effectiveEstimate(i, childrenOf).minutes;
 
-  switch (sort) {
-    case 'priority':
-      // Todoist stores 4 as the most urgent, so the higher number comes first.
-      return copy.sort((a, b) => b.priority - a.priority || manualCompare(a, b, order));
-    case 'due':
-      return copy.sort((a, b) => {
+  // Only the label sort needs this, and needs it built once rather than
+  // once per comparison.
+  const labelPositions = snapshot ? labelOrderByName(snapshot) : new Map<string, number>();
+  const labelRank = (item: Item): [bucket: number, position: number, unknown: string] => {
+    const labels = item.labels.filter((label) => !label.toLowerCase().startsWith('est-'));
+    if (labels.length === 0) return [2, Number.POSITIVE_INFINITY, ''];
+    const known = labels
+      .map((label) => labelPositions.get(label.toLowerCase()))
+      .filter((position): position is number => position !== undefined);
+    if (known.length > 0) return [0, Math.min(...known), ''];
+    return [1, Number.POSITIVE_INFINITY, [...labels].sort().join('\u0000').toLowerCase()];
+  };
+
+  const compare = (a: Item, b: Item): number => {
+    switch (sort) {
+      case 'priority':
+        // Todoist stores 4 as the most urgent, so the higher number comes first.
+        return b.priority - a.priority || manualCompare(a, b, order);
+      case 'due': {
         const da = dueDate(a)?.getTime();
         const db = dueDate(b)?.getTime();
         // Undated tasks sink to the bottom rather than jumping to the top.
@@ -132,47 +159,48 @@ export function sortItems(
         if (da === undefined) return 1;
         if (db === undefined) return -1;
         return da - db || manualCompare(a, b, order);
-      });
-    case 'added':
-      return copy.sort((a, b) => (a.added_at ?? '').localeCompare(b.added_at ?? ''));
-    case 'alphabetical':
-      return copy.sort((a, b) => a.content.localeCompare(b.content));
-    case 'estimate-asc':
-    case 'estimate-desc': {
-      const direction = sort === 'estimate-asc' ? 1 : -1;
-      return copy.sort((a, b) => {
+      }
+      case 'added-asc':
+      case 'added-desc': {
+        const direction = sort === 'added-asc' ? 1 : -1;
+        return (a.added_at ?? '').localeCompare(b.added_at ?? '') * direction
+          || manualCompare(a, b, order);
+      }
+      case 'alphabetical':
+        return a.content.localeCompare(b.content);
+      case 'estimate-asc':
+      case 'estimate-desc': {
+        const direction = sort === 'estimate-asc' ? 1 : -1;
         const ea = estimate(a);
         const eb = estimate(b);
         if (ea === null && eb === null) return manualCompare(a, b, order);
         if (ea === null) return 1;
         if (eb === null) return -1;
         return (ea - eb) * direction || manualCompare(a, b, order);
-      });
-    }
-    case 'label': {
-      const positions = snapshot ? labelOrderByName(snapshot) : new Map<string, number>();
-      const rank = (item: Item): [bucket: number, position: number, unknown: string] => {
-        const labels = item.labels.filter((label) => !label.toLowerCase().startsWith('est-'));
-        if (labels.length === 0) return [2, Number.POSITIVE_INFINITY, ''];
-        const known = labels
-          .map((label) => positions.get(label.toLowerCase()))
-          .filter((position): position is number => position !== undefined);
-        if (known.length > 0) return [0, Math.min(...known), ''];
-        return [1, Number.POSITIVE_INFINITY, [...labels].sort().join('\u0000').toLowerCase()];
-      };
-      return copy.sort((a, b) => {
-        const [bucketA, positionA, unknownA] = rank(a);
-        const [bucketB, positionB, unknownB] = rank(b);
+      }
+      case 'label': {
+        const [bucketA, positionA, unknownA] = labelRank(a);
+        const [bucketB, positionB, unknownB] = labelRank(b);
         return bucketA - bucketB
           || positionA - positionB
           || unknownA.localeCompare(unknownB)
           || manualCompare(a, b, order);
-      });
+      }
+      case 'manual':
+      default:
+        return manualCompare(a, b, order);
     }
-    case 'manual':
-    default:
-      return copy.sort((a, b) => manualCompare(a, b, order));
-  }
+  };
+
+  /* A completed task never competes with an open one for its place -- it
+     sinks to the bottom of whatever list or group it's in, the way a
+     finished item always does, whichever of the sorts above is asking.
+     Only a project's own "show completed" toggle (ProjectView) ever hands
+     this a checked item at all; everywhere else sorts only open tasks,
+     where every comparison here falls through unchanged. */
+  return copy.sort((a, b) => (
+    a.checked !== b.checked ? (a.checked ? 1 : -1) : compare(a, b)
+  ));
 }
 
 export interface Group {
