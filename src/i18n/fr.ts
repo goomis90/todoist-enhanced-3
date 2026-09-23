@@ -400,7 +400,7 @@ export const fr: Record<TranslationKey, string> = {
 
   /* Connect screen */
   'connect.title': 'Connectez votre compte Todoist',
-  'connect.intro': 'Cette application dialogue avec Todoist directement depuis votre navigateur. Votre jeton d’API reste sur cet appareil et n’est envoyé nulle part ailleurs.',
+  'connect.intro': 'Cette application dialogue avec Todoist directement depuis votre navigateur. Votre accès reste sur cet appareil et n’est envoyé nulle part ailleurs.',
   'connect.tokenLabel': 'Jeton d’API',
   'connect.tokenPlaceholder': 'Collez votre jeton d’API',
   'connect.submit': 'Connecter',
@@ -507,10 +507,15 @@ export const fr: Record<TranslationKey, string> = {
   'connect.appName': 'Enhanced for Todoist',
   'connect.version': 'version {version}',
   'connect.privacyLead': 'Privé par conception.',
-  'connect.privacyBody': 'Votre jeton d’API est stocké dans ce navigateur et envoyé à Todoist seulement, pour charger vos tâches. Aucun serveur, aucune collecte.',
+  'connect.privacyBody': 'Votre accès est stocké dans ce navigateur et envoyé à Todoist seulement, pour charger vos tâches. Aucun serveur, aucune collecte.',
   'connect.github': 'Voir le code sur GitHub',
   'connect.apiKey': 'Obtenir votre jeton d’API dans Todoist',
   'connect.demoInstead': 'Explorer avec des données de démonstration',
+  'connect.oauth': 'Continuer avec Todoist',
+  'connect.oauthLeaving': 'Ouverture de Todoist…',
+  'connect.oauthDenied': 'L’accès à Todoist n’a pas été accordé. Vous pouvez réessayer quand vous voulez.',
+  'connect.oauthFailed': 'La connexion avec Todoist n’a pas abouti. Réessayez, ou utilisez un jeton d’API ci-dessous.',
+  'connect.useToken': 'Utiliser un jeton d’API à la place',
   'connect.legal': 'Enhanced for Todoist est un projet indépendant de {author}. Il n’est ni créé, ni affilié, ni soutenu par Todoist. « Todoist » est une marque de Todoist Inc.',
 
   'insights.per_day': 'Achevées par jour',

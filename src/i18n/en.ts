@@ -398,7 +398,7 @@ export const en = {
 
   /* Connect screen */
   'connect.title': 'Connect your Todoist account',
-  'connect.intro': 'This app talks to Todoist straight from your browser. Your API token stays on this device and is never sent anywhere else.',
+  'connect.intro': 'This app talks to Todoist straight from your browser. Your access stays on this device and is never sent anywhere else.',
   'connect.tokenLabel': 'API token',
   'connect.tokenPlaceholder': 'Paste your API token',
   'connect.submit': 'Connect',
@@ -505,10 +505,15 @@ export const en = {
   'connect.appName': 'Enhanced for Todoist',
   'connect.version': 'version {version}',
   'connect.privacyLead': 'Private by design.',
-  'connect.privacyBody': 'Your API token is stored in this browser and sent only to Todoist to load your tasks. No backend, no data collection.',
+  'connect.privacyBody': 'Your access is stored in this browser and sent only to Todoist to load your tasks. No backend, no data collection.',
   'connect.github': 'Check the code on GitHub',
   'connect.apiKey': 'Get your API token in Todoist',
   'connect.demoInstead': 'Explore with demo data instead',
+  'connect.oauth': 'Continue with Todoist',
+  'connect.oauthLeaving': 'Opening Todoist…',
+  'connect.oauthDenied': 'Todoist access was not granted. You can try again whenever you like.',
+  'connect.oauthFailed': 'Signing in with Todoist did not complete. Try again, or use an API token below.',
+  'connect.useToken': 'Use an API token instead',
   'connect.legal': 'Enhanced for Todoist is an independent project from {author}. It is not created by, affiliated with, or supported by Todoist. “Todoist” is a trademark of Todoist Inc.',
 
   'insights.per_day': 'Completed per day',

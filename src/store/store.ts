@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { auth } from '@/api/auth';
+import { completeSignIn } from '@/api/oauth';
 import { ApiError, NotConnectedError } from '@/api/client';
 import { applySync, applyWrite, sync } from '@/api/sync';
 import {
@@ -205,6 +206,8 @@ interface AppState {
    * after reconnecting, most of all. They look the real one up here.
    */
   resolvedIds: Record<string, string>;
+  /** Why the last "Continue with Todoist" did not end signed in, for the connect screen. */
+  signInError: 'denied' | 'failed' | null;
 
   /* Lifecycle */
   init: () => Promise<void>;
@@ -636,8 +639,15 @@ export const useStore = create<AppState>((set, get) => ({
   selectionAnchor: null,
   demo: false,
   resolvedIds: {},
+  signInError: null,
 
   async init() {
+    /* A page load that is Todoist sending the person back from its consent
+       page finishes the sign-in first, so what follows finds a connection. */
+    const signIn = await completeSignIn();
+    if (signIn === 'signed-in') sessionStorage.removeItem('demo');
+    if (signIn === 'denied' || signIn === 'failed') set({ signInError: signIn });
+
     const [storedPrefs, snapshot, queue] = await Promise.all([
       idb.loadPrefs<Preferences>(PREFS_KEY),
       idb.loadSnapshot(),
@@ -663,7 +673,8 @@ export const useStore = create<AppState>((set, get) => ({
     });
 
     if (connected) {
-      void get().refresh(snapshot.syncToken === '*');
+      // A fresh sign-in reads the whole account, whatever the device held.
+      void get().refresh(signIn === 'signed-in' || snapshot.syncToken === '*');
     }
   },
 
