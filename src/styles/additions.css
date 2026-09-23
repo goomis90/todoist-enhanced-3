@@ -52,6 +52,13 @@
 .connect-privacy a .ic{width:14px;height:14px}
 
 .connect-submit{width:100%;margin-top:var(--s3)}
+/* The token route, folded under the sign-in: there for whoever wants it, not
+   a second first step for everyone else. */
+.connect-token{margin-top:var(--s4);border-top:1px solid var(--border);padding-top:var(--s3)}
+.connect-token summary{cursor:pointer;color:var(--muted);font-size:var(--fs-13);font-weight:600;list-style-position:inside}
+.connect-token summary:hover{color:var(--text)}
+.connect-token[open] summary{margin-bottom:var(--s3)}
+.connect-token-submit{width:100%;margin-top:var(--s2);justify-content:center}
 .connect-demo{width:100%;margin-top:var(--s2);justify-content:center}
 .connect-apikey{
   display:block;margin-top:var(--s4);text-align:center;

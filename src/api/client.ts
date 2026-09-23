@@ -87,8 +87,9 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
  * wrong and trying again cannot fix it.
  */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const token = await auth.getToken();
+  let token = await auth.getToken();
   if (!token) throw new NotConnectedError();
+  let renewed = false;
 
   const { method = 'GET', form, json, query, signal, retries = 3 } = options;
 
@@ -99,7 +100,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     }
   }
 
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  const headers: Record<string, string> = {};
   let body: string | undefined;
 
   if (form) {
@@ -112,7 +113,20 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let attempt = 0;
   for (;;) {
-    const response = await fetch(url, { method, headers, body, signal });
+    const response = await fetch(url, {
+      method, headers: { ...headers, Authorization: `Bearer ${token}` }, body, signal,
+    });
+
+    /* A signed-in access token lasts an hour; one that ran out between the
+       check and the request is renewed once and the request tried again. */
+    if (response.status === 401 && !renewed) {
+      renewed = true;
+      const next = await auth.renewAfterRefusal();
+      if (next) {
+        token = next;
+        continue;
+      }
+    }
 
     if (response.ok) {
       if (response.status === 204) return undefined as T;
