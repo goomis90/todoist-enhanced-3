@@ -5,8 +5,75 @@ import { defaultConflictSettings, type ConflictSettings } from '@/domain/conflic
 import { defaultCapacity, type DailyCapacity } from '@/domain/load';
 import { DATE_FORMATS, type DateFormat } from '@/domain/dates';
 
-/** The Todoist task whose description is the canonical cross-device copy. */
+/**
+ * The Todoist task that held the settings up to 1.12.
+ *
+ * Still recognised so an account that has one is moved over to the comment
+ * (and the task removed), and so it is never drawn in a list meanwhile.
+ */
 export const PREFERENCES_TASK_CONTENT = '* Enhanced for Todoist settings';
+
+/**
+ * The first line of the Inbox comment that holds the settings.
+ *
+ * A comment on the Inbox rather than a task in it: it follows the account to
+ * every browser, but it is not a task — it is not in the Inbox count, in
+ * Todoist's search, in filters, or in the way of an empty Inbox.
+ */
+export const SETTINGS_COMMENT_MARKER = 'Enhanced for Todoist · settings (edited by the app, please leave as is)';
+
+/**
+ * The preferences that follow the account.
+ *
+ * Everything in Settings — the general ones, the matrix, the look (accent,
+ * theme, density) — and how each project is displayed. Not whether the
+ * sidebar is folded, which is a matter of the window in front of you, nor the
+ * display of the other pages.
+ */
+export type SyncedPreferences = Omit<Preferences, 'sidebarCollapsed'>;
+
+export function syncedPreferences(prefs: Preferences): SyncedPreferences {
+  const { sidebarCollapsed: _local, views, ...rest } = prefs;
+  return {
+    ...rest,
+    /* Sorted, so two devices holding the same settings write the same text
+       and never take turns rewriting the comment. */
+    views: Object.fromEntries(Object.entries(views)
+      .filter(([key]) => key.startsWith('project:'))
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))),
+  };
+}
+
+/** The comment's text: the marker line, then the settings as one line of JSON. */
+export function settingsCommentContent(prefs: Preferences): string {
+  return `${SETTINGS_COMMENT_MARKER}\n\n${JSON.stringify(syncedPreferences(prefs))}`;
+}
+
+/** The settings a comment carries, or null if it is not ours or cannot be read. */
+export function readSettingsComment(content: string): Partial<Preferences> | null {
+  if (!content.startsWith(SETTINGS_COMMENT_MARKER)) return null;
+  const json = content.slice(SETTINGS_COMMENT_MARKER.length).trim();
+  try {
+    const value = JSON.parse(json);
+    return value && typeof value === 'object' ? (value as Partial<Preferences>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Settings from the account laid over the ones on this device: the device
+ * keeps what does not travel (the folded sidebar, the display of pages other
+ * than projects), the account decides the rest.
+ */
+export function mergeSynced(local: Preferences, remote: Partial<Preferences>, locale: Locale): Preferences {
+  const hydrated = hydratePreferences({ ...local, ...remote, views: undefined }, locale);
+  return {
+    ...hydrated,
+    sidebarCollapsed: local.sidebarCollapsed,
+    views: { ...local.views, ...(remote.views ?? {}) },
+  };
+}
 
 /** The views that make sense as a landing page: no view that needs an id. */
 export const HOME_VIEWS = [

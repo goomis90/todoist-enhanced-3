@@ -53,7 +53,7 @@ export async function sendCommands(
     method: 'POST',
     form: {
       sync_token: syncToken,
-      resource_types: JSON.stringify(['items', 'projects', 'sections', 'labels', 'notes']),
+      resource_types: JSON.stringify(['items', 'projects', 'sections', 'labels', 'notes', 'project_notes']),
       commands: JSON.stringify(batch),
     },
   });

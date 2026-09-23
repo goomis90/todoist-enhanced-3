@@ -6,7 +6,7 @@ import type {
 
 /** The resource types the app reads. Anything else Todoist offers is ignored. */
 export const SYNC_RESOURCE_TYPES = [
-  'items', 'projects', 'sections', 'labels', 'notes',
+  'items', 'projects', 'sections', 'labels', 'notes', 'project_notes',
   'reminders', 'user', 'collaborators', 'workspaces',
 ] as const;
 
@@ -18,6 +18,8 @@ export interface SyncResponse {
   sections?: Section[];
   labels?: Label[];
   notes?: Note[];
+  /** Comments on projects rather than tasks; kept in the same collection as task comments. */
+  project_notes?: Note[];
   reminders?: Reminder[];
   collaborators?: Collaborator[];
   workspaces?: Workspace[];
@@ -73,7 +75,13 @@ export function applySync(snapshot: Snapshot, response: SyncResponse): Snapshot 
     projects: mergeCollection(snapshot.projects, response.projects, full),
     sections: mergeCollection(snapshot.sections, response.sections, full),
     labels: mergeCollection(snapshot.labels, response.labels, full),
-    notes: mergeCollection(snapshot.notes, response.notes, full),
+    /* Task comments and project comments are one collection here, told apart
+       by `item_id` / `project_id`. A full sync rebuilds it from both. */
+    notes: mergeCollection(
+      mergeCollection(snapshot.notes, response.notes, full),
+      response.project_notes,
+      false,
+    ),
     reminders: mergeCollection(snapshot.reminders, response.reminders, full),
     collaborators: mergeCollection(snapshot.collaborators, response.collaborators, full),
     workspaces: mergeCollection(snapshot.workspaces, response.workspaces, full),
