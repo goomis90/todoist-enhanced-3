@@ -440,7 +440,7 @@ ul{margin:0;padding:0;list-style:none}
 .protonote strong{color:var(--note-strong);font-weight:600}
 .protonote span:last-child{white-space:nowrap}
 
-.app{width:min(1480px,100%);height:calc(100vh - 34px);min-height:680px;margin:0 auto;
+.app{width:min(1480px,100%);margin:0 auto;
   display:grid;grid-template-columns:var(--sidebar-w) minmax(0,1fr);overflow:hidden;background:var(--surface);
   transition:grid-template-columns .2s ease}
 .app.collapsed{grid-template-columns:0 minmax(0,1fr)}

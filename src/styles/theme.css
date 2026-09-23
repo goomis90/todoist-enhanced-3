@@ -17,7 +17,20 @@
   border:0;
   border-radius:0;
   box-shadow:none;
+  /* One row, never taller than the window. Left to size itself, the row grew
+     to the sidebar's full height — every project listed — and the app's
+     overflow cut the bottom of every page off by the difference: the last
+     tasks sat under the window's edge, showing only in the trackpad's bounce.
+     The demo already had this, through its banner row, which is why it never
+     showed the bug. */
+  grid-template-rows:minmax(0,1fr);
 }
+/* A grid item's minimum height is its content's unless it is told otherwise. */
+.sidebar,
+.workspace{min-height:0}
+/* The end of a list is the end of the scroll: it does not bounce the window. */
+.screen,
+.side-scroll{overscroll-behavior-y:contain}
 
 /* ---------- Content spans the workspace ---------- */
 .page,
