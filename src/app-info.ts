@@ -12,7 +12,7 @@ export const VERSION = '1.13.0';
 export const AUTHOR = 'julesbertolino';
 export const AUTHOR_AVATAR_URL = 'https://github.com/julesvbertolino.png?size=96';
 
-export const SITE_URL = 'https://todoistenhanced.julesbertolino.fr';
+export const SITE_URL = 'https://todoist-enhanced-3.vercel.app';
 export const GITHUB_URL = 'https://github.com/julesvbertolino/todoist-enhancements';
 export const COFFEE_URL = 'https://buymeacoffee.com/julesbertolino';
 /** Where a bug or an idea goes. The same form the README and GitHub point at. */

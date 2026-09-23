@@ -1,10 +1,10 @@
 {
-  "client_id": "https://todoistenhanced.julesbertolino.fr/oauth/client.json",
+  "client_id": "https://todoist-enhanced-3.vercel.app/oauth/client.json",
   "client_name": "Enhanced for Todoist",
-  "client_uri": "https://todoistenhanced.julesbertolino.fr/",
-  "logo_uri": "https://todoistenhanced.julesbertolino.fr/icon-192.png",
+  "client_uri": "https://todoist-enhanced-3.vercel.app/",
+  "logo_uri": "https://todoist-enhanced-3.vercel.app/icon-192.png",
   "redirect_uris": [
-    "https://todoistenhanced.julesbertolino.fr/",
+    "https://todoist-enhanced-3.vercel.app/",
     "http://localhost:5192/"
   ],
   "grant_types": ["authorization_code", "refresh_token"],

@@ -107,7 +107,17 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
     // kept (and droppable) for as long as a task is actually in the air, so
     // an empty project (or an empty Tomorrow) is still somewhere to drop
     // the first task into it.
-    return cols.filter((col) => col.items.length > 0 || dragging);
+    // Today/Tomorrow hide when empty (and reappear mid-drag, same as Quick
+    // elsewhere) — safe, since it's at most two columns changing at once.
+    // Project columns never do this: with many projects and the "hide
+    // scheduled" filter on, most would empty out together, so grabbing a
+    // task would make a dozen columns appear at the same instant and the
+    // drag gesture itself would lose its target mid-pointer-capture. Always
+    // rendering them costs a look at a handful of quiet columns, not a
+    // broken drag.
+    return cols.filter((col) => col.id === 'today' || col.id === 'tomorrow'
+      ? col.items.length > 0 || dragging
+      : true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     scoped, projects, current.sort, current.filters.hideScheduledInProjects,
