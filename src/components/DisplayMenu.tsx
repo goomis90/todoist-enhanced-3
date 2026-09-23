@@ -273,16 +273,32 @@ export function DisplayMenu({
           )}
 
           <hr />
-          <div className="panelrow">
-            <span>{t('filter.includeScheduled')}</span>
-            <button
-              className="switch"
-              role="switch"
-              aria-checked={current.filters.includeScheduled}
-              aria-label={t('filter.includeScheduled')}
-              onClick={() => setFilters({ includeScheduled: !current.filters.includeScheduled })}
-            />
-          </div>
+          {!showProjects && (
+            <div className="panelrow">
+              <span>{t('filter.includeScheduled')}</span>
+              <button
+                className="switch"
+                role="switch"
+                aria-checked={current.filters.includeScheduled}
+                aria-label={t('filter.includeScheduled')}
+                onClick={() => setFilters({ includeScheduled: !current.filters.includeScheduled })}
+              />
+            </div>
+          )}
+          {showProjects && (
+            <div className="panelrow">
+              <span>{t('filter.hideScheduledInProjects')}</span>
+              <button
+                className="switch"
+                role="switch"
+                aria-checked={current.filters.hideScheduledInProjects}
+                aria-label={t('filter.hideScheduledInProjects')}
+                onClick={() => setFilters({
+                  hideScheduledInProjects: !current.filters.hideScheduledInProjects,
+                })}
+              />
+            </div>
+          )}
           <div className="panelrow">
             <span>{t('filter.showSubtasks')}</span>
             <button

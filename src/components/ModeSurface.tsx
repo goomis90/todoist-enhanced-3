@@ -42,6 +42,9 @@ interface ModeSurfaceProps {
     capacityMinutes?: number | null;
     /** Same meaning as TaskGroup's accent: a callout wash for the whole column. */
     accent?: 'late' | 'quick' | 'deadline';
+    /** Overrides the surface-wide showProject for just this column — Planning's
+        Today/Tomorrow name a task's project; its own project column doesn't. */
+    showProject?: boolean;
   }>;
 }
 
@@ -204,7 +207,7 @@ function BoardSurface(props: ModeSurfaceProps) {
                 item={item}
                 childrenOf={props.childrenOf}
                 onOpen={props.onOpen}
-                showProject={props.showProject}
+                showProject={column.showProject ?? props.showProject}
                 surface="card"
               />
             ))}

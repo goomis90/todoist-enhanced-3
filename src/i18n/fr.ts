@@ -179,6 +179,7 @@ export const fr: Record<TranslationKey, string> = {
   'filter.isUnestimated': 'Non estimées',
   'filter.any': 'Peu importe',
   'filter.includeScheduled': 'Inclure les tâches planifiées',
+  'filter.hideScheduledInProjects': 'Masquer les tâches datées dans les projets',
   'filter.showSubtasks': 'Afficher les sous-tâches',
   'filter.showCompleted': 'Afficher les tâches terminées',
   'filter.clear': 'Effacer les filtres',

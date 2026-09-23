@@ -177,6 +177,7 @@ export const en = {
   'filter.isUnestimated': 'Unestimated',
   'filter.any': 'Any',
   'filter.includeScheduled': 'Include scheduled tasks',
+  'filter.hideScheduledInProjects': 'Hide scheduled tasks in project boards',
   'filter.showSubtasks': 'Show subtasks',
   'filter.showCompleted': 'Show completed tasks',
   'filter.clear': 'Clear filters',

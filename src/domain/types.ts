@@ -314,6 +314,13 @@ export interface ViewFilters {
   showSubtasks: boolean;
   /** A project page only: also lists the project's completed tasks. */
   showCompleted: boolean;
+  /**
+   * Planning only: hides a dated task from its project column, since Today
+   * and Tomorrow already show it there. Deliberately separate from
+   * `includeScheduled` above, which also hides it from Today/Tomorrow
+   * themselves — exactly the two places a date is the point.
+   */
+  hideScheduledInProjects: boolean;
 }
 
 export const defaultFilters = (): ViewFilters => ({
@@ -325,6 +332,7 @@ export const defaultFilters = (): ViewFilters => ({
   includeScheduled: true,
   showSubtasks: true,
   showCompleted: false,
+  hideScheduledInProjects: false,
 });
 
 export interface ViewPrefs {

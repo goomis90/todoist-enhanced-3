@@ -1,6 +1,6 @@
 import { bucketOf } from './views';
 import { SYSTEM_LABELS, weekLabel, type Item } from './types';
-import { toApiDate } from './dates';
+import { toApiDate, isTomorrow } from './dates';
 import { dueForDate } from './recurrence';
 import { byChildOrder } from './orderKey';
 
@@ -158,10 +158,18 @@ export function dropMutation(item: Item, target: DropTarget): DropMutation | nul
       return { move: { project_id: target.projectId } };
 
     case 'planning-project': {
-      if (item.project_id === target.projectId && !item.parent_id) return null;
+      // Today and Tomorrow on the Planning page are date views, not real
+      // storage — a task already sitting in the target project (because
+      // that's genuinely where it lives) still needs its date cleared on the
+      // way out of one of those, so this is checked before, not instead of,
+      // the "already there" question below.
       const bucket = bucketOf(item, new Date());
-      const leavingToday = bucket === 'overdue' || bucket === 'today';
-      return leavingToday
+      const leavingDateColumn = bucket === 'overdue' || bucket === 'today' || isTomorrow(item);
+      const alreadyInProject = item.project_id === target.projectId && !item.parent_id;
+      if (alreadyInProject) {
+        return leavingDateColumn ? { update: { due: null } } : null;
+      }
+      return leavingDateColumn
         ? { move: { project_id: target.projectId }, update: { due: null } }
         : { move: { project_id: target.projectId } };
     }
