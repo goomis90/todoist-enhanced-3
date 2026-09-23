@@ -370,7 +370,7 @@ export const fr: Record<TranslationKey, string> = {
   'settings.aboutCoffee': 'M’offrir un café',
   'settings.connected': 'Connecté à Todoist',
   'settings.disconnect': 'Déconnecter',
-  'settings.disconnectHint': 'Retire le jeton et toutes les copies locales de cet appareil.',
+  'settings.disconnectHint': 'Retire le jeton d’API et toutes les copies locales de cet appareil.',
   'settings.language': 'Langue',
   'settings.languageHint': 'Langue de l’interface',
   'settings.timeFormat': 'Format horaire',
@@ -400,13 +400,13 @@ export const fr: Record<TranslationKey, string> = {
 
   /* Connect screen */
   'connect.title': 'Connectez votre compte Todoist',
-  'connect.intro': 'Cette application dialogue avec Todoist directement depuis votre navigateur. Votre jeton reste sur cet appareil et n’est envoyé nulle part ailleurs.',
-  'connect.tokenLabel': 'Jeton API personnel',
-  'connect.tokenPlaceholder': 'Collez votre jeton',
+  'connect.intro': 'Cette application dialogue avec Todoist directement depuis votre navigateur. Votre jeton d’API reste sur cet appareil et n’est envoyé nulle part ailleurs.',
+  'connect.tokenLabel': 'Jeton d’API',
+  'connect.tokenPlaceholder': 'Collez votre jeton d’API',
   'connect.submit': 'Connecter',
   'connect.checking': 'Vérification…',
-  'connect.invalid': 'Todoist a refusé ce jeton. Vérifiez-le et réessayez.',
-  'connect.malformed': 'Cela ne ressemble pas à un jeton Todoist.',
+  'connect.invalid': 'Todoist a refusé ce jeton d’API. Vérifiez-le et réessayez.',
+  'connect.malformed': 'Cela ne ressemble pas à un jeton d’API Todoist.',
   'connect.offline': 'Aucune connexion. Vérifiez votre réseau et réessayez.',
 
   /* Sync status */
@@ -507,9 +507,9 @@ export const fr: Record<TranslationKey, string> = {
   'connect.appName': 'Enhanced for Todoist',
   'connect.version': 'version {version}',
   'connect.privacyLead': 'Privé par conception.',
-  'connect.privacyBody': 'Votre jeton est stocké dans ce navigateur et envoyé à Todoist seulement, pour charger vos tâches. Aucun serveur, aucune collecte.',
+  'connect.privacyBody': 'Votre jeton d’API est stocké dans ce navigateur et envoyé à Todoist seulement, pour charger vos tâches. Aucun serveur, aucune collecte.',
   'connect.github': 'Voir le code sur GitHub',
-  'connect.apiKey': 'Obtenir votre clé API dans Todoist',
+  'connect.apiKey': 'Obtenir votre jeton d’API dans Todoist',
   'connect.demoInstead': 'Explorer avec des données de démonstration',
   'connect.legal': 'Enhanced for Todoist est un projet indépendant de {author}. Il n’est ni créé, ni affilié, ni soutenu par Todoist. « Todoist » est une marque de Todoist Inc.',
 

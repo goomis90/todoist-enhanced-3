@@ -368,7 +368,7 @@ export const en = {
   'settings.aboutCoffee': 'Buy me a coffee',
   'settings.connected': 'Connected to Todoist',
   'settings.disconnect': 'Disconnect',
-  'settings.disconnectHint': 'Removes the token and every local copy from this device.',
+  'settings.disconnectHint': 'Removes the API token and every local copy from this device.',
   'settings.language': 'Language',
   'settings.languageHint': 'Interface language',
   'settings.timeFormat': 'Time format',
@@ -398,13 +398,13 @@ export const en = {
 
   /* Connect screen */
   'connect.title': 'Connect your Todoist account',
-  'connect.intro': 'This app talks to Todoist straight from your browser. Your token stays on this device and is never sent anywhere else.',
-  'connect.tokenLabel': 'Personal API token',
-  'connect.tokenPlaceholder': 'Paste your token',
+  'connect.intro': 'This app talks to Todoist straight from your browser. Your API token stays on this device and is never sent anywhere else.',
+  'connect.tokenLabel': 'API token',
+  'connect.tokenPlaceholder': 'Paste your API token',
   'connect.submit': 'Connect',
   'connect.checking': 'Checking…',
-  'connect.invalid': 'That token was refused by Todoist. Check it and try again.',
-  'connect.malformed': 'That does not look like a Todoist token.',
+  'connect.invalid': 'That API token was refused by Todoist. Check it and try again.',
+  'connect.malformed': 'That does not look like a Todoist API token.',
   'connect.offline': 'No connection. Check your network and try again.',
 
   /* Sync status */
@@ -505,9 +505,9 @@ export const en = {
   'connect.appName': 'Enhanced for Todoist',
   'connect.version': 'version {version}',
   'connect.privacyLead': 'Private by design.',
-  'connect.privacyBody': 'Your token is stored in this browser and sent only to Todoist to load your tasks. No backend, no data collection.',
+  'connect.privacyBody': 'Your API token is stored in this browser and sent only to Todoist to load your tasks. No backend, no data collection.',
   'connect.github': 'Check the code on GitHub',
-  'connect.apiKey': 'Get your API key in Todoist',
+  'connect.apiKey': 'Get your API token in Todoist',
   'connect.demoInstead': 'Explore with demo data instead',
   'connect.legal': 'Enhanced for Todoist is an independent project from {author}. It is not created by, affiliated with, or supported by Todoist. “Todoist” is a trademark of Todoist Inc.',
 

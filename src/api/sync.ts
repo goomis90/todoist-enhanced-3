@@ -32,6 +32,9 @@ export interface SyncResponse {
  * Passing `*` asks for everything; passing the token from the previous call
  * asks only for what changed since. The caller keeps the returned token.
  */
+/** A full sync of a large account is a big download; it gets longer than the usual deadline. */
+const FULL_SYNC_TIMEOUT_MS = 60_000;
+
 export async function sync(syncToken: string, signal?: AbortSignal): Promise<SyncResponse> {
   return request<SyncResponse>('/sync', {
     method: 'POST',
@@ -40,6 +43,7 @@ export async function sync(syncToken: string, signal?: AbortSignal): Promise<Syn
       resource_types: JSON.stringify(SYNC_RESOURCE_TYPES),
     },
     signal,
+    timeoutMs: syncToken === '*' ? FULL_SYNC_TIMEOUT_MS : undefined,
   });
 }
 

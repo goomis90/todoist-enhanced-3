@@ -106,6 +106,26 @@ function advanceDemoRecurrence(snapshot: Snapshot, id: string): Snapshot {
   });
 }
 
+/**
+ * Makes sure a change only Todoist can finish has come back finished.
+ *
+ * Closing a recurring task, or giving one a rule, leaves the date to Todoist.
+ * Its answer to the write already carries the task as it now stands, because
+ * every write is sent as an incremental sync. So nothing more is asked for
+ * unless that answer did not bring the task back: then one incremental sync
+ * fetches it, never a full one.
+ */
+async function settleFromServer(
+  get: () => AppState,
+  id: string,
+  unsettled: (item: Item) => boolean,
+): Promise<void> {
+  const state = get();
+  if (state.demo || !navigator.onLine) return;
+  const item = state.snapshot.items[id];
+  if (item && unsettled(item)) await state.refresh();
+}
+
 export type SyncState = 'idle' | 'loading' | 'syncing' | 'error' | 'offline';
 
 export interface Toast {
@@ -514,6 +534,10 @@ export const useStore = create<AppState>((set, get) => ({
         set({ connected: false });
         await auth.disconnect();
       }
+    } finally {
+      /* Whatever happened above, this sync is over. A state left on
+         "syncing" stops every later sync from starting. */
+      if (get().syncState === 'syncing') set({ syncState: 'idle' });
     }
   },
 
@@ -720,8 +744,11 @@ export const useStore = create<AppState>((set, get) => ({
     };
 
     await get().apply([updateItem(id, { due })], (snapshot) => patchItem(snapshot, id, local));
-    // Only Todoist knows the date the rule resolves to; this is how it arrives.
-    await get().refresh();
+    /* Only Todoist knows the date the rule resolves to. Its answer to the
+       update brings it, and the task comes back with a new `updated_at`; one
+       that did not come back is fetched. */
+    const stamp = item.updated_at;
+    await settleFromServer(get, id, (current) => current.updated_at === stamp);
   },
 
   async setEstimates(entries) {
@@ -754,7 +781,9 @@ export const useStore = create<AppState>((set, get) => ({
       const demo = get().demo;
       await get().apply([command('item_close', { id })], (snapshot) =>
         demo ? advanceDemoRecurrence(snapshot, id) : patchItem(snapshot, id, { checked: true }));
-      await get().refresh(true);
+      /* Todoist's answer to the close is the task on its next date, unticked.
+         A task still ticked here is one that answer did not carry. */
+      await settleFromServer(get, id, (current) => current.checked);
       return;
     }
     const checked = !item.checked;
@@ -869,6 +898,7 @@ export const useStore = create<AppState>((set, get) => ({
       labels: item.labels,
       project_id: item.project_id,
       section_id: item.section_id,
+      parent_id: item.parent_id,
     };
     const patch = (fields: Record<string, unknown>) => (snapshot: Snapshot): Snapshot => {
       const current = snapshot.items[id];
@@ -879,8 +909,21 @@ export const useStore = create<AppState>((set, get) => ({
     if (mutation.update) {
       await get().apply([updateItem(id, mutation.update)], patch(mutation.update));
     } else if (mutation.move) {
-      await get().apply([moveItem(id, mutation.move)], patch(mutation.move));
+      // One destination, and a move to a project or a section lands at its top level.
+      await get().apply(
+        [moveItem(id, moveArgs(mutation.move))],
+        patch({ ...mutation.move, parent_id: null }),
+      );
     }
+
+    /* A move is undone by a move, the same way DragProvider undoes a drop:
+       `item_update` takes no project or section, so sending them there put the
+       task back on screen and left it where it was on the server. */
+    const undo = !mutation.move
+      ? updateItem(id, { due: before.due, labels: before.labels })
+      : before.parent_id
+        ? moveItem(id, { parent_id: before.parent_id })
+        : moveItem(id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
 
     /* A null destination asks for no toast. In a review the row answering the
        question is the feedback — it leaves the list, or its button lights up —
@@ -888,7 +931,7 @@ export const useStore = create<AppState>((set, get) => ({
     if (destination === null) return;
     get().toast(
       translate(get().prefs.locale, 'task.movedTo', { destination }),
-      () => void get().apply([updateItem(id, before)], patch(before)),
+      () => void get().apply([undo], patch(before)),
     );
   },
 
@@ -990,7 +1033,11 @@ export const useStore = create<AppState>((set, get) => ({
           && (item.section_id ?? null) === target.section_id)) return null;
         return {
           id,
-          before: { project_id: item.project_id, section_id: item.section_id },
+          before: {
+            project_id: item.project_id,
+            section_id: item.section_id,
+            parent_id: item.parent_id,
+          },
         };
       })
       .filter((change): change is NonNullable<typeof change> => change !== null);
@@ -1002,23 +1049,35 @@ export const useStore = create<AppState>((set, get) => ({
     ) => (current: Snapshot): Snapshot =>
       changes.reduce((acc, change) => patchItem(acc, change.id, fields(change)), current);
 
+    /* `item_move` to a project or a section lifts a subtask out from under its
+       parent, so the snapshot says so too. */
     await get().apply(
       changes.map((change) => moveItem(change.id, moveArgs(target))),
       patchAll(() => ({
         project_id: target.project_id,
         section_id: target.section_id,
+        parent_id: null,
       })),
     );
+
+    /* The way back takes one destination, like the way there: `item_move`
+       refuses a project and a section together. A task that was a subtask
+       goes back under its parent, which also puts it back in the parent's
+       project and section; one whose parent has gone since goes back to where
+       it stood. */
+    const back = (change: (typeof changes)[number]): Command => {
+      const { parent_id: parentId, project_id: projectId, section_id: sectionId } = change.before;
+      return parentId && get().snapshot.items[parentId]
+        ? moveItem(change.id, { parent_id: parentId })
+        : moveItem(change.id, moveArgs({ project_id: projectId, section_id: sectionId }));
+    };
 
     get().toast(
       translate(get().prefs.locale, 'task.movedManyTo', {
         count: changes.length, destination,
       }),
       () => void get().apply(
-        changes.map((change) => moveItem(change.id, {
-          project_id: change.before.project_id,
-          section_id: change.before.section_id,
-        })),
+        changes.map(back),
         patchAll((change) => change.before as unknown as Record<string, unknown>),
       ),
     );
@@ -1141,7 +1200,7 @@ export const useStore = create<AppState>((set, get) => ({
     const demo = get().demo;
     await get().apply([command('item_close', { id })], (snapshot) =>
       demo ? advanceDemoRecurrence(snapshot, id) : patchItem(snapshot, id, { checked: true }));
-    await get().refresh(true);
+    await settleFromServer(get, id, (current) => current.checked);
   },
 
   async skipOccurrences(ids) {
@@ -1159,7 +1218,10 @@ export const useStore = create<AppState>((set, get) => ({
         snapshot,
       ),
     );
-    await get().refresh(true);
+    /* One incremental sync at most, whatever the size of the selection: the
+       first task still ticked is enough to say the answer was incomplete. */
+    const stillTicked = recurring.find((id) => get().snapshot.items[id]?.checked);
+    if (stillTicked) await settleFromServer(get, stillTicked, (current) => current.checked);
     return recurring.length;
   },
 
