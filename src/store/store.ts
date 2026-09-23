@@ -24,6 +24,7 @@ import {
   PREFERENCES_TASK_CONTENT,
   type Preferences,
 } from './prefs';
+import { byChildOrder, bySectionOrder, keyBetween, keysInOrder } from '@/domain/orderKey';
 
 /**
  * A due the rest of the app can read.
@@ -59,6 +60,34 @@ function nextChildOrder(
       && (item.section_id ?? null) === sectionId;
   });
   return siblings.reduce((top, item) => Math.max(top, item.child_order), 0) + 1;
+}
+
+/**
+ * The key a new task will get from Todoist, at the end of its siblings.
+ *
+ * Todoist appends a new task by key when its siblings have keys, and a list
+ * that sorts by key would draw an optimistic row without one wherever its
+ * number happened to fall. Null where the siblings are not migrated.
+ */
+function nextOrderKey(
+  snapshot: Snapshot,
+  parentId: string | null,
+  projectId: string,
+  sectionId: string | null,
+): string | null {
+  const siblings = Object.values(snapshot.items).filter((item) => {
+    if (item.is_deleted) return false;
+    if (parentId) return item.parent_id === parentId;
+    return !item.parent_id && item.project_id === projectId
+      && (item.section_id ?? null) === sectionId;
+  });
+  if (siblings.length === 0 || !siblings.every((item) => item.order_key)) return null;
+  const last = siblings.sort(byChildOrder)[siblings.length - 1].order_key ?? null;
+  try {
+    return keyBetween(last, null);
+  } catch {
+    return null;
+  }
 }
 
 const PREFS_KEY = 'preferences';
@@ -1054,6 +1083,12 @@ export const useStore = create<AppState>((set, get) => ({
         String(args.project_id ?? get().snapshot.user?.inbox_project_id ?? ''),
         (args.section_id as string) ?? null,
       ),
+      order_key: nextOrderKey(
+        get().snapshot,
+        (args.parent_id as string) ?? null,
+        String(args.project_id ?? get().snapshot.user?.inbox_project_id ?? ''),
+        (args.section_id as string) ?? null,
+      ),
       day_order: -1,
       collapsed: false,
       checked: false,
@@ -1207,48 +1242,60 @@ export const useStore = create<AppState>((set, get) => ({
 
   async reorderLabels(ids) {
     const order = Object.fromEntries(ids.map((id, index) => [id, index + 1]));
+    const keys = keysInOrder(ids.length);
     await get().apply(
       [command('label_update_orders', { id_order_mapping: order })],
       (snapshot) => {
         const labels = { ...snapshot.labels };
-        for (const [id, item_order] of Object.entries(order)) {
-          if (labels[id]) labels[id] = { ...labels[id], item_order };
-        }
+        ids.forEach((id, index) => {
+          /* A fresh run of keys as well as the numbers, so the list sorts one
+             way until Todoist's own keys come back with its answer. */
+          if (labels[id]) labels[id] = { ...labels[id], item_order: index + 1, order_key: keys[index] };
+        });
         return { ...snapshot, labels };
       },
     );
   },
 
+  /* Every sibling is sent, not only the ones whose number changes: once
+     Todoist orders by `order_key`, the old numbers are no longer a reliable
+     picture of the current order to diff against. */
   async reorderProjects(ids) {
     const projects = get().snapshot.projects;
-    const moved = ids
-      .map((id, index) => ({ id, child_order: index + 1 }))
-      .filter(({ id, child_order }) => projects[id] && projects[id].child_order !== child_order);
+    const listed = ids.filter((id) => projects[id]);
+    const current = Object.values(projects)
+      .filter((project) => listed.includes(project.id))
+      .sort(byChildOrder)
+      .map((project) => project.id);
+    if (listed.length === 0 || listed.join() === current.join()) return;
 
-    if (moved.length === 0) return;
-
-    await get().apply([command('project_reorder', { projects: moved })], (snapshot) => {
+    const orders = listed.map((id, index) => ({ id, child_order: index + 1 }));
+    const keys = keysInOrder(listed.length);
+    await get().apply([command('project_reorder', { projects: orders })], (snapshot) => {
       const next = { ...snapshot.projects };
-      for (const { id, child_order } of moved) {
-        if (next[id]) next[id] = { ...next[id], child_order };
-      }
+      listed.forEach((id, index) => {
+        if (next[id]) next[id] = { ...next[id], child_order: index + 1, order_key: keys[index] };
+      });
       return { ...snapshot, projects: next };
     });
   },
 
   async reorderSubtasks(ids) {
     const items = get().snapshot.items;
-    const moved = ids
-      .map((id, index) => ({ id, child_order: index + 1 }))
-      .filter(({ id, child_order }) => items[id] && items[id].child_order !== child_order);
+    const listed = ids.filter((id) => items[id]);
+    const current = Object.values(items)
+      .filter((item) => listed.includes(item.id))
+      .sort(byChildOrder)
+      .map((item) => item.id);
+    if (listed.length === 0 || listed.join() === current.join()) return;
 
-    if (moved.length === 0) return;
-
-    await get().apply([reorderItems(moved)], (snapshot) => {
+    const orders = listed.map((id, index) => ({ id, child_order: index + 1 }));
+    const keys = keysInOrder(listed.length);
+    await get().apply([reorderItems(orders)], (snapshot) => {
       const next = { ...snapshot.items };
-      for (const { id, child_order } of moved) {
-        if (next[id]) next[id] = { ...next[id], child_order };
-      }
+      listed.forEach((id, index) => {
+        if (next[id]) next[id] = { ...next[id], child_order: index + 1, order_key: keys[index] };
+      });
       return { ...snapshot, items: next };
     });
   },
@@ -1316,6 +1363,7 @@ export const useStore = create<AppState>((set, get) => ({
        sibling from there down is pushed one place to make room — with their
        real ids, so no command has to resolve a temp id to do its work. */
     let childOrder = Object.keys(snapshot.projects).length;
+    let orderKey: string | null = null;
     if (sibling) {
       const siblings = Object.values(snapshot.projects)
         .filter((project) =>
@@ -1324,21 +1372,34 @@ export const useStore = create<AppState>((set, get) => ({
           !project.inbox_project &&
           (project.parent_id ?? null) === (sibling.parent_id ?? null) &&
           (project.workspace_id ?? null) === (sibling.workspace_id ?? null))
-        .sort((a, b) => a.child_order - b.child_order);
+        .sort(byChildOrder);
 
       const at = siblings.findIndex((project) => project.id === sibling.id);
       const insertAt = anchor?.position === 'above' ? at : at + 1;
       childOrder = insertAt + 1;
 
-      const shifted = siblings.slice(insertAt).map((project, offset) => ({
-        id: project.id,
-        child_order: insertAt + offset + 2,
-      }));
-      if (shifted.length > 0) {
-        commands.push(command('project_reorder', { projects: shifted }));
+      /* Where every sibling has a key, the new project takes one between its
+         two neighbours and nothing else moves. Otherwise the siblings below
+         are pushed down one number, the way it was always done. */
+      try {
+        if (!siblings.every((project) => project.order_key)) throw new Error('unmigrated');
+        orderKey = keyBetween(
+          siblings[insertAt - 1]?.order_key ?? null,
+          siblings[insertAt]?.order_key ?? null,
+        );
+      } catch {
+        orderKey = null;
+        const shifted = siblings.slice(insertAt).map((project, offset) => ({
+          id: project.id,
+          child_order: insertAt + offset + 2,
+        }));
+        if (shifted.length > 0) {
+          commands.push(command('project_reorder', { projects: shifted }));
+        }
       }
     }
-    args.child_order = childOrder;
+    if (orderKey) args.order_key = orderKey;
+    else args.child_order = childOrder;
 
     commands.unshift({ type: 'project_add', uuid: newUuid(), args, temp_id: tempId });
 
@@ -1350,6 +1411,7 @@ export const useStore = create<AppState>((set, get) => ({
           id: tempId, name, color,
           parent_id: (sibling?.parent_id ?? null),
           child_order: childOrder,
+          order_key: orderKey,
           description: extra.description ?? '',
           is_archived: false, is_deleted: false,
           is_favorite: extra.favourite ?? false,
@@ -1416,7 +1478,7 @@ export const useStore = create<AppState>((set, get) => ({
     const sectionTempIds = new Map<string, string>();
     for (const section of Object.values(snapshot.sections)
       .filter((s) => s.project_id === id && !s.is_archived && !s.is_deleted)
-      .sort((a, b) => a.section_order - b.section_order)) {
+      .sort(bySectionOrder)) {
       const tempId = newUuid();
       sectionTempIds.set(section.id, tempId);
       commands.push({
@@ -1429,7 +1491,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     for (const item of Object.values(snapshot.items)
       .filter((i) => i.project_id === id && !i.checked && !i.is_deleted)
-      .sort((a, b) => a.child_order - b.child_order)) {
+      .sort(byChildOrder)) {
       commands.push({
         type: 'item_add',
         uuid: newUuid(),
@@ -1478,15 +1540,27 @@ export const useStore = create<AppState>((set, get) => ({
        and hoping the sort works it out is how it ended up at the bottom. */
     const existing = Object.values(get().snapshot.sections)
       .filter((s) => s.project_id === projectId && !s.is_archived && !s.is_deleted)
-      .sort((a, b) => a.section_order - b.section_order);
+      .sort(bySectionOrder);
 
-    const shifted = existing.slice(index);
+    /* Where every section has a key, the new one takes a key between its two
+       neighbours and nothing else is written. */
+    let orderKey: string | null = null;
+    try {
+      if (!existing.every((section) => section.order_key)) throw new Error('unmigrated');
+      orderKey = keyBetween(existing[index - 1]?.order_key ?? null, existing[index]?.order_key ?? null);
+    } catch {
+      orderKey = null;
+    }
+
+    const shifted = orderKey ? [] : existing.slice(index);
     const commands = [
       {
         type: 'section_add',
         uuid: newUuid(),
         temp_id: tempId,
-        args: { name: '', project_id: projectId, section_order: index },
+        args: orderKey
+          ? { name: '', project_id: projectId, order_key: orderKey }
+          : { name: '', project_id: projectId, section_order: index },
       },
       ...shifted.map((section, offset) =>
         command('section_update', { id: section.id, section_order: index + offset + 1 })),
@@ -1499,7 +1573,7 @@ export const useStore = create<AppState>((set, get) => ({
       });
       sections[tempId] = {
         id: tempId, project_id: projectId, name: '',
-        section_order: index, is_archived: false, is_deleted: false,
+        section_order: index, order_key: orderKey, is_archived: false, is_deleted: false,
       };
       return { ...snapshot, sections };
     });
@@ -1515,7 +1589,29 @@ export const useStore = create<AppState>((set, get) => ({
     const others = Object.values(snapshot.sections)
       .filter((s) => s.project_id === section.project_id && s.id !== id
         && !s.is_archived && !s.is_deleted)
-      .sort((a, b) => a.section_order - b.section_order);
+      .sort(bySectionOrder);
+
+    /* Where every section has a key, the moved one takes a key between its
+       new neighbours: one write, and the undo-free act it always was. */
+    if ([section, ...others].every((s) => s.order_key)) {
+      try {
+        const orderKey = keyBetween(
+          others[index - 1]?.order_key ?? null,
+          others[index]?.order_key ?? null,
+        );
+        if (orderKey === section.order_key) return;
+        await get().apply(
+          [command('section_update', { id, order_key: orderKey })],
+          (snap) => ({
+            ...snap,
+            sections: { ...snap.sections, [id]: { ...snap.sections[id], order_key: orderKey } },
+          }),
+        );
+        return;
+      } catch {
+        /* keys out of order: renumber below, as before */
+      }
+    }
 
     // The order the list should end up in, then one command per section that
     // actually moved — a whole-list rewrite would churn every row.
@@ -1530,9 +1626,10 @@ export const useStore = create<AppState>((set, get) => ({
         command('section_update', { id: s.id, section_order: order })),
       (snap) => {
         const sections = { ...snap.sections };
-        for (const { section: s, order } of changed) {
-          sections[s.id] = { ...sections[s.id], section_order: order };
-        }
+        const keys = keysInOrder(ordered.length);
+        ordered.forEach((s, order) => {
+          sections[s.id] = { ...sections[s.id], section_order: order, order_key: keys[order] };
+        });
         return { ...snap, sections };
       },
     );
