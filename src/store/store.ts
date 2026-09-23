@@ -10,7 +10,7 @@ import {
 import * as idb from '@/db/idb';
 import {
   emptySnapshot, isUncompletable, setWeekLabel, toTodoistPriority,
-  type DisplayPriority, type Item, type Snapshot, type ViewPrefs,
+  type DisplayPriority, type Item, type Note, type Snapshot, type ViewPrefs,
 } from '@/domain/types';
 import { withEstimate } from '@/domain/estimates';
 import { toApiDate } from '@/domain/dates';
@@ -199,8 +199,11 @@ interface AppState {
   removeTask: (id: string) => Promise<void>;
   /** Deletes several tasks as one act, with one undo that puts them all back. */
   removeTasks: (ids: string[]) => Promise<void>;
-  /** Writes deleted tasks back, subtrees included. They come back under new ids. */
-  restoreTasks: (items: Item[]) => Promise<void>;
+  /**
+   * Writes deleted tasks back, subtrees included, with their comments. They
+   * come back under new ids: this is the undo for a deletion already sent.
+   */
+  restoreTasks: (items: Item[], notes?: Note[]) => Promise<void>;
   /** Sends several tasks to the same destination, as one change and one undo. */
   sendManyTo: (ids: string[], target: DropTarget, destination: string | null) => Promise<void>;
   /**
@@ -343,11 +346,98 @@ interface AppState {
   setDraggingSection: (id: string | null) => void;
 }
 
+/** How long a toast with an undo stays up, and so how long a deletion waits. */
+const UNDO_TOAST_MS = 8000;
+
+/**
+ * Deletions that have not been sent yet.
+ *
+ * Todoist has no undelete, so a deletion is held back for as long as its
+ * toast offers to undo it: the rows leave the screen at once, and the
+ * `item_delete` only goes out when the toast does. Undoing inside that window
+ * cancels a command that was never sent, which gives back the very same task
+ * — its id, its comments, its reminders, its assignee, its history — instead
+ * of a copy rebuilt from memory.
+ */
+interface PendingDelete {
+  timer: ReturnType<typeof setTimeout>;
+  commands: Command[];
+  /** The removed tasks, subtasks included, exactly as they were. */
+  items: Item[];
+  /** Written to the offline queue because the page was being left. */
+  queued: boolean;
+}
+const pendingDeletes = new Map<string, PendingDelete>();
+
+/** Every task id a pending deletion is holding off the screen. */
+function pendingIds(): Set<string> {
+  const ids = new Set<string>();
+  for (const pending of pendingDeletes.values()) {
+    for (const item of pending.items) ids.add(item.id);
+  }
+  return ids;
+}
+
+/**
+ * Keeps pending deletions off the screen whatever a sync says.
+ *
+ * Todoist still has those tasks until the deletion goes out, so any sync in
+ * the meantime — a poll, a write's answer, a full read — would bring them
+ * straight back without this.
+ */
+function hidePending(snapshot: Snapshot): Snapshot {
+  if (pendingDeletes.size === 0) return snapshot;
+  const hidden = pendingIds();
+  if (!Object.keys(snapshot.items).some((id) => hidden.has(id))) return snapshot;
+  const items = { ...snapshot.items };
+  for (const id of hidden) delete items[id];
+  return { ...snapshot, items };
+}
+
+/**
+ * What goes to disk puts pending deletions back.
+ *
+ * If the page closes before a deletion is sent and before it reaches the
+ * queue, the copy on disk must still have the tasks: Todoist does, and an
+ * incremental sync would never bring back something that did not change.
+ */
+function withPending(snapshot: Snapshot): Snapshot {
+  if (pendingDeletes.size === 0) return snapshot;
+  const items = { ...snapshot.items };
+  for (const pending of pendingDeletes.values()) {
+    for (const item of pending.items) items[item.id] = item;
+  }
+  return { ...snapshot, items };
+}
+
 /** Writes the snapshot to the device without blocking the interface. */
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 function schedulePersist(snapshot: Snapshot) {
   if (persistTimer) clearTimeout(persistTimer);
-  persistTimer = setTimeout(() => void idb.saveSnapshot(snapshot), 400);
+  persistTimer = setTimeout(() => void idb.saveSnapshot(withPending(snapshot)), 400);
+}
+
+/*
+ * Leaving the page must not forget a deletion. The moment the page is hidden
+ * — a tab closed or switched, the app sent to the background — every pending
+ * deletion is written to the offline queue, which goes out on the next sync
+ * even if that is the next launch. It stays pending in memory: coming back
+ * inside the window and undoing still works, and takes it back off the queue.
+ */
+if (typeof document !== 'undefined') {
+  const queuePending = () => {
+    // A demo deletes nothing, and nothing of it may reach the queue.
+    if (useStore.getState().demo) return;
+    for (const pending of pendingDeletes.values()) {
+      if (pending.queued) continue;
+      pending.queued = true;
+      void idb.enqueue(pending.commands);
+    }
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') queuePending();
+  });
+  window.addEventListener('pagehide', queuePending);
 }
 
 
@@ -496,7 +586,7 @@ export const useStore = create<AppState>((set, get) => ({
         ? null
         : remotePreferences(snapshot, get().prefs.locale);
       if (canonical) setWeekLabel(canonical.weekLabel);
-      set({ snapshot, prefs: canonical ?? get().prefs, syncState: 'idle' });
+      set({ snapshot: hidePending(snapshot), prefs: canonical ?? get().prefs, syncState: 'idle' });
       schedulePersist(snapshot);
       if (canonical) void idb.savePrefs(PREFS_KEY, canonical);
       else window.setTimeout(() => void get().ensurePreferencesTask(), 0);
@@ -656,7 +746,7 @@ export const useStore = create<AppState>((set, get) => ({
         merged = { ...merged, items, projects, sections, labels };
       }
 
-      set({ snapshot: merged, syncState: 'idle' });
+      set({ snapshot: hidePending(merged), syncState: 'idle' });
       schedulePersist(merged);
 
       await idb.dequeue(commands.map((c) => c.uuid));
@@ -778,12 +868,15 @@ export const useStore = create<AppState>((set, get) => ({
   /**
    * Deletes tasks, and offers them back.
    *
-   * Todoist has no undelete: the only way back is to write the task again, so
-   * everything worth keeping is read out of the snapshot before the delete
-   * goes out. Subtasks go with their parent when Todoist deletes it, so they
-   * are captured and rebuilt too — a restored task with its children missing
-   * would be a worse answer than no undo at all. The rebuilt tasks carry new
-   * ids, which is the one thing an undo here cannot preserve.
+   * The rows go at once; the deletion itself waits for the toast to go (see
+   * `pendingDeletes`). Undo inside that window cancels it and puts back the
+   * same tasks. After it — Cmd+Z reaches further back than a toast lasts —
+   * the deletion has gone out and Todoist has no undelete, so the branch is
+   * rebuilt instead, as close to the original as the API allows, and the toast
+   * says it is a copy.
+   *
+   * Subtasks go with their parent when Todoist deletes it, so they are
+   * captured too: a branch comes back whole or not at all.
    */
   async removeTasks(ids) {
     const snapshot = get().snapshot;
@@ -804,21 +897,58 @@ export const useStore = create<AppState>((set, get) => ({
       doomed.push(snapshot.items[id]);
       walk(id);
     }
+    // Their comments too, for the copy a late undo has to make.
+    const doomedIds = new Set(doomed.map((item) => item.id));
+    const notes = Object.values(snapshot.notes)
+      .filter((note) => !note.is_deleted && note.item_id && doomedIds.has(note.item_id));
 
-    await get().apply(wanted.map(deleteItem), (current) => {
-      const items = { ...current.items };
-      for (const item of doomed) delete items[item.id];
-      return { ...current, items };
+    const commands = wanted.map(deleteItem);
+    const key = newUuid();
+    const commit = () => {
+      const pending = pendingDeletes.get(key);
+      if (!pending) return;
+      pendingDeletes.delete(key);
+      /* The rows are already gone; this only sends the deletion (and, in the
+         demo, only forgets it). */
+      void get().apply(pending.commands, (current) => current);
+    };
+
+    pendingDeletes.set(key, {
+      timer: setTimeout(commit, UNDO_TOAST_MS),
+      commands,
+      items: doomed,
+      queued: false,
     });
+    set({ snapshot: hidePending(get().snapshot) });
+    schedulePersist(get().snapshot);
 
     const label = wanted.length === 1
       ? translate(get().prefs.locale, 'task.deletedOne', { name: snapshot.items[wanted[0]].content })
       : translate(get().prefs.locale, 'task.deletedMany', { count: wanted.length });
 
-    get().toast(label, () => void get().restoreTasks(doomed));
+    get().toast(label, () => {
+      const pending = pendingDeletes.get(key);
+      if (pending) {
+        // Never sent: the same tasks come straight back.
+        clearTimeout(pending.timer);
+        pendingDeletes.delete(key);
+        if (pending.queued) void idb.dequeue(pending.commands.map((c) => c.uuid));
+        const items = { ...get().snapshot.items };
+        for (const item of pending.items) items[item.id] = item;
+        set({ snapshot: { ...get().snapshot, items } });
+        schedulePersist(get().snapshot);
+        return;
+      }
+      // Already sent: Todoist has no undelete, so a copy is the best there is.
+      void get().restoreTasks(doomed, notes).then(() => {
+        get().toast(translate(get().prefs.locale, 'task.restoredAsCopy', {
+          count: wanted.length,
+        }));
+      });
+    });
   },
 
-  async restoreTasks(items) {
+  async restoreTasks(items, notes = []) {
     if (items.length === 0) return;
 
     /* Parents first, so a child's new parent id is known — or at least sent as
@@ -840,8 +970,22 @@ export const useStore = create<AppState>((set, get) => ({
       labels: item.labels,
       due: item.due ?? undefined,
       deadline: item.deadline ?? undefined,
+      duration: item.duration ?? undefined,
+      responsible_uid: item.responsible_uid ?? undefined,
       child_order: item.child_order,
     }, tempIds.get(item.id)!));
+
+    /* The comments come back on the copies, oldest first, attachments
+       included: a file already uploaded to Todoist is linked, not re-sent. */
+    const noteCommands = [...notes]
+      .sort((a, b) => a.posted_at.localeCompare(b.posted_at))
+      .filter((note) => note.item_id && tempIds.has(note.item_id))
+      .map((note) => command('note_add', {
+        item_id: tempIds.get(note.item_id!)!,
+        content: note.content,
+        ...(note.file_attachment ? { file_attachment: note.file_attachment } : {}),
+      }));
+    commands.push(...noteCommands);
 
     await get().apply(commands, (current) => {
       const restored = { ...current.items };
@@ -1582,7 +1726,7 @@ export const useStore = create<AppState>((set, get) => ({
       undo: undo ? () => { void get().consumeUndo(id); } : undefined,
     };
     set({ toasts: [...get().toasts, entry] });
-    setTimeout(() => get().dismissToast(entry.id), undo ? 8000 : 4000);
+    setTimeout(() => get().dismissToast(entry.id), undo ? UNDO_TOAST_MS : 4000);
   },
 
   dismissToast(id) {
@@ -1670,11 +1814,21 @@ async function flushQueue(
   const queue = await idb.readQueue();
   if (queue.length === 0) return;
 
-  const commands: Command[] = queue.map(({ queuedAt: _q, attempts: _a, ...cmd }) => cmd);
+  /* A deletion written to the queue because the page was hidden is still
+     pending while the page lives: it goes when its toast does, or never if it
+     is undone. Only a relaunch, which has forgotten it, sends it from here. */
+  const held = new Set<string>();
+  for (const pending of pendingDeletes.values()) {
+    for (const cmd of pending.commands) held.add(cmd.uuid);
+  }
+  const commands: Command[] = queue
+    .filter((cmd) => !held.has(cmd.uuid))
+    .map(({ queuedAt: _q, attempts: _a, ...cmd }) => cmd);
+  if (commands.length === 0) return;
   try {
     const { response, failures } = await sendCommands(get().snapshot.syncToken, commands);
     const merged = applySync(get().snapshot, response);
-    set({ snapshot: merged });
+    set({ snapshot: hidePending(merged) });
     await idb.dequeue(commands.map((c) => c.uuid));
     set({ pendingCount: 0 });
     if (failures.length > 0) {
