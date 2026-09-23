@@ -216,6 +216,11 @@ interface AppState {
    */
   setEstimates: (entries: Array<{ id: string; minutes: number }>) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
+  /**
+   * Ticks several tasks off as one act: one request, one toast and one undo
+   * that puts them all back. A recurring task rolls on to its next date.
+   */
+  completeTasks: (ids: string[]) => Promise<void>;
   removeTask: (id: string) => Promise<void>;
   /** Deletes several tasks as one act, with one undo that puts them all back. */
   removeTasks: (ids: string[]) => Promise<void>;
@@ -788,16 +793,60 @@ export const useStore = create<AppState>((set, get) => ({
     }
     const checked = !item.checked;
     const cmd = checked ? completeItem(id) : uncompleteItem(id);
-    await get().apply([cmd], (snapshot) => patchItem(snapshot, id, { checked }));
+    const done = get().apply([cmd], (snapshot) => patchItem(snapshot, id, { checked }));
 
     /* No toast: ticking something off is the most common act in the app and a
        message after every one would be a message after everything. It is still
        the thing people most often wish they could take back, so the step is
-       recorded and Cmd+Z reaches it. */
+       recorded and Cmd+Z reaches it — recorded at once, not after Todoist has
+       answered, or a quick Cmd+Z undid whatever came before. The way back
+       waits for the way there, so the two can never cross on the network. */
     get().pushUndo(item.content, async () => {
+      await done;
       const back = checked ? uncompleteItem(id) : completeItem(id);
       await get().apply([back], (snapshot) => patchItem(snapshot, id, { checked: !checked }));
     });
+    await done;
+  },
+
+  async completeTasks(ids) {
+    const snapshot = get().snapshot;
+    const items = [...new Set(ids)]
+      .map((id) => snapshot.items[id])
+      .filter((item): item is Item => !!item && !item.checked && !isUncompletable(item));
+    if (items.length === 0) return;
+    const recurring = items.filter((item) => item.due?.is_recurring);
+    const plain = items.filter((item) => !item.due?.is_recurring);
+    const demo = get().demo;
+
+    const done = get().apply(
+      [
+        ...recurring.map((item) => command('item_close', { id: item.id })),
+        ...plain.map((item) => completeItem(item.id)),
+      ],
+      (current) => items.reduce((acc, item) => (item.due?.is_recurring && demo
+        ? advanceDemoRecurrence(acc, item.id)
+        : patchItem(acc, item.id, { checked: true })), current),
+    );
+
+    /* One step back for the whole selection. A recurring task has already
+       rolled on to its next date and has nothing to reopen, so the undo puts
+       back the one-off tasks, which is what the toast counts. */
+    const label = translate(get().prefs.locale, 'task.completedMany', { count: items.length });
+    if (plain.length > 0) {
+      get().toast(label, async () => {
+        await done;
+        await get().apply(
+          plain.map((item) => uncompleteItem(item.id)),
+          (current) => plain.reduce((acc, item) => patchItem(acc, item.id, { checked: false }), current),
+        );
+      });
+    } else {
+      get().toast(label);
+    }
+    await done;
+    const stillTicked = recurring.find((item) => get().snapshot.items[item.id]?.checked);
+    if (stillTicked) await settleFromServer(get, stillTicked.id, (current) => current.checked);
   },
 
   async removeTask(id) {
@@ -1542,13 +1591,16 @@ export const useStore = create<AppState>((set, get) => ({
       .filter((s) => s.project_id === projectId && !s.is_archived && !s.is_deleted)
       .sort((a, b) => a.section_order - b.section_order);
 
+    /* Todoist refuses a section with no name. It is created under a
+       placeholder the field then selects, so typing replaces it. */
+    const untitled = translate(get().prefs.locale, 'section.untitled');
     const shifted = existing.slice(index);
     const commands = [
       {
         type: 'section_add',
         uuid: newUuid(),
         temp_id: tempId,
-        args: { name: '', project_id: projectId, section_order: index },
+        args: { name: untitled, project_id: projectId, section_order: index },
       },
       ...shifted.map((section, offset) =>
         command('section_update', { id: section.id, section_order: index + offset + 1 })),
@@ -1560,7 +1612,7 @@ export const useStore = create<AppState>((set, get) => ({
         sections[section.id] = { ...section, section_order: index + offset + 1 };
       });
       sections[tempId] = {
-        id: tempId, project_id: projectId, name: '',
+        id: tempId, project_id: projectId, name: untitled,
         section_order: index, is_archived: false, is_deleted: false,
       };
       return { ...snapshot, sections };

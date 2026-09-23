@@ -296,6 +296,25 @@ export function DragProvider({ children }: { children: ReactNode }) {
   }
 
   /** Where a task landed when it followed a row into another list. */
+  /** What a group drop names in its toast: "3 tasks moved to {this}". */
+  function groupDestination(target: DropTarget): string {
+    switch (target.kind) {
+      case 'today': return t('common.today');
+      case 'day': return formatDayOrName(target.date, locale, dateFormat);
+      case 'quick': return t('group.quick');
+      case 'anytime': return t('group.anytime');
+      case 'someday': return t('nav.someday');
+      case 'label': return `@${target.label}`;
+      case 'project': return snapshot.projects[target.projectId]?.name ?? '';
+      case 'section': {
+        const project = snapshot.projects[target.projectId]?.name ?? '';
+        const section = target.sectionId ? snapshot.sections[target.sectionId]?.name : null;
+        return section ? `${project} / ${section}` : project;
+      }
+      default: return '';
+    }
+  }
+
   function whereItLanded(container: { project_id: string; section_id: string | null }): string {
     return container.section_id
       ? t('drop.toSection', { name: snapshot.sections[container.section_id]?.name ?? '' })
@@ -580,6 +599,28 @@ export function DragProvider({ children }: { children: ReactNode }) {
 
     const target = decodeTarget(String(event.over.id));
     if (!item || !target) return;
+
+    /* A task carried out of a selection carries the selection: the drop is
+       the same act the bulk bar does, on every picked task, with one toast
+       and one undo. Only the dragged task used to go. */
+    const store = useStore.getState();
+    if (store.selection.length > 1 && store.selection.includes(item.id)) {
+      const ids = store.selection;
+      const name = groupDestination(target);
+      if (target.kind === 'project' || target.kind === 'section') {
+        store.clearSelection();
+        await store.moveMany(ids, {
+          project_id: target.projectId,
+          section_id: target.kind === 'section' ? target.sectionId ?? null : null,
+        }, name);
+        return;
+      }
+      if (name) {
+        store.clearSelection();
+        await store.sendManyTo(ids, target, name);
+        return;
+      }
+    }
 
     const mutation = dropMutation(item, target);
     if (!mutation) return;
