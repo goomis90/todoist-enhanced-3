@@ -336,7 +336,21 @@ export function useKeyboard(bridge: KeyboardBridge) {
         if (e.key >= '1' && e.key <= '4') {
           e.preventDefault();
           // Todoist counts priority the other way up: its 4 is p1.
-          void store.updateTask(id, { priority: 5 - Number(e.key) });
+          const priority = 5 - Number(e.key);
+          /* Inside a selection the key is for all of it, the way the bar's
+             Priority is: every task set at once, one toast, one undo. It set
+             only the row under the cursor and left the others as they were. */
+          const picked = store.selection;
+          if (picked.length > 1 && picked.includes(id)) {
+            store.clearSelection();
+            void store.updateMany(
+              picked,
+              (task) => (task.priority === priority ? null : { priority }),
+              say('bulk.prioritySet', { count: picked.length, priority: `P${e.key}` }),
+            );
+            return;
+          }
+          void store.updateTask(id, { priority });
           return;
         }
       }
