@@ -5,6 +5,7 @@ import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
 import { markerStyle } from '@/domain/colors';
+import { BULK_MENU_EVENT, type BulkMenuName } from '@/hooks/useKeyboard';
 import { toDisplayPriority, toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import type { DropTarget } from '@/domain/dnd';
 import { matchesSearch } from '@/domain/search';
@@ -21,10 +22,34 @@ import { byChildOrder, byLabelOrder, bySectionOrder } from '@/domain/orderKey';
  * selection belongs to the bar, and should not also throw the menu away.
  */
 function BulkMenu({
-  icon, label, children,
-}: { icon: IconName; label: string; children: (close: () => void) => ReactNode }) {
+  icon, label, name, children,
+}: {
+  icon: IconName;
+  label: string;
+  /** Which keyboard request opens this panel (T for date, V for move). */
+  name?: BulkMenuName;
+  children: (close: () => void) => ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  /* Opened from the keyboard, the panel takes the focus: its own field when it
+     has one (Move's search already asks for it), otherwise its first choice. */
+  useEffect(() => {
+    if (!name) return;
+    const onAsk = (event: Event) => {
+      if ((event as CustomEvent<BulkMenuName>).detail !== name) return;
+      setOpen(true);
+      window.requestAnimationFrame(() => {
+        const panel = ref.current?.querySelector('.bulkpop');
+        if (panel && !panel.contains(document.activeElement)) {
+          panel.querySelector<HTMLElement>('input, button')?.focus();
+        }
+      });
+    };
+    window.addEventListener(BULK_MENU_EVENT, onAsk);
+    return () => window.removeEventListener(BULK_MENU_EVENT, onAsk);
+  }, [name]);
 
   useEffect(() => {
     if (!open) return;
@@ -190,9 +215,10 @@ export function BulkBar() {
     );
   };
 
+  /* The selection stays: a priority moves nothing off the page, and the next
+     change is usually for the same tasks. */
   const setPriority = (priority: DisplayPriority) => {
     const ids = selection;
-    clearSelection();
     void updateMany(
       ids,
       (item) =>
@@ -208,7 +234,7 @@ export function BulkBar() {
       <strong>{t('bulk.count', { count })}</strong>
       <span className="sep" aria-hidden="true" />
 
-      <BulkMenu icon="calendar" label={t('bulk.date')}>
+      <BulkMenu icon="calendar" label={t('bulk.date')} name="date">
         {(close) => (
           <>
             <button
@@ -265,7 +291,7 @@ export function BulkBar() {
         )}
       </BulkMenu>
 
-      <BulkMenu icon="project" label={t('bulk.move')}>
+      <BulkMenu icon="project" label={t('bulk.move')} name="move">
         {(close) => (
           <div className="bulkpop-list">
             <div className="pickersearch">

@@ -114,6 +114,14 @@ function land(row: HTMLElement | undefined) {
 export type RowMenu = 'schedule' | 'move' | 'more';
 export const ROW_MENU_EVENT = 'enhanced:rowmenu';
 
+/**
+ * The same keys on a selection open the bulk bar's panels instead: T its Date,
+ * V its Move. The bar is the one place a selection is dated or moved, so the
+ * keyboard asks it rather than keeping a second copy of either panel.
+ */
+export type BulkMenuName = 'date' | 'move';
+export const BULK_MENU_EVENT = 'enhanced:bulkmenu';
+
 interface KeyboardBridge {
   openTask: (id: string) => void;
   /** Opens the search with what was typed already in it. */
@@ -180,7 +188,7 @@ export function useKeyboard(bridge: KeyboardBridge) {
       /* A dialog or a row menu in front owns the keyboard. Each closes on
          Escape by itself, and nothing behind one should answer a letter typed
          into it. */
-      if (document.querySelector('.overlay.open, .rowmenu')) return;
+      if (document.querySelector('.overlay.open, .rowmenu, .bulkpop')) return;
 
       const current = rowOf(document.activeElement);
 
@@ -323,30 +331,55 @@ export function useKeyboard(bridge: KeyboardBridge) {
           window.setTimeout(() => land(rows()[Math.min(at, rows().length - 1)]), TICK_SETTLES_MS);
           return;
         }
-        if (e.key === 't') { e.preventDefault(); ask(current, 'schedule'); return; }
+        /* Inside a selection, the keys below are for all of it — the same
+           rule as E and delete. A change that can take the tasks off the page
+           (a date, a project) ends the selection, as the bar's does; one that
+           leaves them in place (a priority) keeps it, so the next key can
+           follow. */
+        const selected = store.selection;
+        const onSelection = selected.length > 1 && selected.includes(id);
+        const openBulk = (menu: BulkMenuName) => {
+          window.dispatchEvent(new CustomEvent(BULK_MENU_EVENT, { detail: menu }));
+        };
+
+        if (e.key === 't') {
+          e.preventDefault();
+          if (onSelection) openBulk('date'); else ask(current, 'schedule');
+          return;
+        }
         if (e.key === 'T') {
           // Shift+T, as in Todoist: the date comes off.
           e.preventDefault();
+          if (onSelection) {
+            store.clearSelection();
+            void store.updateMany(
+              selected,
+              (task) => (task.due ? { due: null } : null),
+              say('bulk.dateRemoved', { count: selected.length }),
+            );
+            return;
+          }
           void store.updateTask(id, { due: null });
           return;
         }
-        if (e.key === 'v') { e.preventDefault(); ask(current, 'move'); return; }
+        if (e.key === 'v') {
+          e.preventDefault();
+          if (onSelection) openBulk('move'); else ask(current, 'move');
+          return;
+        }
         if (e.key === '.') { e.preventDefault(); ask(current, 'more'); return; }
         if (e.key === 'x') { e.preventDefault(); store.toggleSelection(id); return; }
         if (e.key >= '1' && e.key <= '4') {
           e.preventDefault();
           // Todoist counts priority the other way up: its 4 is p1.
           const priority = 5 - Number(e.key);
-          /* Inside a selection the key is for all of it, the way the bar's
-             Priority is: every task set at once, one toast, one undo. It set
-             only the row under the cursor and left the others as they were. */
-          const picked = store.selection;
-          if (picked.length > 1 && picked.includes(id)) {
-            store.clearSelection();
+          /* Every task of the selection at once, one toast, one undo — and the
+             selection stays, since a priority moves nothing off the page. */
+          if (onSelection) {
             void store.updateMany(
-              picked,
+              selected,
               (task) => (task.priority === priority ? null : { priority }),
-              say('bulk.prioritySet', { count: picked.length, priority: `P${e.key}` }),
+              say('bulk.prioritySet', { count: selected.length, priority: `P${e.key}` }),
             );
             return;
           }
