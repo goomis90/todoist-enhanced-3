@@ -886,6 +886,8 @@
 /* A column's load sits under its heading in the same quiet type as the count. */
 .cload{margin:-4px 0 10px;color:var(--faint);font-size:var(--fs-11);font-variant-numeric:tabular-nums}
 .cload.over{color:var(--accent-dark);font-weight:600}
+.cload-warning{margin-left:8px;color:var(--late-dark);font-weight:600}
+.cload-warning:first-child{margin-left:0}
 
 /* A parent and its subtasks are one card, not several. */
 .col .taskwrap{

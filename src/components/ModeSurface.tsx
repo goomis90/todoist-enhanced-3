@@ -45,6 +45,8 @@ interface ModeSurfaceProps {
     /** Overrides the surface-wide showProject for just this column — Planning's
         Today/Tomorrow name a task's project; its own project column doesn't. */
     showProject?: boolean;
+    /** Same meaning as TaskGroup's own: a short flagged line under the heading, alongside the load percentage. */
+    warning?: string;
   }>;
 }
 
@@ -198,8 +200,11 @@ function BoardSurface(props: ModeSurfaceProps) {
                 <small>{t('metrics.tasks', { count: column.items.length })}</small>
               </div>
             </div>
-            {parts.length > 0 && (
-              <p className={`cload${load.level === 'over' ? ' over' : ''}`}>{parts.join(' · ')}</p>
+            {(parts.length > 0 || column.warning) && (
+              <p className={`cload${load.level === 'over' ? ' over' : ''}`}>
+                {parts.join(' · ')}
+                {column.warning && <span className="cload-warning">{column.warning}</span>}
+              </p>
             )}
             {column.items.map((item) => (
               <DraggableTask

@@ -9,11 +9,12 @@ import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
 import { applyFilters, orderedProjects, rootItems, sortItems } from '@/store/selectors';
-import { bucketOf } from '@/domain/views';
+import { bucketOf, isQuick } from '@/domain/views';
 import { toApiDate, isTomorrow } from '@/domain/dates';
 import { summariseLoad } from '@/domain/load';
 import type { Item } from '@/domain/types';
 import type { TaskPlacement } from '@/domain/dnd';
+import { toDisplayPriority } from '@/domain/types';
 
 interface PlanningViewProps {
   onOpen: (id: string) => void;
@@ -84,6 +85,16 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
       ? scoped.filter((item) => !item.due)
       : scoped;
 
+    // Pullein's 2+8: Quick and recurring tasks are the mechanical batch and
+    // never counted here, the same reasoning Personal's own grouping uses —
+    // what's left is the real, decision-requiring load for the day.
+    const realToday = todayItems.filter((item) => !isQuick(item) && !item.due?.is_recurring);
+    const p1Count = realToday.filter((item) => toDisplayPriority(item.priority) === 1).length;
+    const p2Count = realToday.filter((item) => toDisplayPriority(item.priority) === 2).length;
+    const todayWarning = p1Count > 2 || p2Count > 8
+      ? t('planning.tooManyToday', { p1: p1Count, p2: p2Count })
+      : undefined;
+
     const cols = [
       {
         id: 'today',
@@ -93,6 +104,8 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
         onAddTask: () => onAddTaskTo({ date: today }),
         showProject: true,
         accent: 'today' as const,
+        capacityMinutes: prefs.dailyCapacity[now.getDay()],
+        warning: todayWarning,
       },
       {
         id: 'tomorrow',
@@ -102,6 +115,8 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
         onAddTask: () => onAddTaskTo({ date: toApiDate(tomorrowDate) }),
         showProject: true,
         accent: 'tomorrow' as const,
+        capacityMinutes: prefs.dailyCapacity[tomorrowDate.getDay()],
+        warning: undefined,
       },
       ...projects.map((project) => ({
         id: project.id,
@@ -110,6 +125,8 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
         dropTarget: { kind: 'planning-project' as const, projectId: project.id },
         onAddTask: () => onAddTaskTo({ projectId: project.id }),
         showProject: false,
+        capacityMinutes: undefined,
+        warning: undefined,
         accent: undefined,
       })),
     ];
@@ -131,7 +148,7 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     scoped, projects, current.sort, current.filters.hideScheduledInProjects,
-    childrenOf, snapshot, t, today, tomorrowDate, onAddTaskTo, dragging,
+    childrenOf, snapshot, t, today, tomorrowDate, onAddTaskTo, dragging, prefs.dailyCapacity,
   ]);
 
   const load = useMemo(() => summariseLoad(scoped, childrenOf, null), [scoped, childrenOf]);
@@ -168,6 +185,8 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
               onAddTask={column.onAddTask}
               showProject={column.showProject}
               accent={column.accent}
+              capacityMinutes={column.capacityMinutes}
+              warning={column.warning}
             />
           ))}
         </div>

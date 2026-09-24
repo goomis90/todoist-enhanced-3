@@ -781,6 +781,7 @@ ul{margin:0;padding:0;list-style:none}
 .meta .repeatdot,.meta .hash{display:inline-grid;place-items:center}
 .meta .late{color:var(--late)}
 .meta .deadline{color:var(--deadline)}
+.meta .stale{color:var(--faint)}
 .meta .at{color:var(--info)}
 /* A tag wears its own colour: the glyph in it, the chip a wash of it. Todoist
    holds a colour for every tag and the row is where it earns its keep. */
