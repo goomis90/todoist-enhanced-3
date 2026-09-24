@@ -825,10 +825,10 @@ export const en = {
   /* The keyboard. Todoist's own keys, wherever Todoist has one. */
   'keys.or': 'or',
   'keys.title': 'Keyboard shortcuts',
-  'keys.typingHint': 'With no task under the cursor, a letter starts a search — projects, tags and views included.',
+  'keys.typingHint': 'With no task picked with the arrow keys (↑ ↓ or J K), a letter starts a search — projects, tags and views included.',
   'keys.anywhere': 'Anywhere',
   'keys.moving': 'Moving through a list',
-  'keys.onATask': 'On the task under the cursor',
+  'keys.onATask': 'On the task picked with the arrow keys',
   'keys.thisList': 'This list',
   'keys.moveCursor': 'Previous and next task',
   'keys.moveCursorAlt': 'The same, without leaving the home row',

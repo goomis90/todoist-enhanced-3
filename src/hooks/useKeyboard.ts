@@ -23,14 +23,11 @@ import type { ViewId } from '@/domain/types';
  * opened from — the dialog shell already returns focus to wherever it came
  * from, which is the behaviour the issue asked for, unwritten.
  *
- * The mouse moves the cursor too. Todoist acts on the task the pointer is
- * over, and people arrive with that habit: hovering a row and pressing `1`
- * started a search instead, and only a row opened and closed again answered
- * the keys — and then kept answering while the pointer moved on. So a row the
- * pointer moves onto takes the focus, and gives it back when the pointer
- * leaves it for somewhere that is not a row. It never takes it from a field
- * being typed in, a dialog or a menu, and only a pointer that actually moved
- * counts: a list scrolling under a still mouse is not a choice of row.
+ * The mouse pointer is not the cursor. Hovering a task and pressing a key
+ * was tried (#90) and left out on purpose: with the pointer resting on a
+ * list, typing a search that starts with `e` completed whatever task was
+ * under it. Arrows, J/K, Tab or a task opened and closed again put the cursor
+ * on a row; the pointer never does.
  *
  * The cursor is not carried between pages. Restoring one on arrival would mean
  * taking focus on every navigation, which fights anyone tabbing through the
@@ -102,10 +99,8 @@ function rows(): HTMLElement[] {
     .filter((row) => row.offsetParent !== null);
 }
 
-/* Any element, not only HTML ones: the pointer is often on a button's icon,
-   which is an SVG element, and that is still inside the row. */
 const rowOf = (node: Element | null): HTMLElement | null =>
-  (node instanceof Element ? node.closest<HTMLElement>('[data-task-id]') : null);
+  (node instanceof HTMLElement ? node.closest<HTMLElement>('[data-task-id]') : null);
 
 /* Moved to, not scrolled to: `nearest` keeps the list still when the row is
    already in sight, and brings it just inside the edge when it is not. */
@@ -363,46 +358,9 @@ export function useKeyboard(bridge: KeyboardBridge) {
       to.openSearch(e.key);
     };
 
-    /** The row that has the focus because the pointer is on it, not the keys. */
-    let hovered: HTMLElement | null = null;
-    let lastX = NaN;
-    let lastY = NaN;
-
-    const onPointerMove = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse' || e.buttons !== 0) return;
-      if (e.clientX === lastX && e.clientY === lastY) return;
-      lastX = e.clientX;
-      lastY = e.clientY;
-
-      if (document.querySelector('.overlay.open, .rowmenu')) return;
-      const active = document.activeElement as HTMLElement | null;
-      /* Only a focus that is nowhere, or on a row, is free to move: a field,
-         a button in the sidebar or anything in a dialog was put there on
-         purpose. A button inside a row is part of that row. */
-      const free = !active
-        || active === document.body
-        || (rowOf(active) !== null
-          && active.tagName !== 'INPUT'
-          && active.tagName !== 'TEXTAREA'
-          && !active.isContentEditable);
-      if (!free) return;
-
-      const row = rowOf(e.target as Element | null);
-      if (row) {
-        if (row.contains(active)) return;
-        row.focus({ preventScroll: true });
-        hovered = row;
-        return;
-      }
-      if (hovered && hovered === active) hovered.blur();
-      hovered = null;
-    };
-
     window.addEventListener('keydown', onKey);
-    document.addEventListener('pointermove', onPointerMove, { passive: true });
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointermove', onPointerMove);
       stopGoing();
     };
   }, []);
