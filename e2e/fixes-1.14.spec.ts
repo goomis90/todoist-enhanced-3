@@ -120,3 +120,22 @@ test('after a priority change, T and V still reach the selection, and the panels
     await expect(row(page, title).getByRole('checkbox', { name: 'Complete task' })).toHaveClass(/\bp3\b/);
   }
 });
+
+test('Shift+↓ and Shift+↑ grow and shrink the selection from the cursor', async ({ demo: page }) => {
+  const all = await titles(page);
+  await page.locator('h1').first().click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Shift+ArrowDown');
+  await page.keyboard.press('Shift+ArrowDown');
+  const bar = page.getByRole('toolbar');
+  await expect(bar).toContainText('3 selected');
+  for (const title of all.slice(0, 3)) await expect(row(page, title)).toHaveAttribute('aria-selected', 'true');
+
+  await page.keyboard.press('Shift+ArrowUp');
+  await expect(bar).toContainText('2 selected');
+  await expect(row(page, all[2])).not.toHaveAttribute('aria-selected', 'true');
+
+  // The keys then act on the whole range.
+  await page.keyboard.press('4');
+  await expect(page.locator('.toast')).toContainText('2 tasks set to P4');
+});
