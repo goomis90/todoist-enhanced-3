@@ -10,7 +10,9 @@ import { detectLocale } from '@/i18n';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import { defaultPreferences, hydratePreferences, type Preferences } from './prefs';
 import { explainFailure, explainFailures, hidePending, pendingDeletes, revertRefused, schedulePersist } from './helpers';
-import { PREFS_KEY, preferencesWriteTimer, remotePreferences, tourSnapshotBackup } from './preferences';
+import {
+  PREFS_KEY, preferencesWriteTimer, remotePreferences, tourSnapshotBackup, withOnboarding,
+} from './preferences';
 import type { AppState } from './types';
 import type { Slice, SyncSlice } from './types';
 
@@ -132,9 +134,11 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       const snapshot = applySync(emptySnapshot(), response);
       const canonical = remotePreferences(snapshot, get().prefs);
       if (canonical) setWeekLabel(canonical.weekLabel);
-      set({ connected: true, snapshot, prefs: canonical ?? get().prefs, syncState: 'idle' });
+      const adopted = canonical ?? get().prefs;
+      const prefs = withOnboarding(snapshot, adopted);
+      set({ connected: true, snapshot, prefs, syncState: 'idle' });
       void idb.saveSnapshot(snapshot);
-      if (canonical) void idb.savePrefs(PREFS_KEY, canonical);
+      if (canonical || prefs !== adopted) void idb.savePrefs(PREFS_KEY, prefs);
       window.setTimeout(() => void get().ensurePreferencesTask(), 0);
       return true;
     } catch (error) {
@@ -193,9 +197,11 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
         ? null
         : remotePreferences(snapshot, get().prefs);
       if (canonical) setWeekLabel(canonical.weekLabel);
-      set({ snapshot: hidePending(snapshot), prefs: canonical ?? get().prefs, syncState: 'idle' });
+      const adopted = canonical ?? get().prefs;
+      const prefs = withOnboarding(snapshot, adopted);
+      set({ snapshot: hidePending(snapshot), prefs, syncState: 'idle' });
       schedulePersist(snapshot);
-      if (canonical) void idb.savePrefs(PREFS_KEY, canonical);
+      if (canonical || prefs !== adopted) void idb.savePrefs(PREFS_KEY, prefs);
       /* Always: writes nothing when the comment already says the same, and
          moves an account off the old settings task the first time. */
       window.setTimeout(() => void get().ensurePreferencesTask(), 0);

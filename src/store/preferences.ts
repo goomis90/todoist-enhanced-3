@@ -8,6 +8,7 @@ import { buildDemoSnapshot } from '@/demo/demoData';
 import { defaultPreferences, hydratePreferences, viewPrefs as readViewPrefs, PREFERENCES_TASK_CONTENT, SETTINGS_COMMENT_MARKER, mergeSynced, readSettingsComment, settingsCommentContent, settingsCommentMatches, syncedPreferences, type Preferences } from './prefs';
 import { schedulePersist } from './helpers';
 import type { AppState } from './types';
+import { hasOnboarded, markOnboarded } from '@/domain/onboarding';
 import type { Slice, PreferencesSlice } from './types';
 
 export const PREFS_KEY = 'preferences';
@@ -67,6 +68,27 @@ export function remotePreferences(snapshot: Snapshot, local: Preferences): Prefe
     }
   }
   return null;
+}
+
+/**
+ * Whether this account has been through the first run, carried both ways
+ * between the device and the account's settings.
+ *
+ * Signing in on a second browser showed the walkthrough again even though the
+ * settings it offers were already there: the "done" mark lived only in the
+ * first browser's storage. Settings that say so, and settings written before
+ * the mark existed (only an account that used the app has any), mark this
+ * device; a device that already knows marks the settings, so the next browser
+ * learns it too. A new account has neither and still gets its walkthrough.
+ */
+export function withOnboarding(snapshot: Snapshot, prefs: Preferences): Preferences {
+  const userId = snapshot.user?.id;
+  if (!userId) return prefs;
+  const comment = settingsComments(snapshot)[0];
+  const stored = comment ? readSettingsComment(comment.content) : null;
+  const setUpElsewhere = stored ? stored.onboarded !== false : Boolean(legacySettingsTask(snapshot));
+  if (setUpElsewhere || prefs.onboarded) markOnboarded(userId);
+  return hasOnboarded(userId) && !prefs.onboarded ? { ...prefs, onboarded: true } : prefs;
 }
 
 /**
