@@ -515,6 +515,7 @@ export const fr: Record<TranslationKey, string> = {
   'connect.oauthLeaving': 'Ouverture de Todoist…',
   'connect.oauthDenied': 'L’accès à Todoist n’a pas été accordé. Vous pouvez réessayer quand vous voulez.',
   'connect.oauthFailed': 'La connexion avec Todoist n’a pas abouti. Réessayez, ou utilisez un jeton d’API ci-dessous.',
+  'connect.oauthElsewhere': 'Cette copie a été construite pour {expected} mais tourne sur {here} : Todoist refuserait la connexion. Reconstruisez-la avec PUBLIC_URL={here} (voir « Self-hosting » dans le README), ou utilisez un jeton d’API ci-dessous.',
   'connect.useToken': 'Utiliser un jeton d’API à la place',
   'connect.legal': 'Enhanced for Todoist est un projet indépendant de {author}. Il n’est ni créé, ni affilié, ni soutenu par Todoist. « Todoist » est une marque de Todoist Inc.',
 

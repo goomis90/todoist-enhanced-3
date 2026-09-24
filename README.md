@@ -231,6 +231,22 @@ npm run dev      # Node 20+, pinned in .nvmrc
 npm run build    # a static site in dist/, see docs/deploying.md
 ```
 
+### Self-hosting
+
+"Continue with Todoist" identifies the app by a file it hosts,
+`oauth/client.json`, and Todoist only sends people back to the address that
+file names. The build writes it for the official site unless told otherwise,
+so a copy on your own domain has to be built for that domain:
+
+```bash
+PUBLIC_URL=https://your.domain/ npm run build   # include the subfolder, if any
+```
+
+The file must be reachable over HTTPS at `https://your.domain/oauth/client.json`,
+since Todoist fetches it. A copy built for another address says so on its
+sign-in screen instead of sending you to Todoist's "Invalid redirect URI".
+Signing in with an API token works anywhere, with none of this.
+
 I built this for myself, so it is shaped around one person's habits — that is
 the main thing it needs help with. If you have an idea, open an issue and say
 how you plan your week. The most useful thing you can tell me is what you do

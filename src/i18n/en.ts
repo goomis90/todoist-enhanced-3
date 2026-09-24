@@ -513,6 +513,7 @@ export const en = {
   'connect.oauthLeaving': 'Opening Todoist…',
   'connect.oauthDenied': 'Todoist access was not granted. You can try again whenever you like.',
   'connect.oauthFailed': 'Signing in with Todoist did not complete. Try again, or use an API token below.',
+  'connect.oauthElsewhere': 'This copy was built for {expected} but is running at {here}, so Todoist would refuse the sign-in. Rebuild it with PUBLIC_URL={here} (see “Self-hosting” in the README), or use an API token below.',
   'connect.useToken': 'Use an API token instead',
   'connect.legal': 'Enhanced for Todoist is an independent project from {author}. It is not created by, affiliated with, or supported by Todoist. “Todoist” is a trademark of Todoist Inc.',
 
