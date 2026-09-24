@@ -49,6 +49,12 @@ const PUBLIC_URL = (() => {
 /** The dev server Todoist also accepts, so signing in works in development. */
 const DEV_REDIRECT = 'http://localhost:5192/';
 
+/** The build-time constants the app reads (declared in src/vite-env.d.ts); the unit tests use them too. */
+export const APP_DEFINE = {
+  __PUBLIC_URL__: JSON.stringify(PUBLIC_URL),
+  __OAUTH_DEV_REDIRECT__: JSON.stringify(DEV_REDIRECT),
+};
+
 /**
  * `oauth/client.json`, built for `PUBLIC_URL`: emitted with the build, and
  * served by the dev server. `vite preview` serves the built one from `dist/`,
@@ -88,10 +94,7 @@ export default defineConfig({
   // Relative base so the build can be dropped into any subfolder on Infomaniak.
   base: './',
   preview: { headers: SECURITY_HEADERS },
-  define: {
-    __PUBLIC_URL__: JSON.stringify(PUBLIC_URL),
-    __OAUTH_DEV_REDIRECT__: JSON.stringify(DEV_REDIRECT),
-  },
+  define: APP_DEFINE,
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

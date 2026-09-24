@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath, URL } from 'node:url';
+import { APP_DEFINE } from './vite.config';
 
 /**
  * The unit tests: the rules in `src/domain` and the parts of `src/api` and
@@ -8,6 +9,7 @@ import { fileURLToPath, URL } from 'node:url';
  * under test. End-to-end journeys live in `e2e/` and run with Playwright.
  */
 export default defineConfig({
+  define: APP_DEFINE,
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
