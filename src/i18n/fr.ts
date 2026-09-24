@@ -203,6 +203,8 @@ export const fr: Record<TranslationKey, string> = {
   'task.deleteTitle': 'Supprimer cette tâche ?',
   'common.confirm': 'Confirmer',
   'task.moveToProject': 'Déplacer vers un projet',
+  'task.sendToday': 'Envoyer à Aujourd\'hui',
+  'task.sendTomorrow': 'Envoyer à Demain',
   'task.moveToHint': 'Ajuste la date et l’étiquette week pour que la tâche arrive dans cette vue.',
   'task.movedTo': 'Déplacée vers {destination}',
   'task.deleteConfirm': 'Supprimer « {name} » ? Todoist conserve les tâches supprimées sept jours dans son historique d’activité.',

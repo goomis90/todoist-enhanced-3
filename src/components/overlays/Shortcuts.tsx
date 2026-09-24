@@ -83,6 +83,8 @@ const SECTIONS: Array<{ title: TranslationKey; join?: Join; rows: Row[] }> = [
       [[['T']], 'task.schedule'],
       [[['⇧', 'T']], 'task.removeDate'],
       [[['V']], 'task.moveToProject'],
+      [[['[']], 'task.sendToday'],
+      [[[']']], 'task.sendTomorrow'],
       [[['1', '2', '3', '4']], 'keys.setPriority'],
       [[['X']], 'keys.select'],
       [[['.']], 'task.moreActions'],

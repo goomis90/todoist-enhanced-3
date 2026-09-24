@@ -314,6 +314,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       case 'someday': return t('nav.someday');
       case 'label': return `@${target.label}`;
       case 'project': return snapshot.projects[target.projectId]?.name ?? '';
+      case 'planning-project': return snapshot.projects[target.projectId]?.name ?? '';
       case 'section': {
         const project = snapshot.projects[target.projectId]?.name ?? '';
         const section = target.sectionId ? snapshot.sections[target.sectionId]?.name : null;

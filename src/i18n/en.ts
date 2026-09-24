@@ -201,6 +201,8 @@ export const en = {
   'task.deleteTitle': 'Delete this task?',
   'common.confirm': 'Confirm',
   'task.moveToProject': 'Move to project',
+  'task.sendToday': 'Send to Today',
+  'task.sendTomorrow': 'Send to Tomorrow',
   'task.moveToHint': 'Changes the date and the week label so the task lands in that view.',
   'task.movedTo': 'Moved to {destination}',
   'task.deleteConfirm': 'Delete "{name}"? Todoist keeps deleted tasks for seven days in its activity history.',

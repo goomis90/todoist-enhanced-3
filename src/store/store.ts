@@ -1386,11 +1386,15 @@ export const useStore = create<AppState>((set, get) => ({
         const item = snapshot.items[id];
         if (!item) return null;
         const mutation = dropMutation(item, target);
-        if (!mutation?.update) return null;
+        if (!mutation?.update && !mutation?.move) return null;
         return {
           id,
           update: mutation.update,
-          before: { due: item.due, labels: item.labels },
+          move: mutation.move,
+          before: {
+            due: item.due, labels: item.labels,
+            project_id: item.project_id, section_id: item.section_id,
+          },
         };
       })
       .filter((change): change is NonNullable<typeof change> => change !== null);
@@ -1402,9 +1406,20 @@ export const useStore = create<AppState>((set, get) => ({
     ) => (current: Snapshot): Snapshot =>
       changes.reduce((acc, change) => patchItem(acc, change.id, fields(change)), current);
 
+    // Same either-or-turned-both-at-once fix as the single-task drop: a
+    // Planning-view bulk drop out of Today can carry an update (clear the
+    // date) and a move (change project) for the same task at once.
+    const commands: Command[] = [];
+    for (const change of changes) {
+      if (change.update) commands.push(updateItem(change.id, change.update));
+      if (change.move) commands.push(moveItem(change.id, moveArgs(change.move)));
+    }
     await get().apply(
-      changes.map((change) => updateItem(change.id, change.update)),
-      patchAll((change) => change.update),
+      commands,
+      patchAll((change) => ({
+        ...(change.update ?? {}),
+        ...(change.move ? { ...change.move, parent_id: null } : {}),
+      })),
     );
 
     if (destination === null) return;
@@ -1412,10 +1427,23 @@ export const useStore = create<AppState>((set, get) => ({
       translate(get().prefs.locale, 'task.movedManyTo', {
         count: changes.length, destination,
       }),
-      () => void get().apply(
-        changes.map((change) => updateItem(change.id, change.before)),
-        patchAll((change) => change.before as unknown as Record<string, unknown>),
-      ),
+      () => {
+        const undoCommands: Command[] = [];
+        for (const change of changes) {
+          if (change.update) {
+            undoCommands.push(updateItem(change.id, { due: change.before.due, labels: change.before.labels }));
+          }
+          if (change.move) {
+            undoCommands.push(moveItem(change.id, moveArgs({
+              project_id: change.before.project_id, section_id: change.before.section_id,
+            })));
+          }
+        }
+        void get().apply(
+          undoCommands,
+          patchAll((change) => change.before as unknown as Record<string, unknown>),
+        );
+      },
     );
   },
 
