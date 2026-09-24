@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Icon, type IconName } from './Icon';
 import { DateField } from './DateField';
 import { useT } from '@/hooks/useT';
@@ -96,6 +96,39 @@ export function BulkBar() {
   const [date, setDate] = useState('');
   const [projectQuery, setProjectQuery] = useState('');
   const [tagQuery, setTagQuery] = useState('');
+
+  /* The bar and the toasts share the foot of the window, and the toast that
+     answers a bulk action used to land on the very buttons the next one needs.
+     The bar says how much of the window it takes, and the toasts stand on it
+     (see `.toasts`); with no bar the variable is gone and they sit where they
+     always have. Measured rather than assumed: on a phone the bar wraps, and
+     the tags panel stays open while tags are ticked one after another, so an
+     open panel counts as part of the bar. */
+  const unmeasure = useRef<(() => void) | null>(null);
+  const measureBar = useCallback((node: HTMLDivElement | null) => {
+    unmeasure.current?.();
+    unmeasure.current = null;
+    const root = document.documentElement.style;
+    if (!node) { root.removeProperty('--bulkbar-room'); return; }
+    const place = () => {
+      const top = Math.min(
+        node.getBoundingClientRect().top,
+        ...[...node.querySelectorAll('.bulkpop')].map((pop) => pop.getBoundingClientRect().top),
+      );
+      root.setProperty('--bulkbar-room', `${Math.ceil(window.innerHeight - top)}px`);
+    };
+    place();
+    const resized = new ResizeObserver(place);
+    resized.observe(node);
+    const opened = new MutationObserver(place);
+    opened.observe(node, { childList: true, subtree: true });
+    window.addEventListener('resize', place);
+    unmeasure.current = () => {
+      resized.disconnect();
+      opened.disconnect();
+      window.removeEventListener('resize', place);
+    };
+  }, []);
 
   if (selection.length === 0) return null;
 
@@ -204,7 +237,7 @@ export function BulkBar() {
   };
 
   return (
-    <div className="bulkbar" role="toolbar" aria-label={t('bulk.title')}>
+    <div ref={measureBar} className="bulkbar" role="toolbar" aria-label={t('bulk.title')}>
       <strong>{t('bulk.count', { count })}</strong>
       <span className="sep" aria-hidden="true" />
 
