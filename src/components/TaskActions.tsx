@@ -9,6 +9,7 @@ import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
    a finger held on the row it is under. Both ask this component to open one of
    its menus, and both say which by name. */
 import { ROW_MENU_EVENT } from '@/hooks/useKeyboard';
+import { copyText, isTemporaryId, todoistTaskUrl } from '@/api/links';
 import { ROW_PRESS_EVENT, type RowMenu } from '@/domain/gestures';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
@@ -133,6 +134,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   const apply = useStore((s) => s.apply);
   const setRecurrence = useStore((s) => s.setRecurrence);
   const toast = useStore((s) => s.toast);
+  const demo = useStore((s) => s.demo);
   const dateFormat = useStore((s) => s.prefs.dateFormat);
   const [menu, setMenu] = useState<'none' | 'schedule' | 'more' | 'estimate' | 'move'>('none');
   /** What has been typed into the schedule field, before it is a date. */
@@ -727,11 +729,23 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
               className="opt"
               onClick={() => {
                 setMenu('none');
-                window.open(`https://app.todoist.com/app/task/${item.id}`, '_blank', 'noopener');
+                window.open(todoistTaskUrl(item.id), '_blank', 'noopener');
               }}
             >
               <span><Icon name="external" size="sm" /> {t('task.openInTodoist')}</span>
             </button>
+            {!demo && !isTemporaryId(item.id) && (
+              <button
+                className="opt"
+                onClick={() => {
+                  setMenu('none');
+                  void copyText(todoistTaskUrl(item.id))
+                    .then((ok) => toast(t(ok ? 'task.linkCopied' : 'task.linkNotCopied')));
+                }}
+              >
+                <span><Icon name="link" size="sm" /> {t('task.copyLink')}</span>
+              </button>
+            )}
             <hr />
             <button
               className="opt danger"
