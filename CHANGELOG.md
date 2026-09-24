@@ -17,6 +17,10 @@ release.
 and V open the bulk bar's Date and Move panels. In those panels ↑ ↓ walk the
 choices, Enter picks and Esc closes, and the cursor comes back to the tasks.
 
+🆕 **Shift+↑ and Shift+↓ extend the selection.** From the task you started
+on to the cursor, growing and shrinking with each step, on top of anything
+already picked with Cmd+click.
+
 🆕 **⌘A selects every task in the list.** Outside a text field, ⌘A (Ctrl+A)
 picks every open task on the page in front and brings up the bulk-edit bar,
 instead of selecting the page's text. Inside a field it still selects the
@@ -53,6 +57,10 @@ instead of one 2,300-line file.
 🐛 **A second browser showed the walkthrough again.** Having been through the
 first run is now kept with the account's settings, so signing in elsewhere no
 longer asks again.
+
+🐛 **Groups followed the sort.** Grouped by project and sorted by priority,
+the project holding a P1 jumped to the top. Projects now keep the sidebar's
+order and sections their project's, and the sort applies inside each group.
 
 🐛 **The cursor was lost when a task moved.** A priority that re-sorted the
 list dropped the keyboard cursor, and the next key opened the search.
