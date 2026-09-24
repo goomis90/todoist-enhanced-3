@@ -105,6 +105,22 @@ function land(row: HTMLElement | undefined) {
 }
 
 /**
+ * Keeps the cursor on a task that a change has moved.
+ *
+ * A new priority re-sorts the list, and a row the browser moves loses the
+ * focus on the way — so the next key, meant for the same task, opened the
+ * search instead. Once the list has been drawn again, a focus that fell to
+ * nothing goes back to the row, wherever it now is.
+ */
+function keepCursor(id: string) {
+  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+    const lost = !document.activeElement || document.activeElement === document.body;
+    if (!lost) return;
+    land(rows().find((row) => row.dataset.taskId === id));
+  }));
+}
+
+/**
  * What the keyboard asks a row to do that only the row can do.
  *
  * `t` and `v` open menus that live inside the row's own actions, as component
@@ -360,6 +376,7 @@ export function useKeyboard(bridge: KeyboardBridge) {
             return;
           }
           void store.updateTask(id, { due: null });
+          keepCursor(id);
           return;
         }
         if (e.key === 'v') {
@@ -381,9 +398,10 @@ export function useKeyboard(bridge: KeyboardBridge) {
               (task) => (task.priority === priority ? null : { priority }),
               say('bulk.prioritySet', { count: selected.length, priority: `P${e.key}` }),
             );
-            return;
+          } else {
+            void store.updateTask(id, { priority });
           }
-          void store.updateTask(id, { priority });
+          keepCursor(id);
           return;
         }
       }
