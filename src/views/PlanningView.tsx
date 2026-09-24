@@ -44,8 +44,15 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
   const current = viewPrefs(prefs, viewKey);
   const dragging = useStore((s) => s.draggingTaskId !== null);
 
+  // Today/Tomorrow read every project regardless of the checkbox list below —
+  // it decides which project BOARDS show, not which tasks count as due today
+  // or tomorrow. Filtering it into this pool too would drop a task from
+  // Today/Tomorrow the moment its own project's board was hidden, which
+  // defeats the point of a day view: seeing the whole day regardless of
+  // which boards are open. Every other filter (priority, tag, estimate…)
+  // still applies here as normal.
   const scoped = useMemo(
-    () => applyFilters(rootItems(items), current.filters, snapshot, childrenOf),
+    () => applyFilters(rootItems(items), { ...current.filters, projects: [] }, snapshot, childrenOf),
     [items, current.filters, snapshot, childrenOf],
   );
 
@@ -85,6 +92,7 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
         dropTarget: { kind: 'today' as const },
         onAddTask: () => onAddTaskTo({ date: today }),
         showProject: true,
+        accent: 'today' as const,
       },
       {
         id: 'tomorrow',
@@ -93,6 +101,7 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
         dropTarget: { kind: 'day' as const, date: tomorrowDate },
         onAddTask: () => onAddTaskTo({ date: toApiDate(tomorrowDate) }),
         showProject: true,
+        accent: 'tomorrow' as const,
       },
       ...projects.map((project) => ({
         id: project.id,
@@ -101,6 +110,7 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
         dropTarget: { kind: 'planning-project' as const, projectId: project.id },
         onAddTask: () => onAddTaskTo({ projectId: project.id }),
         showProject: false,
+        accent: undefined,
       })),
     ];
     // Hidden once empty, same as every other board/list group here — but
@@ -157,6 +167,7 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
               dropTarget={column.dropTarget}
               onAddTask={column.onAddTask}
               showProject={column.showProject}
+              accent={column.accent}
             />
           ))}
         </div>

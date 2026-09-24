@@ -41,7 +41,7 @@ interface ModeSurfaceProps {
     /** A day column knows its capacity, and shows its load against it. */
     capacityMinutes?: number | null;
     /** Same meaning as TaskGroup's accent: a callout wash for the whole column. */
-    accent?: 'late' | 'quick' | 'deadline';
+    accent?: 'late' | 'quick' | 'deadline' | 'today' | 'tomorrow';
     /** Overrides the surface-wide showProject for just this column — Planning's
         Today/Tomorrow name a task's project; its own project column doesn't. */
     showProject?: boolean;
