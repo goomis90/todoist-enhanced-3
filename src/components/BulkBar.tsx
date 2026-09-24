@@ -34,6 +34,23 @@ function BulkMenu({
   const ref = useRef<HTMLDivElement>(null);
   /** Where the focus was when the panel opened, to give it back on closing. */
   const opener = useRef<HTMLElement | null>(null);
+  /** Opened by a key, so the panel takes the focus once it is drawn. */
+  const focusOnOpen = useRef(false);
+
+  const panelItems = (): HTMLElement[] => {
+    const panel = ref.current?.querySelector('.bulkpop');
+    return panel
+      ? [...panel.querySelectorAll<HTMLElement>('input, button:not([disabled])')]
+        .filter((item) => item.offsetParent !== null)
+      : [];
+  };
+
+  useEffect(() => {
+    if (!open || !focusOnOpen.current) return;
+    focusOnOpen.current = false;
+    const panel = ref.current?.querySelector('.bulkpop');
+    if (panel && !panel.contains(document.activeElement)) panelItems()[0]?.focus();
+  }, [open]);
 
   /* Opened from the keyboard, the panel takes the focus: its own field when it
      has one (Move's search already asks for it), otherwise its first choice. */
@@ -42,13 +59,8 @@ function BulkMenu({
     const onAsk = (event: Event) => {
       if ((event as CustomEvent<BulkMenuName>).detail !== name) return;
       opener.current = document.activeElement as HTMLElement | null;
+      focusOnOpen.current = true;
       setOpen(true);
-      window.requestAnimationFrame(() => {
-        const panel = ref.current?.querySelector('.bulkpop');
-        if (panel && !panel.contains(document.activeElement)) {
-          panel.querySelector<HTMLElement>('input, button')?.focus();
-        }
-      });
     };
     window.addEventListener(BULK_MENU_EVENT, onAsk);
     return () => window.removeEventListener(BULK_MENU_EVENT, onAsk);
@@ -67,6 +79,18 @@ function BulkMenu({
       setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
+      /* Up or Down with the focus still outside (on the task, or on the bar's
+         button after a click) steps into the panel. */
+      const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+      const panel = ref.current?.querySelector('.bulkpop');
+      if (step !== 0 && panel && !panel.contains(e.target as Node)) {
+        const items = panelItems();
+        if (items.length === 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        items[step > 0 ? 0 : items.length - 1].focus();
+        return;
+      }
       if (e.key !== 'Escape') return;
       e.stopPropagation();
       setOpen(false);
@@ -109,8 +133,7 @@ function BulkMenu({
     }
     const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
     if (step === 0) return;
-    const items = [...panel.querySelectorAll<HTMLElement>('input, button:not([disabled])')]
-      .filter((item) => item.offsetParent !== null);
+    const items = panelItems();
     if (items.length === 0) return;
     event.preventDefault();
     event.stopPropagation();
