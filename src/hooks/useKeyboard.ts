@@ -166,13 +166,19 @@ export function useKeyboard(bridge: KeyboardBridge) {
      * focus that merely fell to nothing still means this task.
      */
     let remembered: string | null = null;
+    /**
+     * A Shift+arrow range: the task it started from, and what was selected
+     * before it (Cmd+click picks), which it adds to rather than replaces.
+     * Any other key, or a click, ends it.
+     */
+    let range: { from: string; base: string[] } | null = null;
     const onFocusIn = (event: FocusEvent) => {
       const target = event.target as Element | null;
       // A bulk panel opened from the keys is still about the same tasks.
       if (target instanceof Element && target.closest('.bulkpop')) return;
       remembered = rowOf(target)?.dataset.taskId ?? null;
     };
-    const onPointerDown = () => { remembered = null; };
+    const onPointerDown = () => { remembered = null; range = null; };
     /** The row the keys are for: the focused one, or the one the focus fell from. */
     const cursorRow = (): HTMLElement | null => {
       const focused = rowOf(document.activeElement);
@@ -203,6 +209,8 @@ export function useKeyboard(bridge: KeyboardBridge) {
     };
 
     const onKey = (e: KeyboardEvent) => {
+      const extending = e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp');
+      if (!extending && e.key !== 'Shift') range = null;
       const target = e.target as HTMLElement | null;
       const typing =
         target?.tagName === 'INPUT'
@@ -286,6 +294,25 @@ export function useKeyboard(bridge: KeyboardBridge) {
           : Math.min(list.length - 1, Math.max(0, at + step));
         lastIndex = next;
         land(list[next]);
+
+        /* Shift and an arrow picks as it goes, the way every list with a
+           selection does it: from where the range started to where the
+           cursor now is, growing or shrinking with each step. */
+        if (extending) {
+          const idOf = (row: HTMLElement) => row.dataset.taskId ?? '';
+          if (!range || !list.some((row) => idOf(row) === range!.from)) {
+            const from = idOf(current ?? list[next]);
+            range = { from, base: store.selection.filter((id) => id !== from) };
+          }
+          const start = list.findIndex((row) => idOf(row) === range!.from);
+          const span = start <= next ? list.slice(start, next + 1) : list.slice(next, start + 1).reverse();
+          const picked = span.map(idOf).filter((id) => {
+            const task = store.snapshot.items[id];
+            return task !== undefined && !task.checked;
+          });
+          // The cursor's end goes last, so a Shift+click carries on from it.
+          store.selectRange([...new Set([...range.base, ...picked])], false);
+        }
         return;
       }
 

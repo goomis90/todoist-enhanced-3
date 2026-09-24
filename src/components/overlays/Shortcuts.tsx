@@ -73,6 +73,7 @@ const SECTIONS: Array<{ title: TranslationKey; join?: Join; rows: Row[] }> = [
       [[['↑', '↓']], 'keys.moveCursor'],
       [[['J', 'K']], 'keys.moveCursorAlt'],
       [[['Esc']], 'keys.dropCursor'],
+      [[['⇧', '↑', '↓']], 'keys.extendSelection'],
       [[['⌘', 'A']], 'keys.selectAll'],
     ],
   },

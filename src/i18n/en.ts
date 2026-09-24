@@ -844,6 +844,7 @@ export const en = {
   'keys.moveCursor': 'Previous and next task',
   'keys.moveCursorAlt': 'The same, without leaving the home row',
   'keys.dropCursor': 'Leave the list',
+  'keys.extendSelection': 'Select the tasks above or below as well',
   'keys.selectAll': 'Select every task in this list',
   'keys.openTask': 'Open the task',
   'keys.setPriority': 'Priority 1 to 4',
