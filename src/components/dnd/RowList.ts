@@ -28,3 +28,21 @@ export interface RowList {
 export const RowListContext = createContext<RowList | null>(null);
 
 export const useRowList = (): RowList | null => useContext(RowListContext);
+
+/**
+ * A task asked, from the keyboard, to take a neighbour's place in its list.
+ *
+ * The drag provider owns how a place is written — one project's numbering or
+ * a list's day order, a sorted view giving way to a hand-made order — so the
+ * keys ask it the same thing a drop onto that neighbour would, rather than
+ * keeping a second copy of the rules.
+ */
+export const TASK_PLACE_EVENT = 'enhanced:taskplace';
+export interface TaskPlaceRequest {
+  itemId: string;
+  /** The neighbour whose place it takes. */
+  ontoId: string;
+  list: RowList;
+  /** A subtask moves among its own siblings, by its parent's numbering. */
+  subtask: boolean;
+}

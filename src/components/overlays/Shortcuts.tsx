@@ -74,6 +74,7 @@ const SECTIONS: Array<{ title: TranslationKey; join?: Join; rows: Row[] }> = [
       [[['J', 'K']], 'keys.moveCursorAlt'],
       [[['Esc']], 'keys.dropCursor'],
       [[['⇧', '↑', '↓']], 'keys.extendSelection'],
+      [[['⌘', '↑', '↓']], 'keys.moveTask'],
     ],
   },
   {
