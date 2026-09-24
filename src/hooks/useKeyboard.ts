@@ -102,8 +102,10 @@ function rows(): HTMLElement[] {
     .filter((row) => row.offsetParent !== null);
 }
 
+/* Any element, not only HTML ones: the pointer is often on a button's icon,
+   which is an SVG element, and that is still inside the row. */
 const rowOf = (node: Element | null): HTMLElement | null =>
-  (node instanceof HTMLElement ? node.closest<HTMLElement>('[data-task-id]') : null);
+  (node instanceof Element ? node.closest<HTMLElement>('[data-task-id]') : null);
 
 /* Moved to, not scrolled to: `nearest` keeps the list still when the row is
    already in sight, and brings it just inside the edge when it is not. */
