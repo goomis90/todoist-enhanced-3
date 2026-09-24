@@ -191,6 +191,24 @@ export function useKeyboard(bridge: KeyboardBridge) {
          into it. */
       if (document.querySelector('.overlay.open, .rowmenu')) return;
 
+      /* Select all means the tasks, not the page's text: nobody selects the
+         words of a task list to do something with them, and everybody picks
+         a whole list to move or date it at once. Only the rows on the page in
+         front — never another page's, never a collapsed group's — and not the
+         ticked ones, which no bulk action is for. Pressing it again keeps the
+         lot, as it does in every list that has it. Inside a field it is that
+         field's own, which `typing` has already let through. */
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        const ids = [...new Set(rows().map((row) => row.dataset.taskId ?? ''))]
+          .filter((id) => {
+            const item = store.snapshot.items[id];
+            return item !== undefined && !item.checked;
+          });
+        if (ids.length > 0) store.selectRange(ids, false);
+        return;
+      }
+
       const current = rowOf(document.activeElement);
 
       if (e.key === 'Escape') {
