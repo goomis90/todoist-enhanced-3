@@ -662,6 +662,14 @@
 .bulkpop .opt > span{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .bulkpop .opt .hash{flex:0 0 auto}
 .bulkpop-list .opt{width:100%;min-width:0;overflow:hidden}
+/* The choice the keyboard is on, drawn as a fill rather than the usual ring:
+   the list scrolls, and a ring around its first item was cut off by the top
+   of the list. The same wash the row's own Move menu uses. */
+.bulkpop .opt:focus-visible,
+.bulkpop .checkrow:has(input:focus-visible){
+  outline:none;background:var(--accent-soft);color:var(--accent-dark);
+}
+.bulkpop .checkrow input:focus-visible{outline:none}
 .bulkdest{width:100%;overflow:hidden}
 .bulkdest-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bulkpop .opt.sectionopt{padding-left:22px;color:var(--muted)}
