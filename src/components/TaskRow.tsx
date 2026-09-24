@@ -6,7 +6,7 @@ import {
   GROUP_ATTR, TASK_DROP_EVENT, TASK_PLACE_EVENT, groupAnswers, useRowList,
   type TaskDropRequest, type TaskPlaceRequest,
 } from './dnd/RowList';
-import { ROW_MOVE_EVENT } from '@/hooks/useKeyboard';
+import { ROW_MOVE_EVENT, type RowMove } from '@/hooks/useKeyboard';
 import { TaskActions } from './TaskActions';
 import { useT } from '@/hooks/useT';
 import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
@@ -84,10 +84,21 @@ export function TaskRow({
     if (!node) return;
     const onMove = (event: Event) => {
       if (!list) return;
-      const step = (event as CustomEvent<1 | -1>).detail;
+      const move = (event as CustomEvent<RowMove>).detail;
       const siblings = item.parent_id
         ? childrenOf(item.parent_id).filter((task) => !task.checked).map((task) => task.id)
         : list.ids;
+      if (move === 'top' || move === 'bottom') {
+        // To an end of its own group: the first or the last place in it.
+        const end = move === 'top' ? siblings[0] : siblings[siblings.length - 1];
+        if (!end || end === item.id) return;
+        const request: TaskPlaceRequest = {
+          itemId: item.id, ontoId: end, list, subtask: Boolean(item.parent_id),
+        };
+        window.dispatchEvent(new CustomEvent(TASK_PLACE_EVENT, { detail: request }));
+        return;
+      }
+      const step = move;
       const onto = siblings[siblings.indexOf(item.id) + step];
       if (onto) {
         const request: TaskPlaceRequest = {

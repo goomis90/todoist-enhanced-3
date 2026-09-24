@@ -4,6 +4,9 @@ import { useConfirm } from '@/components/overlays/Confirm';
 import { useT } from './useT';
 import { navigate } from './useRoute';
 import type { ViewId } from '@/domain/types';
+import { addDays, startOfDay } from 'date-fns';
+import { dropMutation } from '@/domain/dnd';
+import { dueDate, formatDayOrName } from '@/domain/dates';
 
 /**
  * The whole of the keyboard, in one place.
@@ -119,8 +122,9 @@ const rowById = (id: string): HTMLElement | undefined =>
  */
 export type RowMenu = 'schedule' | 'move' | 'more';
 export const ROW_MENU_EVENT = 'enhanced:rowmenu';
-/** ⌘↑ / ⌘↓: the row is asked to move one place up (-1) or down (1). */
+/** ⌘↑ / ⌘↓: the row is asked to move one place up (-1) or down (1); with ⌥, to an end. */
 export const ROW_MOVE_EVENT = 'enhanced:rowmove';
+export type RowMove = 1 | -1 | 'top' | 'bottom';
 
 /**
  * The same keys on a selection open the bulk bar's panels instead: T its Date,
@@ -205,7 +209,8 @@ export function useKeyboard(bridge: KeyboardBridge) {
     };
 
     const onKey = (e: KeyboardEvent) => {
-      const extending = e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp');
+      const extending = e.shiftKey && !e.metaKey && !e.ctrlKey
+        && (e.key === 'ArrowDown' || e.key === 'ArrowUp');
       if (!extending && e.key !== 'Shift') range = null;
       const target = e.target as HTMLElement | null;
       const typing =
@@ -215,6 +220,13 @@ export function useKeyboard(bridge: KeyboardBridge) {
 
       const store = useStore.getState();
       const { bridge: to, confirm: ask_, t: say } = live.current;
+
+      // ⌘/ shows or hides the sidebar, as in Things; wherever the focus is.
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && (e.key === '/' || e.code === 'Slash')) {
+        e.preventDefault();
+        store.setPrefs({ sidebarCollapsed: !store.prefs.sidebarCollapsed });
+        return;
+      }
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -260,12 +272,17 @@ export function useKeyboard(bridge: KeyboardBridge) {
          in its list, the cursor going with it. With no task under the
          cursor the keys are the browser's own (the top or the end of the
          page). */
-      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey
         && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
         if (!current) return;
         e.preventDefault();
         const id = current.dataset.taskId ?? '';
-        current.dispatchEvent(new CustomEvent(ROW_MOVE_EVENT, { detail: e.key === 'ArrowDown' ? 1 : -1 }));
+        /* With ⌥, straight to the top or the bottom of its own group — the
+           ends of the list it is in, not the next section. */
+        const detail: RowMove = e.altKey
+          ? (e.key === 'ArrowDown' ? 'bottom' : 'top')
+          : (e.key === 'ArrowDown' ? 1 : -1);
+        current.dispatchEvent(new CustomEvent(ROW_MOVE_EVENT, { detail }));
         keepCursor(id);
         return;
       }
@@ -280,10 +297,15 @@ export function useKeyboard(bridge: KeyboardBridge) {
         if (list.length === 0) return;
         e.preventDefault();
         const at = current ? list.indexOf(current) : -1;
-        // With no cursor yet, Down starts at the top and Up at the bottom.
-        const next = at < 0
-          ? (step > 0 ? 0 : list.length - 1)
-          : Math.min(list.length - 1, Math.max(0, at + step));
+        /* With no cursor yet, Down starts at the top and Up at the bottom.
+           With ⌥ it goes straight to the first or the last task, as in
+           Things — and with ⌥⇧ the selection goes there with it. */
+        const toEnd = e.altKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp');
+        const next = toEnd
+          ? (step > 0 ? list.length - 1 : 0)
+          : at < 0
+            ? (step > 0 ? 0 : list.length - 1)
+            : Math.min(list.length - 1, Math.max(0, at + step));
         lastIndex = next;
         land(list[next]);
 
@@ -344,6 +366,58 @@ export function useKeyboard(bridge: KeyboardBridge) {
         const item = store.snapshot.items[id];
         if (!item) return;
         lastIndex = Math.max(0, rows().indexOf(current));
+
+        /* Inside a selection, the keys below are for all of it — the same
+           rule as E and delete. A change that can take the tasks off the page
+           (a date, a project) ends the selection, as the bar's does; one that
+           leaves them in place (a priority, a nudge of a day) keeps it, so the
+           next key can follow. */
+        const selected = store.selection;
+        const onSelection = selected.length > 1 && selected.includes(id);
+        const openBulk = (menu: BulkMenuName) => {
+          window.dispatchEvent(new CustomEvent(BULK_MENU_EVENT, { detail: menu }));
+        };
+
+        /* Things' own keys for the same menus: ⌘S for the date, ⇧⌘M to move. */
+        if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          if (onSelection) openBulk('date'); else ask(current, 'schedule');
+          return;
+        }
+        if ((e.metaKey || e.ctrlKey) && !e.altKey && e.shiftKey && e.key.toLowerCase() === 'm') {
+          e.preventDefault();
+          if (onSelection) openBulk('move'); else ask(current, 'move');
+          return;
+        }
+
+        /* ^] and ^[ push the date a day later or earlier, ⇧ for a week, as in
+           Things. Read by the key's place as well as its character, since ]
+           and [ sit elsewhere (or behind ⌥) on other layouts. A task with no
+           date starts from today; the time of day and a repeat rule are kept,
+           and the week tag comes off — a date and the week tag disagree. */
+        const bracket = e.code === 'BracketRight' || e.key === ']' || e.key === '}'
+          ? 1
+          : e.code === 'BracketLeft' || e.key === '[' || e.key === '{' ? -1 : 0;
+        if (e.ctrlKey && !e.metaKey && !e.altKey && bracket !== 0) {
+          e.preventDefault();
+          const days = bracket * (e.shiftKey ? 7 : 1);
+          const ids = onSelection ? selected : [id];
+          const shifted = (task: typeof item) =>
+            addDays(startOfDay(dueDate(task) ?? new Date()), days);
+          const { locale, dateFormat } = store.prefs;
+          const message = ids.length > 1
+            ? say(days > 0
+              ? (e.shiftKey ? 'bulk.laterWeek' : 'bulk.laterDay')
+              : (e.shiftKey ? 'bulk.earlierWeek' : 'bulk.earlierDay'), { count: ids.length })
+            : say('drop.toDay', { day: formatDayOrName(shifted(item), locale, dateFormat) });
+          void store.updateMany(
+            ids,
+            (task) => dropMutation(task, { kind: 'day', date: shifted(task) })?.update ?? null,
+            message,
+          );
+          keepCursor(id);
+          return;
+        }
 
         /* Todoist opens a task with Enter and edits it with Cmd+E, which here
            are the same panel and so the same key twice. Enter is the row's
@@ -414,17 +488,6 @@ export function useKeyboard(bridge: KeyboardBridge) {
           window.setTimeout(() => land(rows()[Math.min(at, rows().length - 1)]), TICK_SETTLES_MS);
           return;
         }
-        /* Inside a selection, the keys below are for all of it — the same
-           rule as E and delete. A change that can take the tasks off the page
-           (a date, a project) ends the selection, as the bar's does; one that
-           leaves them in place (a priority) keeps it, so the next key can
-           follow. */
-        const selected = store.selection;
-        const onSelection = selected.length > 1 && selected.includes(id);
-        const openBulk = (menu: BulkMenuName) => {
-          window.dispatchEvent(new CustomEvent(BULK_MENU_EVENT, { detail: menu }));
-        };
-
         if (e.key === 't') {
           e.preventDefault();
           if (onSelection) openBulk('date'); else ask(current, 'schedule');
