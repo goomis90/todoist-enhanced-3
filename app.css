@@ -1,0 +1,1219 @@
+/* ==========================================================================
+   1. TOKENS — one scale per dimension.
+   v1 had 17 radii, 22 font sizes, 13 weights, 138 colours. This is the whole
+   system: 5 radii, 8 sizes, 4 real weights, ~30 colour tokens.
+   ========================================================================== */
+:root{
+  /* surfaces */
+  --bg:#ffffff;
+  --surface:#ffffff;
+  --sidebar:#fff9f9;
+  /* an inset panel that must read as "not the page": right rails, previews */
+  --rail:#fcfcfb;
+  --subtle:#f9f8f7;
+  --hover:#f0efee;
+  --border:#f0f0f0;
+  --border-strong:#dcdcdc;
+
+  /* text — every value below passes AA on white at 12px */
+  --text:#202020;
+  --muted:#666666;
+  --faint:#808080;
+
+  /* brand + semantics
+     Four warm reds carry the whole brand, each with one job:
+     accent paints a solid mark, tint fills a quiet control, wash tints a
+     surface, and line draws the border of an outlined control. */
+  --accent:#d1453b;
+  --accent-dark:#b03830;
+  --accent-soft:#feefe5;       /* the selected navigation pill */
+  --accent-tint:#fff1f1;       /* a quiet button on the page */
+  --accent-line:#eddede;       /* the border of an outlined button */
+  --accent-wash:#fff5f5;       /* a section that belongs to the brand */
+  --accent-wash-deep:#ffefec;  /* the same section, saying "late" */
+  --accent-badge:#f4c7c2;      /* a count sitting on a washed surface */
+
+  /* Late — a state, not the brand.
+     Overdue is red in every accent. Under a blue accent an overdue section
+     drawn in the accent's own wash lands within a shade of the Quick one
+     beside it, and the page stops saying which of the two is a problem. */
+  --late:#d1453b;
+  --late-dark:#b03830;
+  --late-wash:#fff5f5;
+  --late-wash-deep:#ffefec;
+  --late-badge:#f4c7c2;
+  --late-tint:#fdf8f6;
+  --deadline:#7c3aed;
+  --deadline-dark:#6425d0;
+  --deadline-wash:#f6f2fe;
+  --deadline-badge:#ddd0f8;
+  --planning-today:#2f9e57;
+  --planning-today-wash:#f1faf4;
+  --planning-tomorrow:#2f7dce;
+  --planning-tomorrow-wash:#f0f7fd;
+
+  --p1:#d1453b; --p2:#eb8909; --p3:#246fe0; --p4:#808080;
+  --ok:#2f7d32; --ok-soft:#d7e7d7;
+  --warn:#8f5a0a; --warn-soft:#fdf5e9; --warn-border:#eedfc6;
+  --info:#246fe0;
+
+  /* chart palette — ONE palette, used by every chart in the product */
+  --c1:#dc4c3e; --c2:#e0a33c; --c3:#4f8f52; --c4:#4a7fd0; --c5:#8a6fc7;
+  --c-track:#eae7e3;
+  /* A single measured series — how many, how long. Neutral on purpose, and
+     the same whatever the accent: the accent is kept for what deserves the
+     eye (the best day, the current period), and red already means late. */
+  --c-data:#7c8698;
+  /* categorical series, in the fixed order the charts assign them */
+  --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a; --series-4:#eda100;
+  --series-5:#e87ba4; --series-6:#008300; --series-7:#4a3aa7; --series-8:#e34948;
+
+  /* project and tag inks, each with the pale chip it sits on */
+  --tag-green:#4c8631;  --tag-green-soft:#edf6e9;
+  --tag-orange:#a4650c; --tag-orange-soft:#fdf2e2;
+  --tag-purple:#7656bb; --tag-purple-soft:#f2edfb;
+  --tag-red:#c2443b;    --tag-red-soft:#fdefed;
+  --tag-blue:#3972bf;   --tag-blue-soft:#eaf2fd;
+  --tag-gray:#6b6864;   --tag-gray-soft:#f1efed;
+  --tag-teal-soft:#e6f2ea;
+  --tag-lavender-soft:#e7e2fb;
+
+  /* quieter surfaces and marks that only a few components use */
+  --wash-late:#fdf8f6;
+  --wash-quick:#f6f8fb;
+  --wash-quick-deep:#f5f8fd;
+  --today-line:#f0cdc6; --today-wash:#fdf7f5;
+  --cal-text:#245ca8;   --cal-wash:#edf3fd; --cal-late-text:#a33c32;
+  --deadline:#7a5cb9;
+  --row-hover:rgba(28,25,23,.022);
+  --row-line-on-wash:rgba(32,32,32,.07);
+  --picked:#f6f6f6;
+  --check-quiet:#b6b2ad;
+  --switch-off:#c9c5c0;
+  --knob:#ffffff;
+  --tb-on-line:#f2c8c2;
+  --field-muted:#676767;
+  --field-hover:#eae7e3;
+  --kbd:#e5e5e5;
+  --note-text:#6f6a66; --note-strong:#4b4743; --note-line:#dedbd7;
+  --placeholder:#757575;
+  --privacy-bg:#f2f2f2; --privacy-text:#818181;
+  --scrollbar:#d7d4d1;
+  --scrim:rgba(28,25,23,.3);
+  --scrim-tour:rgba(28,25,23,.58);
+  /* a hairline card shadow, too faint to see on a dark page */
+  --sh-hair:rgba(28,25,23,.04);
+  --sh-hair-strong:rgba(28,25,23,.07);
+  --sh-float:rgba(28,25,23,.12);
+
+  /* radii */
+  --r-xs:4px; --r-sm:6px; --r-md:8px; --r-ctl:10px; --r-lg:12px; --r-full:999px;
+
+  /* spacing */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+
+  /* type */
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px;
+  --fs-16:16px; --fs-20:20px; --fs-26:26px; --fs-32:32px;
+
+  /* elevation */
+  --sh-sm:0 1px 2px rgba(28,25,23,.07);
+  --sh-md:0 6px 20px rgba(28,25,23,.10);
+  --sh-lg:0 20px 56px rgba(28,25,23,.18);
+
+  --sidebar-w:268px;
+  --row-h:36px;
+
+  font-family:"SF Pro Text","SF Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+  color:var(--text);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  color-scheme:light;
+}
+
+/* ==========================================================================
+   1b. DARK
+   ==========================================================================
+   The same tokens, redrawn for a dark room. The app writes a concrete
+   data-theme on <html> — it resolves "system" itself rather than leaving it to
+   a media query — so the dark palette lives in exactly one place and nothing
+   below this block ever asks what the theme is.
+
+   Brand fills keep their white glyphs; inks lighten far enough to hold
+   contrast on a dark surface, and every pale chip becomes a deep one. */
+:root[data-theme="dark"]{
+  --bg:#1e1e1e;
+  --surface:#1e1e1e;
+  --sidebar:#242323;
+  --rail:#222222;
+  --subtle:#262626;
+  --hover:#2d2d2d;
+  --border:#393939;
+  --border-strong:#4b4b4b;
+
+  --text:#e6e6e6;
+  --muted:#ababab;
+  --faint:#8c8c8c;
+
+  /* The accent keeps its hue: it is the brand. What changes is the family
+     around it — "dark" is the readable ink on a dark page, and the washes go
+     from pale tints to deep ones. */
+  --accent:#d1453b;
+  --accent-dark:#ff8f85;
+  --accent-soft:#3b2523;
+  --accent-tint:#322120;
+  --accent-line:#4b3230;
+  --accent-wash:#2a1f1e;
+  --accent-wash-deep:#34211f;
+  --accent-badge:#5c302c;
+
+  --late:#d1453b;
+  --late-dark:#ff8f85;
+  --late-wash:#2a1f1e;
+  --late-wash-deep:#34211f;
+  --late-badge:#5c302c;
+  --late-tint:#271f1e;
+  --deadline:#a78bfa;
+  --deadline-dark:#c4b5fd;
+  --deadline-wash:#251f38;
+  --deadline-badge:#4c3575;
+  --planning-today:#3fb56c;
+  --planning-today-wash:#1c2b21;
+  --planning-tomorrow:#4a90d9;
+  --planning-tomorrow-wash:#1a2733;
+
+  --p1:#e8625a; --p2:#f09a2a; --p3:#5592f0; --p4:#8c8c8c;
+  --ok:#3f9143; --ok-soft:#1f3321;
+  --warn:#e3aa55; --warn-soft:#2d2518; --warn-border:#4a3b22;
+  --info:#5592f0;
+
+  --c1:#e2594c; --c2:#e6ad4a; --c3:#63a866; --c4:#6394e0; --c5:#a18ad9;
+  --c-track:#333231;
+  --c-data:#7f899c;
+  --series-1:#4c8ff0; --series-2:#f07a4a; --series-3:#2ec48d; --series-4:#f0b020;
+  --series-5:#ef8fb5; --series-6:#45ad45; --series-7:#8d7de6; --series-8:#ef6362;
+
+  --tag-green:#86c46a;  --tag-green-soft:#233020;
+  --tag-orange:#e3a456; --tag-orange-soft:#33291b;
+  --tag-purple:#ac92e3; --tag-purple-soft:#2a2438;
+  --tag-red:#ea7f76;    --tag-red-soft:#3a2523;
+  --tag-blue:#72a3eb;   --tag-blue-soft:#1f2a3a;
+  --tag-gray:#aba7a3;   --tag-gray-soft:#2c2b2a;
+  --tag-teal-soft:#1f2e26;
+  --tag-lavender-soft:#2b2740;
+
+  --wash-late:#271f1e;
+  --wash-quick:#1f232a;
+  --wash-quick-deep:#1f242c;
+  --today-line:#5a3430; --today-wash:#261e1d;
+  --cal-text:#8db6f0;   --cal-wash:#1f2a3a; --cal-late-text:#ef8f86;
+  --deadline:#ae95e6;
+  --row-hover:rgba(255,255,255,.03);
+  --row-line-on-wash:rgba(255,255,255,.07);
+  --picked:#2b2b2b;
+  --check-quiet:#6a6764;
+  --switch-off:#4a4846;
+  --knob:#f2f2f2;
+  --tb-on-line:#5c3430;
+  --field-muted:#a0a0a0;
+  --field-hover:#333333;
+  --kbd:#383838;
+  --note-text:#a09b97; --note-strong:#cfcac6; --note-line:#343230;
+  --placeholder:#8a8a8a;
+  --privacy-bg:#2a2a2a; --privacy-text:#a3a3a3;
+  --scrollbar:#474543;
+  --scrim:rgba(0,0,0,.55);
+  --scrim-tour:rgba(0,0,0,.72);
+
+  /* A shadow on a dark page has to be darker than the page, not a tint of
+     the page's own ink, or the card it lifts reads as flat. */
+  --sh-sm:0 1px 2px rgba(0,0,0,.35);
+  --sh-md:0 6px 20px rgba(0,0,0,.45);
+  --sh-lg:0 20px 56px rgba(0,0,0,.6);
+  --sh-hair:rgba(0,0,0,.4);
+  --sh-hair-strong:rgba(0,0,0,.5);
+  --sh-float:rgba(0,0,0,.5);
+
+  color-scheme:dark;
+}
+
+
+/* ==========================================================================
+   1c. ACCENT
+   ==========================================================================
+   The brand colour, and the nine tokens that hang off it. A theme is that
+   whole family, not one hue: `--accent-wash` has to stay quiet enough to read
+   text on, and `--accent-dark` has to hold its contrast on the page, on the
+   wash and inside a badge. So the families are generated from one recipe —
+   the red one's own saturation and lightness profile, moved to a new hue —
+   and then each ink is taken down (or up, on a dark page) until it clears the
+   contrast the red family already clears. Red is the default and is written
+   out exactly as it shipped, so nobody who never opens the setting sees a
+   single pixel change.
+
+   Every accent exists twice, once per theme. Without that a green accent on a
+   dark page gives back the pale patches the dark theme was written to remove.
+   `data-accent` is written on <html> beside `data-theme`, and both are also
+   read on any element, which is how the settings preview shows five accents
+   at once inside a page that is only wearing one.
+
+   Two tokens are deliberately NOT here. The chart palette (`--c1`..`--c5`,
+   `--series-*`) is independent of the accent and must stay so, or the same
+   data plotted under two themes stops being comparable. Project and tag
+   colours come from Todoist and are not ours at all.
+   ========================================================================== */
+[data-accent="red"]:not(:root){
+  --accent:#d1453b; --accent-dark:#b03830;
+  --accent-soft:#feefe5; --accent-tint:#fff1f1; --accent-line:#eddede;
+  --accent-wash:#fff5f5; --accent-wash-deep:#ffefec; --accent-badge:#f4c7c2;
+  --sidebar:#fff9f9; --tb-on-line:#f2c8c2;
+  --today-line:#f0cdc6; --today-wash:#fdf7f5;
+}
+[data-theme="dark"] [data-accent="red"]:not(:root){
+  --accent:#d1453b; --accent-dark:#ff8f85;
+  --accent-soft:#3b2523; --accent-tint:#322120; --accent-line:#4b3230;
+  --accent-wash:#2a1f1e; --accent-wash-deep:#34211f; --accent-badge:#5c302c;
+  --sidebar:#242323; --tb-on-line:#5c3430;
+  --today-line:#5a3430; --today-wash:#261e1d;
+}
+
+:root[data-accent="orange"],
+[data-accent="orange"]:not(:root){
+  --accent:#b2621d; --accent-dark:#985d29;
+  --accent-soft:#fef1e5; --accent-tint:#fff7f1; --accent-line:#ede4de;
+  --accent-wash:#fff9f5; --accent-wash-deep:#fff7ec; --accent-badge:#f4dbc2;
+  --sidebar:#fffbf9; --tb-on-line:#f2dbc2;
+  --today-line:#f0dec6; --today-wash:#fdf9f5;
+}
+:root[data-accent="orange"][data-theme="dark"],
+[data-theme="dark"] [data-accent="orange"]:not(:root){
+  --accent:#b2621d; --accent-dark:#f3c091;
+  --accent-soft:#3b2f23; --accent-tint:#322820; --accent-line:#4b3d30;
+  --accent-wash:#2a241e; --accent-wash-deep:#34291f; --accent-badge:#5c432c;
+  --sidebar:#262321; --tb-on-line:#5c4630;
+  --today-line:#5a4530; --today-wash:#26221d;
+}
+
+:root[data-accent="amber"],
+[data-accent="amber"]:not(:root){
+  --accent:#917218; --accent-dark:#866d25;
+  --accent-soft:#fef8e5; --accent-tint:#fffbf1; --accent-line:#ede8de;
+  --accent-wash:#fffcf5; --accent-wash-deep:#fffcec; --accent-badge:#f4e9c2;
+  --sidebar:#fffdf9; --tb-on-line:#f2e9c2;
+  --today-line:#f0eac6; --today-wash:#fdfbf5;
+}
+:root[data-accent="amber"][data-theme="dark"],
+[data-theme="dark"] [data-accent="amber"]:not(:root){
+  --accent:#917218; --accent-dark:#f3dc91;
+  --accent-soft:#3b3523; --accent-tint:#322d20; --accent-line:#4b4430;
+  --accent-wash:#2a271e; --accent-wash-deep:#342f1f; --accent-badge:#5c512c;
+  --sidebar:#262421; --tb-on-line:#5c5230;
+  --today-line:#5a5130; --today-wash:#26241d;
+}
+
+:root[data-accent="green"],
+[data-accent="green"]:not(:root){
+  --accent:#168849; --accent-dark:#23804c;
+  --accent-soft:#e5fef0; --accent-tint:#f1fff7; --accent-line:#deede4;
+  --accent-wash:#f5fff9; --accent-wash-deep:#ecfff6; --accent-badge:#c2f4da;
+  --sidebar:#f9fffb; --tb-on-line:#c2f2da;
+  --today-line:#c6f0dd; --today-wash:#f5fdf8;
+}
+:root[data-accent="green"][data-theme="dark"],
+[data-theme="dark"] [data-accent="green"]:not(:root){
+  --accent:#168849; --accent-dark:#91f3bf;
+  --accent-soft:#233b2e; --accent-tint:#203228; --accent-line:#304b3c;
+  --accent-wash:#1e2a24; --accent-wash-deep:#1f3429; --accent-badge:#2c5c42;
+  --sidebar:#212623; --tb-on-line:#305c45;
+  --today-line:#305a44; --today-wash:#1d2621;
+}
+
+:root[data-accent="teal"],
+[data-accent="teal"]:not(:root){
+  --accent:#16828a; --accent-dark:#237a80;
+  --accent-soft:#e5fcfe; --accent-tint:#f1ffff; --accent-line:#deeded;
+  --accent-wash:#f5ffff; --accent-wash-deep:#ecfcff; --accent-badge:#c2eff4;
+  --sidebar:#f9ffff; --tb-on-line:#c2ecf2;
+  --today-line:#c6e9f0; --today-wash:#f5fcfd;
+}
+:root[data-accent="teal"][data-theme="dark"],
+[data-theme="dark"] [data-accent="teal"]:not(:root){
+  --accent:#16828a; --accent-dark:#91ebf3;
+  --accent-soft:#23393b; --accent-tint:#203132; --accent-line:#30494b;
+  --accent-wash:#1e292a; --accent-wash-deep:#1f3234; --accent-badge:#2c585c;
+  --sidebar:#212626; --tb-on-line:#30585c;
+  --today-line:#30565a; --today-wash:#1d2526;
+}
+
+:root[data-accent="blue"],
+[data-accent="blue"]:not(:root){
+  --accent:#2675dc; --accent-dark:#2e64aa;
+  --accent-soft:#e5f0fe; --accent-tint:#f1f8ff; --accent-line:#dee6ed;
+  --accent-wash:#f5faff; --accent-wash-deep:#ecf3ff; --accent-badge:#c2d6f4;
+  --sidebar:#f9fcff; --tb-on-line:#c2d4f2;
+  --today-line:#c6d4f0; --today-wash:#f5f8fd;
+}
+:root[data-accent="blue"][data-theme="dark"],
+[data-theme="dark"] [data-accent="blue"]:not(:root){
+  --accent:#2675dc; --accent-dark:#91baf3;
+  --accent-soft:#232d3b; --accent-tint:#202832; --accent-line:#303b4b;
+  --accent-wash:#1e232a; --accent-wash-deep:#1f2834; --accent-badge:#2c405c;
+  --sidebar:#212326; --tb-on-line:#30425c;
+  --today-line:#30415a; --today-wash:#1d2026;
+}
+
+:root[data-accent="indigo"],
+[data-accent="indigo"]:not(:root){
+  --accent:#3d2fdd; --accent-dark:#3a30b0;
+  --accent-soft:#e7e5fe; --accent-tint:#f1f1ff; --accent-line:#dedeed;
+  --accent-wash:#f5f5ff; --accent-wash-deep:#efecff; --accent-badge:#c8c2f4;
+  --sidebar:#f9f9ff; --tb-on-line:#c9c2f2;
+  --today-line:#cec6f0; --today-wash:#f5f5fd;
+}
+:root[data-accent="indigo"][data-theme="dark"],
+[data-theme="dark"] [data-accent="indigo"]:not(:root){
+  --accent:#3d2fdd; --accent-dark:#9b91f3;
+  --accent-soft:#25233b; --accent-tint:#212032; --accent-line:#32304b;
+  --accent-wash:#1f1e2a; --accent-wash-deep:#211f34; --accent-badge:#312c5c;
+  --sidebar:#212126; --tb-on-line:#35305c;
+  --today-line:#35305a; --today-wash:#1e1d26;
+}
+
+:root[data-accent="purple"],
+[data-accent="purple"]:not(:root){
+  --accent:#8c2fdd; --accent-dark:#7430b0;
+  --accent-soft:#f2e5fe; --accent-tint:#f8f1ff; --accent-line:#e5deed;
+  --accent-wash:#faf5ff; --accent-wash-deep:#f8ecff; --accent-badge:#dec2f4;
+  --sidebar:#fcf9ff; --tb-on-line:#dec2f2;
+  --today-line:#e1c6f0; --today-wash:#f9f5fd;
+}
+:root[data-accent="purple"][data-theme="dark"],
+[data-theme="dark"] [data-accent="purple"]:not(:root){
+  --accent:#8c2fdd; --accent-dark:#c791f3;
+  --accent-soft:#30233b; --accent-tint:#292032; --accent-line:#3f304b;
+  --accent-wash:#251e2a; --accent-wash-deep:#2b1f34; --accent-badge:#462c5c;
+  --sidebar:#232126; --tb-on-line:#49305c;
+  --today-line:#48305a; --today-wash:#221d26;
+}
+
+:root[data-accent="pink"],
+[data-accent="pink"]:not(:root){
+  --accent:#dc2681; --accent-dark:#ac2f6e;
+  --accent-soft:#fee5f1; --accent-tint:#fff1f9; --accent-line:#eddee6;
+  --accent-wash:#fff5fb; --accent-wash-deep:#ffecf4; --accent-badge:#f4c2d9;
+  --sidebar:#fff9fc; --tb-on-line:#f2c2d7;
+  --today-line:#f0c6d7; --today-wash:#fdf5f9;
+}
+:root[data-accent="pink"][data-theme="dark"],
+[data-theme="dark"] [data-accent="pink"]:not(:root){
+  --accent:#dc2681; --accent-dark:#f391c1;
+  --accent-soft:#3b232f; --accent-tint:#322029; --accent-line:#4b303d;
+  --accent-wash:#2a1e24; --accent-wash-deep:#341f29; --accent-badge:#5c2c43;
+  --sidebar:#262124; --tb-on-line:#5c3045;
+  --today-line:#5a3044; --today-wash:#261d21;
+}
+
+*{box-sizing:border-box}
+body{margin:0;min-width:320px;background:var(--bg)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{border:0;background:transparent;cursor:pointer}
+svg{display:block}
+h1,h2,h3,h4,p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+
+/* one focus ring for the entire product (v1 had none) */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-xs)}
+/* every control confirms the press — never a glow, just a small scale */
+.btn:active,.tb:active,.iconbtn:active,.navitem:active,.addrow:active,.coladd:active,
+.attn:active,.searchbtn:active,.addbtn:active{transform:scale(.97)}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+@media (prefers-reduced-motion:no-preference){
+  /* first load only — switching views stays instant (see body.boot in the script) */
+  body.boot .screen.active .group,
+  body.boot .screen.active .card{animation:rise .42s cubic-bezier(.16,1,.3,1) backwards}
+  body.boot .screen.active .group:nth-of-type(2),
+  body.boot .screen.active .card:nth-of-type(2){animation-delay:.06s}
+  body.boot .screen.active .group:nth-of-type(3),
+  body.boot .screen.active .card:nth-of-type(3){animation-delay:.12s}
+  body.boot .screen.active .group:nth-of-type(n+4),
+  body.boot .screen.active .card:nth-of-type(n+4){animation-delay:.18s}
+}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* icons: one sprite, one stroke weight, one size scale */
+.ic{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+/* 2px beside semibold labels, 1.5px beside regular body text */
+.btn .ic,.tb .ic,.navitem .ic,.addbtn .ic,.ptitle .ic{stroke-width:1.95}
+.meta .ic,.est .ic,.metrics .ic,.upnext .ic{stroke-width:1.55}
+.ic-sm{width:14px;height:14px}
+.ic-lg{width:20px;height:20px}
+
+/* ==========================================================================
+   2. SHELL
+   ========================================================================== */
+.protonote{height:34px;padding:0 var(--s4);display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  color:var(--note-text);font-size:var(--fs-12);background:var(--bg);border-bottom:1px solid var(--note-line)}
+.protonote strong{color:var(--note-strong);font-weight:600}
+.protonote span:last-child{white-space:nowrap}
+
+.app{width:min(1480px,100%);margin:0 auto;
+  display:grid;grid-template-columns:var(--sidebar-w) minmax(0,1fr);overflow:hidden;background:var(--surface);
+  transition:grid-template-columns .2s ease}
+.app.collapsed{grid-template-columns:0 minmax(0,1fr)}
+.app.collapsed .sidebar{opacity:0;transform:translateX(-100%);pointer-events:none}
+
+/* ==========================================================================
+   3. SIDEBAR
+   ========================================================================== */
+.sidebar{min-width:0;padding:var(--s3) 10px var(--s3);display:flex;flex-direction:column;
+  background:var(--sidebar);border-right:1px solid var(--border);transition:opacity .15s ease,transform .2s ease}
+.side-top{display:flex;align-items:center;gap:var(--s2);position:relative;padding-bottom:var(--s2)}
+.profile{flex:1;min-width:0;display:flex;align-items:center;gap:var(--s2);padding:var(--s1) 6px;border-radius:var(--r-sm);text-align:left}
+.profile:hover,.profile[aria-expanded="true"]{background:var(--hover)}
+.avatar{width:30px;height:30px;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;
+  border-radius:var(--r-full);
+  color:#fff;background:linear-gradient(145deg,#2d5961,#d87c62);font-size:var(--fs-11);font-weight:700}
+/* A photo fills the circle and is cropped by it. Left to itself it kept its
+   own square corners over the round background, and a portrait that is not
+   square was squashed to fit. */
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.identity{min-width:0;display:grid;line-height:1.2}
+.identity strong{font-size:var(--fs-13);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.identity small{color:var(--muted);font-size:var(--fs-11)}
+.iconbtn{width:32px;height:32px;flex:0 0 auto;display:grid;place-items:center;border-radius:var(--r-sm);color:var(--muted)}
+.iconbtn:hover{color:var(--text);background:var(--hover)}
+
+.menu{position:absolute;z-index:60;top:46px;left:4px;width:254px;padding:6px;display:none;transform-origin:top left;
+  border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--sh-md)}
+.menu.open{display:block;animation:popIn .14s ease-out}
+@keyframes popIn{from{opacity:0;transform:scale(.97) translateY(-4px)}}
+.menu button{width:100%;min-height:36px;padding:6px var(--s2);display:flex;align-items:center;gap:10px;
+  border-radius:var(--r-sm);font-size:var(--fs-13);text-align:left}
+.menu button small{margin-left:auto;flex:0 0 auto;color:var(--faint);font-size:var(--fs-11);white-space:nowrap}
+.menu button:hover{background:var(--subtle)}
+.menu hr{height:1px;margin:6px 0;border:0;background:var(--border)}
+
+.searchbtn{width:100%;min-height:36px;margin-bottom:var(--s3);padding:0 var(--s3);display:flex;align-items:center;gap:10px;
+  border:1px solid transparent;border-radius:var(--r-ctl);color:var(--field-muted);background:var(--hover);font-size:var(--fs-13)}
+.searchbtn:hover{border-color:var(--border-strong);background:var(--field-hover)}
+.searchbtn kbd{margin-left:auto;padding:2px 5px;border:1px solid var(--border-strong);border-radius:var(--r-xs);
+  background:var(--kbd);color:var(--field-muted);font-size:10px;font-family:inherit}
+
+.side-scroll{flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.side-scroll::-webkit-scrollbar{display:none}
+.navitem{width:100%;min-height:var(--row-h);padding:0 var(--s3);display:flex;align-items:center;gap:9px;
+  border-radius:var(--r-ctl);font-size:var(--fs-13);font-weight:500;letter-spacing:-.02em;
+  text-align:left;color:var(--muted)}
+.navitem:hover{background:var(--hover)}
+/* FIX: v1 styled .nav-item.active but never .project-item.active, so opening a
+   project left nothing highlighted. One rule now covers every sidebar entry. */
+.navitem[aria-current="page"]{color:var(--accent-dark);background:var(--accent-soft);font-weight:600}
+.navitem .label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navitem .count{color:var(--faint);font-size:var(--fs-12);font-variant-numeric:tabular-nums}
+.navitem[aria-current="page"] .count{color:var(--accent-dark)}
+.navitem .ic{color:var(--muted)}
+.navitem[aria-current="page"] .ic{color:var(--accent-dark)}
+
+.side-group{margin-top:22px}
+.side-head{padding:0 var(--s3) var(--s1);display:flex;align-items:center;gap:var(--s1);
+  color:var(--muted);font-size:var(--fs-14);font-weight:600;letter-spacing:-.02em}
+/* The heading row uses the same right padding as a nav row, so its caret ends
+   on the same vertical line as the counts underneath it. */
+.side-head{padding-right:var(--s2)}
+.side-disclose,
+.side-add{width:20px}
+/* The heading is the disclosure control, with its caret on the right so it
+   lines up with the folder carets below it. */
+.side-headbtn{
+  flex:1;min-width:0;display:flex;align-items:center;gap:var(--s2);
+  color:inherit;font:inherit;text-align:left;
+}
+.side-disclose{
+  width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;
+  border-radius:var(--r-xs);color:var(--faint);
+}
+.side-disclose:hover{background:var(--hover);color:var(--text)}
+.side-headbtn > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-add{
+  width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;
+  border-radius:var(--r-xs);color:var(--muted);
+  /* Revealed under the pointer; the resting sidebar stays quiet. */
+  opacity:0;transition:opacity .12s ease-out;
+}
+.side-head:hover .side-add,
+.side-head:focus-within .side-add{opacity:1}
+.side-add:hover{background:var(--hover);color:var(--text)}
+
+/* A caret that closes a block always sits at the end of its row. */
+.disclose{margin-left:auto;color:var(--faint)}
+.navitem .disclose{flex:0 0 auto}
+.dot{width:9px;height:9px;flex:0 0 auto;border-radius:var(--r-full);background:currentColor}
+.hash{width:20px;height:20px;flex:0 0 auto;display:grid;place-items:center;border-radius:var(--r-sm);font-size:var(--fs-13);font-weight:700}
+/* A folder sits in the same 20px marker slot as a project's hash, or the two
+   rows read as different indents. */
+.navitem.folderitem > .ic:first-child{width:20px;height:20px;padding:2px;box-sizing:border-box}
+.hash.green{color:var(--tag-green);background:var(--tag-green-soft)}
+.hash.orange{color:var(--tag-orange);background:var(--tag-orange-soft)}
+.hash.purple{color:var(--tag-purple);background:var(--tag-purple-soft)}
+.hash.red{color:var(--tag-red);background:var(--tag-red-soft)}
+.hash.blue{color:var(--tag-blue);background:var(--tag-blue-soft)}
+.hash.gray{color:var(--tag-gray);background:var(--tag-gray-soft)}
+.wsavatar{width:19px;height:19px;flex:0 0 auto;display:grid;place-items:center;border-radius:var(--r-sm);
+  color:#fff;font-size:9px;font-weight:700}
+.ws{display:flex;align-items:center;gap:7px;min-width:0;color:var(--text);font-weight:600}
+.side-head{min-height:28px}
+
+.side-foot{padding-top:var(--s3);border-top:1px solid var(--border)}
+.addbtn{width:100%;min-height:40px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:var(--s2);
+  border-radius:var(--r-ctl);color:#fff;background:var(--accent);font-size:var(--fs-14);font-weight:600;letter-spacing:-.02em}
+.addbtn:hover{background:var(--accent-dark)}
+.side-foot .row{margin-top:var(--s2);display:flex;justify-content:flex-end}
+
+/* ==========================================================================
+   4. WORKSPACE + PAGE HEADER — identical structure on every list view
+   ========================================================================== */
+.workspace{position:relative;min-width:0;overflow:hidden}
+.screen{display:none;height:100%;overflow:auto;scrollbar-color:var(--scrollbar) transparent}
+.screen.active{display:block}
+.page{width:min(100%,1040px);min-height:100%;margin:0 auto;padding:44px 48px 96px}
+.page.wide{width:min(100%,1240px)}
+.expand-wrap{position:absolute;z-index:12;top:12px;left:14px;display:none}
+.app.collapsed .expand-wrap{display:block}
+.expand-wrap .iconbtn{border:1px solid var(--border);background:var(--surface)}
+
+.phead{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s5);margin-bottom:var(--s2)}
+.ptitle{display:flex;align-items:center;gap:10px;font-size:var(--fs-26);font-weight:700;letter-spacing:-.025em;line-height:1.1;text-wrap:balance}
+.psub{margin-top:4px;max-width:68ch;color:var(--muted);font-size:var(--fs-13);line-height:1.55;text-wrap:pretty}
+.pactions{display:flex;align-items:center;gap:var(--s2);flex:0 0 auto}
+
+.btn{position:relative;min-height:34px;padding:0 11px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border:1px solid var(--border);border-radius:var(--r-ctl);background:var(--surface);
+  font-size:var(--fs-13);font-weight:600;letter-spacing:-.02em;white-space:nowrap;
+  transition:background .14s ease-out,border-color .14s ease-out,transform .1s ease-out}
+.btn:hover{border-color:var(--border-strong);background:var(--subtle)}
+.btn .ic{color:var(--muted)}
+.btn.primary{color:#fff;border-color:var(--accent);background:var(--accent)}
+.btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn.primary .ic{color:#fff}
+.btn.quiet{border-color:transparent;background:transparent}
+.btn.quiet:hover{background:var(--hover)}
+.btn.sm{min-height:28px;padding:0 var(--s2);font-size:var(--fs-12)}
+/* The remaining Figma variants. Each is the same shape in a different weight
+   of the brand: a quiet fill, an outline, and an outline that speaks up. */
+.btn.tint{border-color:transparent;background:var(--accent-tint);color:var(--muted)}
+.btn.tint:hover{border-color:var(--accent-line);background:var(--accent-tint)}
+.btn.tint .ic{color:var(--accent)}
+.btn.outline{border-color:var(--accent-line);background:var(--surface)}
+.btn.outline:hover{border-color:var(--accent);background:var(--accent-tint)}
+.btn.lg{min-height:40px;padding:0 20px;font-size:var(--fs-14)}
+.btn.primary{border-radius:var(--r-ctl)}
+
+/* metric line — same three facts, same order, on every list view */
+.metrics,.count,.gcount,.gtime,.gdate,.est,.loadpill,.fcount,.capacity,.minifacts strong,
+.latelist time,.prow,.loadweek,.kpi-value,.ibig,.attn-n{font-variant-numeric:tabular-nums}
+.metrics{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:var(--s5);
+  color:var(--muted);font-size:var(--fs-13)}
+.metrics b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.metric{display:inline-flex;align-items:center;gap:5px}
+.metrics .sep{color:var(--border-strong)}
+.loadpill{padding:3px 9px;display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-full);
+  font-size:var(--fs-12);font-weight:700;font-variant-numeric:tabular-nums}
+.loadpill .ic{width:12px;height:12px;stroke-width:2}
+.loadpill.ok{color:var(--ok);background:var(--ok-soft)}
+.loadpill.warn{color:var(--warn);background:var(--warn-soft)}
+.loadpill.over{color:var(--accent-dark);background:var(--accent-soft)}
+
+/* ==========================================================================
+   5. THE TOOLBAR  ← the part this redesign is really about
+   v1: five identical outlined dropdowns (List / Group / Filter / Sort / Options)
+       that showed no state, wrapped to 2 rows on mobile (101px tall) and were
+       drawn differently on 5 of 5 screens.
+   v2: one component, three ranks.
+       a) segmented control  = layout, mutually exclusive, 1 click
+       b) "Display"          = group + sort + show/hide, set-and-forget
+       c) "Filter"           = subtractive, ALWAYS shows what it removed
+   ========================================================================== */
+.toolbar{position:sticky;top:0;z-index:14;display:flex;align-items:center;flex-wrap:wrap;gap:var(--s3);
+  padding:12px 0 14px;margin-bottom:var(--s1);
+  background:linear-gradient(var(--surface) 78%,transparent);
+  border-bottom:1px solid var(--border)}
+
+/* toolbar buttons */
+.tb{min-height:32px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);
+  font-size:var(--fs-13);font-weight:600;white-space:nowrap}
+.tb:hover,.tb[aria-expanded="true"]{border-color:var(--border-strong);background:var(--subtle)}
+.tb .ic{color:var(--muted)}
+.tb .caret{width:12px;height:12px;color:var(--faint)}
+/* a Display that is no longer at its default says so with a dot */
+.tb .mark{width:6px;height:6px;border-radius:var(--r-full);background:var(--accent)}
+/* a Filter that is removing rows says how many, in colour, permanently */
+.tb.on{color:var(--accent-dark);border-color:var(--tb-on-line);background:var(--accent-soft)}
+.tb.on .ic{color:var(--accent-dark)}
+.tb .num{min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center;border-radius:var(--r-full);
+  color:#fff;background:var(--accent);font-size:10px;font-weight:700}
+
+/* layout sits left, the controls that change the data sit right */
+.tb-spacer{flex:1 1 auto;min-width:0}
+
+/* popovers */
+.pop-wrap{position:relative}
+.pop{position:absolute;z-index:40;top:calc(100% + 6px);left:0;width:268px;padding:6px;
+  max-height:min(70vh,440px);overflow:auto;overscroll-behavior:contain;
+  border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--sh-md);
+  transform-origin:top left;opacity:0;transform:scale(.97) translateY(-4px);visibility:hidden;pointer-events:none;
+  transition:opacity .14s ease-out,transform .14s ease-out,visibility .14s}
+.pop.right,.pop-right{left:auto;right:0;transform-origin:top right}
+.pop.open{opacity:1;transform:none;visibility:visible;pointer-events:auto}
+.pop h4{padding:8px 8px 4px;display:flex;align-items:center;gap:6px;color:var(--muted);font-size:var(--fs-11);font-weight:700;letter-spacing:.03em}
+.pop h4 .ic{width:13px;height:13px}
+.pop hr{height:1px;margin:6px 4px;border:0;background:var(--border)}
+.pop button,.pop label{width:100%;min-height:32px;padding:0 var(--s2);display:flex;align-items:center;gap:var(--s2);
+  border-radius:var(--r-sm);font-size:var(--fs-13);text-align:left;cursor:pointer}
+.pop button:hover,.pop label:hover{background:var(--subtle)}
+.pop .tick{margin-left:auto;color:var(--accent);opacity:0}
+.pop button[aria-checked="true"] .tick{opacity:1}
+.pop input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent)}
+.pop .reset{color:var(--muted);font-size:var(--fs-12)}
+.pop-foot{position:sticky;bottom:-6px;margin:4px -6px -6px;padding:4px 6px 6px;background:var(--surface);border-top:1px solid var(--border)}
+.pop label .dot,.pop label .hash{width:14px;height:14px;font-size:11px;border-radius:var(--r-xs)}
+.pop label .ic{width:14px;height:14px}
+.pop label .favatar{width:18px;height:18px;flex:0 0 auto;display:grid;place-items:center;border-radius:var(--r-full);
+  color:#fff;font-size:8px;font-weight:700}
+.pop label .fcount{margin-left:auto;color:var(--faint);font-size:var(--fs-11);font-variant-numeric:tabular-nums}
+
+/* ==========================================================================
+   6. ATTENTION BAR — one line, inside the flow, naming the real problem
+   (v1: a 60px banner with generic copy, repeated identically on 4 screens)
+   ========================================================================== */
+.attention{margin:var(--s3) 0 0;padding:9px 10px 9px 11px;display:flex;align-items:center;gap:10px;
+  border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);font-size:var(--fs-13)}
+.attention .ic{color:var(--warn)}
+.attention p{flex:1;min-width:0;color:var(--muted);text-wrap:pretty}
+.attention p b{color:var(--text);font-weight:600}
+.attention .btn{min-height:30px}
+
+/* ==========================================================================
+   7. GROUPS + TASK ROWS — one group header, one task row, everywhere
+   ========================================================================== */
+.group{margin-top:36px;padding:0 var(--s2) var(--s2);border-radius:var(--r-lg)}
+.group:first-of-type{margin-top:var(--s5)}
+.group.tinted-late{padding:var(--s4) var(--s4) var(--s3);background:var(--late-tint)}
+.group.tinted-quick{padding:var(--s4) var(--s4) var(--s3);background:var(--wash-quick)}
+
+/* No dead strip between the heading row and the rule under it: the toggle's
+   own padding reaches the rule, so clicking anywhere on the row collapses the
+   section rather than only on the words themselves. */
+.gheadblock{padding-bottom:0;border-bottom:1px solid var(--border)}
+.ghead{min-height:38px;display:flex;align-items:center;flex-wrap:wrap;gap:var(--s2);padding:0 4px}
+.gtoggle{align-self:stretch}
+/* a collapsed group has nothing under it, so the rule would float free */
+.group.collapsed .gheadblock{border-bottom:0;padding-bottom:0}
+.gdate{color:var(--faint);font-size:var(--fs-12);font-weight:500;white-space:nowrap}
+.gflag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--r-full);
+  color:var(--warn);background:var(--warn-soft);font-size:var(--fs-11);font-weight:600;white-space:nowrap}
+.gflag .ic{width:12px;height:12px;stroke-width:2}
+.gtoggle{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:10px 0;text-align:left}
+.gdisclose{
+  width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;
+  border-radius:var(--r-xs);color:var(--faint);
+}
+.gdisclose:hover{background:var(--hover);color:var(--text)}
+.gtoggle .caret{width:14px;height:14px;color:var(--faint);transition:transform .15s ease}
+.group.collapsed .gtoggle .caret{transform:rotate(-90deg)}
+.group.collapsed > :not(.gheadblock){display:none}
+.gname{font-size:var(--fs-14);font-weight:700;letter-spacing:-.01em}
+/* project sections are structural, not just headings — make them read as such */
+[data-view="project"] .gname{color:var(--accent-dark)}
+.gcount{min-width:22px;height:20px;padding:0 6px;display:grid;place-items:center;border-radius:var(--r-full);
+  color:var(--muted);background:var(--subtle);font-size:var(--fs-11);font-weight:600;font-variant-numeric:tabular-nums}
+.gtime{color:var(--muted);font-size:var(--fs-13);font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gtime::before{content:"·";margin-right:5px;color:var(--border-strong)}
+.gactions,.gflag{margin-left:auto}
+.gactions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.gflag ~ .gcount{margin-left:10px}
+.ghead > .gcount{margin-left:auto}
+.ghead > .gdisclose{margin-left:2px}
+.gactions ~ .gcount{margin-left:0}
+
+.task{position:relative;width:100%;display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:12px;
+  padding:14px 10px 14px 32px;margin-left:-26px;width:calc(100% + 26px);
+  min-height:62px;border-radius:var(--r-md);text-align:left;cursor:pointer}
+.task:hover{background:var(--row-hover)}
+.task.done .ttitle{color:var(--faint);text-decoration:line-through}
+.drag{position:absolute;left:0;top:50%;width:24px;height:40px;display:grid;place-items:center;
+  border-radius:var(--r-sm);color:var(--faint);opacity:0;transform:translateY(-50%);cursor:grab}
+.task:hover .drag,.task:focus-within .drag{opacity:1}
+.drag:hover{background:var(--hover)}
+.task.dragging{opacity:.45;background:var(--subtle)}
+
+.check{width:16px;height:16px;margin-top:3px;flex:0 0 auto;display:grid;place-items:center;
+  border:1.5px solid var(--p3);border-radius:var(--r-sm);background:rgba(36,111,224,.06);color:transparent}
+.check .ic{width:10px;height:10px;stroke-width:2.8}
+.check:hover{background:rgba(36,111,224,.16)}
+.check.p1{border-color:var(--p1);background:rgba(209,69,59,.07)}
+.check.p2{border-color:var(--p2);background:rgba(181,101,0,.07)}
+.check.p4{border-color:var(--check-quiet);background:transparent}
+.task.done .check,.tcard.done .check{color:#fff;border-color:var(--ok);background:var(--ok)}
+/* A "* " task: Todoist itself gives it no checkbox, since a click on one
+   would have nothing to do. The slot stays, empty, so the row still lines
+   up with every completable one around it. */
+.check.nocheck{border-color:transparent;background:transparent;cursor:default}
+.check.nocheck:hover{background:transparent}
+
+.tmain{display:block;min-width:0}
+.ttitle{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:var(--fs-14);line-height:1.4;text-wrap:pretty}
+.tdesc{display:block;margin-top:2px;color:var(--muted);font-size:var(--fs-12);line-height:1.4;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tdesc strong{font-weight:600;color:var(--muted)}
+.tdesc code{padding:0 3px;border-radius:var(--r-xs);background:var(--subtle);font-size:.92em}
+.tdesc a{color:inherit;text-decoration:underline}
+.meta{display:flex;width:100%;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:6px;color:var(--muted);font-size:var(--fs-12)}
+.meta > span{display:inline-flex;align-items:center;gap:4px}
+.meta .ic{width:13px;height:13px}
+/* The recurring marker and the project hash are centred badges, not rows. */
+.meta .repeatdot,.meta .hash{display:inline-grid;place-items:center}
+.meta .late{color:var(--late)}
+.meta .deadline{color:var(--deadline)}
+.meta .stale{color:var(--faint)}
+.meta .at{color:var(--info)}
+/* A tag wears its own colour: the glyph in it, the chip a wash of it. Todoist
+   holds a colour for every tag and the row is where it earns its keep. */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 6px 1px 5px;border-radius:var(--r-xs);
+  background:var(--marker-soft,var(--subtle));color:var(--muted);font-size:var(--fs-11)}
+.tag .ic{width:11px;height:11px;color:var(--marker,var(--faint))}
+/* project reference: ONE treatment everywhere (v1 had 3: coloured inline,
+   plain grey inline, and a right-hand grey column) */
+.proj{display:inline-flex;align-items:center;gap:3px;font-weight:600}
+.proj.green{color:var(--tag-green)}.proj.orange{color:var(--tag-orange)}.proj.purple{color:var(--tag-purple)}
+.proj.red{color:var(--tag-red)}.proj.blue{color:var(--tag-blue)}.proj.gray{color:var(--muted)}
+
+/* duration: one chip, one slot, one icon — and a visibly different state
+   when it is missing, because a missing estimate is an action, not a value */
+.est{height:24px;padding:0 2px;display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;align-self:flex-start;
+  color:var(--muted);font-size:var(--fs-12);font-variant-numeric:tabular-nums;white-space:nowrap}
+.est .ic{color:var(--faint)}
+.est.missing{height:26px;padding:0 9px;color:var(--warn);border:1px dashed var(--warn-border);border-radius:var(--r-full);
+  font-size:var(--fs-11);font-weight:600}
+.est.missing:hover{background:var(--warn-soft)}
+.meta .est{height:auto;padding:0;font-size:var(--fs-12)}
+
+/* the actions column is always reserved, so hovering never covers the duration
+   chip, never shifts the row, and needs no white gradient to hide what is under it */
+.trow-actions{display:flex;align-self:center;justify-self:end;gap:2px;visibility:hidden}
+.task:hover .trow-actions,.task:focus-within .trow-actions{visibility:visible}
+.trow-actions button{width:30px;height:30px;display:grid;place-items:center;border-radius:var(--r-sm);color:var(--muted)}
+.trow-actions button:hover{color:var(--text);background:var(--hover)}
+
+.subtasks{margin-left:28px;padding-left:var(--s3);border-left:1px solid var(--border)}
+.subtasks .task{min-height:48px;padding-block:9px;margin-left:0;width:100%;padding-left:10px;grid-template-columns:18px minmax(0,1fr) auto}
+.subtasks .check{width:14px;height:14px;border-radius:var(--r-full);border-style:dashed}
+.addrow{width:100%;padding:9px 8px;display:flex;align-items:center;gap:6px;margin-top:2px;
+  border-radius:var(--r-sm);color:var(--muted);font-size:var(--fs-13);text-align:left}
+.addrow:hover{color:var(--text);background:var(--hover)}
+.addrow .ic{width:14px;height:14px}
+
+/* ==========================================================================
+   8. BOARD / DAY COLUMNS / CALENDAR / STACK
+   ========================================================================== */
+.board{display:flex;gap:var(--s4);margin-top:var(--s5);align-items:flex-start}
+
+.col{min-width:0;display:flex;flex-direction:column;padding:var(--s4);border:1px solid var(--border);
+  border-radius:var(--r-lg);background:var(--subtle)}
+.col.today{border-color:var(--today-line);background:var(--today-wash)}
+.chead{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s2);margin-bottom:10px}
+.chead strong{display:block;font-size:var(--fs-13);font-weight:700}
+.chead small{display:block;margin-top:1px;color:var(--muted);font-size:var(--fs-11)}
+/* day columns: the weekday and its date read as one line, not a stacked pair */
+.chead-title{display:flex;align-items:baseline;gap:7px;min-width:0}
+.chead-title small{margin-top:0;white-space:nowrap}
+.col.today .chead small{color:var(--accent)}
+.cdesc{margin-top:3px;max-width:24ch;color:var(--faint);font-size:var(--fs-11);line-height:1.4}
+.cdesc.empty{font-style:italic}
+.capacity{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);
+  color:var(--muted);font-size:var(--fs-11);font-variant-numeric:tabular-nums}
+.capacity.over{color:var(--accent-dark);font-weight:600}
+.bar{height:5px;margin-top:5px;border-radius:var(--r-full);overflow:hidden;background:var(--c-track)}
+.bar i{display:block;height:100%;border-radius:inherit;background:var(--ok)}
+.bar i.warn{background:var(--c2)}
+.bar i.over{background:var(--accent)}
+
+.tcard{position:relative;width:100%;margin-bottom:10px;padding:12px 12px 12px 34px;display:block;
+  border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);text-align:left;
+  transition:border-color .14s ease-out,transform .1s ease-out}
+.tcard:hover{border-color:var(--border-strong)}
+.tcard:active{transform:scale(.99)}
+.tcard .check{position:absolute;left:9px;top:11px;margin:0}
+.tcard .ttitle{font-size:var(--fs-13)}
+.tcard .meta{margin-top:7px}
+.coladd{margin-top:auto;padding:9px 6px;display:flex;align-items:center;gap:6px;border-radius:var(--r-sm);
+  color:var(--muted);font-size:var(--fs-12);text-align:left}
+.coladd:hover{color:var(--text);background:var(--hover)}
+.rangenote{padding-top:var(--s3);color:var(--faint);font-size:var(--fs-11);text-align:center}
+
+.cal{display:grid;grid-template-columns:repeat(7,minmax(96px,1fr));gap:1px;margin-top:var(--s4);
+  overflow:hidden;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--border)}
+.calday{min-height:148px;padding:var(--s2);background:var(--surface)}
+.calday strong{display:block;margin-bottom:var(--s2);font-size:var(--fs-12)}
+.caltask{margin-top:5px;padding:5px 6px;border-radius:var(--r-xs);background:var(--cal-wash);color:var(--cal-text);
+  font-size:var(--fs-11);line-height:1.3}
+.caltask.late{color:var(--cal-late-text);background:var(--tag-red-soft)}
+
+.stack{max-width:820px;margin:var(--s4) auto 0;display:grid;gap:10px}
+.stackcard{padding:18px 20px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);
+  text-align:left;width:100%;display:block}
+.stackcard:first-child{box-shadow:var(--sh-md)}
+.stacktop{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s3);
+  color:var(--muted);font-size:var(--fs-12)}
+.stackcard .task{margin:0;width:100%;padding:0;min-height:0;cursor:default}
+.stackcard .task:hover{background:transparent}
+.stackcard .drag,.stackcard .trow-actions{display:none}
+.stackcard:first-child .ttitle{font-size:var(--fs-16);font-weight:600}
+.stackcard .tdesc{white-space:normal;max-width:64ch}
+
+/* ==========================================================================
+   9. DASHBOARD + INSIGHTS — one chart palette for the whole product
+   ========================================================================== */
+/* minmax(0,1fr) rather than 1fr: a plain fr track takes the min-content width
+   of its widest child as a floor, so one wide chart pushed every card in the
+   column past the page gutter. */
+.bento{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--s4);margin-top:var(--s5);align-items:start}
+.card{padding:20px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}
+.card h3{font-size:var(--fs-13);font-weight:700;line-height:1.2;text-wrap:balance}
+.card .psub{margin-top:2px;font-size:var(--fs-12)}
+.chead-row{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s3)}
+.w8{grid-column:span 8}.w4{grid-column:span 4}.w6{grid-column:span 6}.w12{grid-column:span 12}
+.stackcol{grid-column:span 4;display:grid;gap:var(--s3)}
+
+.focuslist{display:grid;gap:2px}
+.focuslist .task{margin-left:0;width:100%;padding:10px 8px;min-height:0}
+.focuslist .drag{display:none}
+
+.ring{width:96px;height:96px;flex:0 0 auto;display:grid;place-items:center;border-radius:var(--r-full);position:relative;
+  background:conic-gradient(var(--ring-color,var(--accent)) 0 var(--ring,70%),var(--c-track) var(--ring,70%))}
+.ring::before{content:"";position:absolute;inset:9px;border-radius:var(--r-full);background:var(--surface)}
+.ring > div{position:relative;z-index:1;text-align:center;line-height:1.1}
+.ring strong{font-size:var(--fs-26);font-weight:700}
+.ring small{display:block;color:var(--muted);font-size:var(--fs-11)}
+.ring.complete{--ring-color:var(--ok)}
+.goalflex{display:flex;align-items:center;gap:var(--s4);margin-top:var(--s3)}
+.goalcopy{color:var(--muted);font-size:var(--fs-12);line-height:1.55}
+.goalcopy b{display:block;color:var(--ok);font-size:var(--fs-13)}
+
+.progress-rows{display:grid;gap:var(--s4);margin-top:var(--s3)}
+.prow{display:grid;grid-template-columns:150px minmax(60px,1fr) 40px;align-items:center;gap:var(--s3);font-size:var(--fs-13)}
+.prow > span:first-child{display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow i{height:8px;border-radius:var(--r-full);
+  background:linear-gradient(90deg,var(--pc) var(--pv),var(--c-track) var(--pv))}
+.prow > span:last-child{color:var(--muted);text-align:right;font-size:var(--fs-12);font-variant-numeric:tabular-nums}
+
+.attn-list{display:grid;gap:2px;margin-top:var(--s3)}
+.attn{width:100%;padding:10px 8px;display:grid;grid-template-columns:30px minmax(0,1fr) 16px;align-items:center;gap:10px;
+  border-radius:var(--r-sm);text-align:left}
+.attn:hover{background:var(--subtle)}
+.attn-n{height:24px;min-width:26px;padding:0 7px;display:grid;place-items:center;border-radius:var(--r-full);
+  color:var(--muted);background:var(--subtle);font-size:var(--fs-12);font-weight:700}
+.attn-n.danger{color:var(--accent-dark);background:var(--accent-soft)}
+.attn-n.warn{color:var(--warn);background:var(--warn-soft)}
+.attn strong{display:block;font-size:var(--fs-13);font-weight:600}
+.attn small{display:block;margin-top:1px;color:var(--muted);font-size:var(--fs-12)}
+.attn .ic{color:var(--faint)}
+.loadweek{display:grid;gap:10px;margin-top:var(--s4)}
+.loadweek > div{display:grid;grid-template-columns:38px minmax(60px,1fr) 58px;align-items:center;gap:var(--s3);
+  color:var(--muted);font-size:var(--fs-12)}
+.loadweek i{display:block;height:10px;border-radius:var(--r-full);background:var(--c-track);overflow:hidden}
+.loadweek b{display:block;height:100%;border-radius:inherit;background:var(--ok)}
+.loadweek .over b{background:var(--accent)}
+.loadweek .over em{color:var(--accent-dark);font-weight:700}
+.loadweek .free b{background:var(--border-strong)}
+.loadweek em{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-style:normal;font-variant-numeric:tabular-nums}
+.loadweek em .ic{width:12px;height:12px;stroke-width:2}
+.minifacts{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-top:var(--s4);
+  padding-top:var(--s3);border-top:1px solid var(--border)}
+.minifacts strong{display:block;font-size:var(--fs-16);font-weight:700;letter-spacing:-.01em}
+.minifacts span{color:var(--muted);font-size:var(--fs-11)}
+.upnext{display:grid;gap:var(--s3);margin-top:var(--s3)}
+.upnext > div{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:var(--s2);
+  color:var(--muted);font-size:var(--fs-12)}
+.upnext .ic{color:var(--faint)}
+.upnext strong{overflow:hidden;color:var(--text);font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+
+.tabs{display:flex;gap:var(--s5);margin-top:var(--s4);border-bottom:1px solid var(--border)}
+.tabs button{padding:0 2px 10px;color:var(--muted);font-size:var(--fs-13);font-weight:600}
+.tabs button[aria-selected="true"]{color:var(--text);box-shadow:inset 0 -2px 0 var(--accent)}
+.actset{display:contents}
+.actset[hidden]{display:none}
+.subnav{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--s4)}
+.subnav button{min-height:30px;padding:0 11px;border-radius:var(--r-full);color:var(--muted);
+  font-size:var(--fs-12);font-weight:600}
+.subnav button:hover{background:var(--hover)}
+.subnav button[aria-current="true"]{color:var(--text);background:var(--subtle)}
+.kpi{padding:var(--s4);border:1px solid var(--border);border-radius:var(--r-lg)}
+.kpi-label{color:var(--muted);font-size:var(--fs-12)}
+.kpi-value{margin-top:6px;font-size:var(--fs-26);font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi-delta{margin-top:4px;display:inline-flex;align-items:center;gap:3px;color:var(--ok);font-size:var(--fs-11);font-weight:600}
+
+
+/* ==========================================================================
+   10. SETTINGS
+   ========================================================================== */
+.settings{display:grid;grid-template-columns:186px 1fr;gap:var(--s6);margin-top:var(--s5)}
+/* The menu stays with the reader while the page scrolls under it. */
+.setnav{display:grid;align-content:start;gap:2px;position:sticky;top:var(--s5);align-self:start}
+.setnav a{
+  display:flex;align-items:center;min-height:34px;padding:0 var(--s3);
+  border-radius:var(--r-ctl);font-size:var(--fs-13);font-weight:500;
+  letter-spacing:-.02em;color:var(--muted);text-decoration:none;
+  transition:background .14s ease-out,color .14s ease-out;
+}
+.setnav a:hover{background:var(--hover);color:var(--text)}
+.setnav a[aria-current="true"]{background:var(--accent-soft);color:var(--accent-dark);font-weight:600}
+/* A section scrolled to by anchor must not hide under the sticky menu. */
+.setsection{scroll-margin-top:var(--s5)}
+.setsection{padding-bottom:var(--s6);margin-bottom:var(--s6);border-bottom:1px solid var(--border)}
+.setsection.last{padding-bottom:0;margin-bottom:0;border-bottom:0}
+.setsection h2{margin-bottom:var(--s3);font-size:var(--fs-16);font-weight:700}
+.setrow{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:var(--s5)}
+.setrow strong{display:block;font-size:var(--fs-13);font-weight:600}
+/* The hint belongs to the row's own label column. Left unscoped, this rule
+   also caught the text inside any control sitting in the row and broke it. */
+.setrow > div > span{display:block;margin-top:2px;color:var(--muted);font-size:var(--fs-12)}
+.switch{width:38px;height:22px;flex:0 0 auto;padding:2px;border-radius:var(--r-full);background:var(--switch-off)}
+.switch::after{content:"";display:block;width:18px;height:18px;border-radius:var(--r-full);background:var(--knob);
+  box-shadow:var(--sh-sm);transition:margin .15s ease}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{margin-left:16px}
+
+/* ==========================================================================
+   11. OVERLAYS
+   ========================================================================== */
+.overlay{position:fixed;inset:0;z-index:80;display:grid;pointer-events:none}
+.overlay.open{pointer-events:auto}
+.scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .2s ease-out}
+.overlay.open .scrim{opacity:1}
+
+.sheet{position:relative;justify-self:center;align-self:center;width:min(1040px,calc(100vw - 56px));
+  max-height:calc(100vh - 56px);overflow:auto;border-radius:var(--r-lg);background:var(--surface);
+  box-shadow:var(--sh-lg);opacity:0;transform:translateY(8px) scale(.985);transition:opacity .2s ease-out,transform .2s cubic-bezier(.16,1,.3,1)}
+.overlay.open .sheet{opacity:1;transform:none}
+.sheet-sm{width:min(660px,calc(100vw - 32px))}
+.sheet-search{align-self:start;margin-top:12vh;width:min(560px,calc(100vw - 32px));padding:6px}
+
+.side-sheet{position:absolute;top:0;right:0;height:100%;width:min(400px,100%);overflow:auto;padding:var(--s4);
+  background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--sh-lg);
+  transform:translateX(102%);transition:transform .26s cubic-bezier(.16,1,.3,1)}
+.overlay.open .side-sheet{transform:none}
+
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);padding:var(--s4);
+  border-bottom:1px solid var(--border)}
+.sheet-head h2{font-size:var(--fs-20);font-weight:700;letter-spacing:-.015em;line-height:1.15;text-wrap:balance}
+.sheet-body{padding:var(--s4)}
+
+/* task detail */
+.detail-top{position:sticky;top:0;z-index:2;height:56px;padding:0 var(--s4);display:flex;align-items:center;
+  justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface)}
+.detail-top .crumb{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:var(--fs-13);font-weight:600}
+.detail-body{display:grid;grid-template-columns:minmax(0,1fr) 320px;min-height:520px}
+.detail-main{padding:var(--s6) 48px}
+.detail-title{display:flex;align-items:flex-start;gap:var(--s3);font-size:var(--fs-26);font-weight:700;letter-spacing:-.025em;line-height:1.15;text-wrap:balance}
+.detail-title .check{margin-top:7px;width:18px;height:18px}
+.detail-desc{margin:var(--s4) 0 var(--s5) 32px;max-width:68ch;color:var(--muted);font-size:var(--fs-14);line-height:1.6;text-wrap:pretty}
+.detail-main .addrow{margin-left:32px;width:auto}
+.detail-comments{margin-left:32px;padding-top:var(--s5);border-top:1px solid var(--border)}
+.composer-line{min-height:42px;padding:0 var(--s3);display:flex;align-items:center;gap:var(--s2);
+  border:1px solid var(--border);border-radius:var(--r-full);color:var(--muted);font-size:var(--fs-13)}
+.detail-side{padding:var(--s4);border-left:1px solid var(--border)}
+.prop{padding:10px 8px;margin-bottom:2px;border-radius:var(--r-sm);width:100%;text-align:left;display:block}
+.prop:hover{background:var(--subtle)}
+.prop > span{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:var(--fs-12);font-weight:600}
+/* every property gets the SAME add affordance (v1 mixed ＋ and # glyphs) */
+.prop .add{width:20px;height:20px;display:grid;place-items:center;border-radius:var(--r-xs);color:var(--muted);opacity:0}
+.prop:hover .add,.prop:focus-visible .add{opacity:1}
+.prop strong{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:var(--fs-14);font-weight:500}
+.prop .pills{display:flex;justify-content:flex-start;flex-wrap:wrap;gap:5px;margin-top:8px}
+.pill{padding:3px 8px;display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-sm);
+  color:var(--muted);background:var(--subtle);font-size:var(--fs-12)}
+
+/* composer */
+.composer{width:100%;min-height:110px;padding:var(--s4);border:0;outline:0;resize:none;font-size:var(--fs-16);line-height:1.5}
+.composer::placeholder{color:var(--faint)}
+.composer-tools{display:flex;align-items:center;gap:var(--s3);
+  padding:10px var(--s3);border-top:1px solid var(--border);background:var(--subtle)}
+.tool-chips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:4px}
+.composer-actions{flex:0 0 auto;margin-left:auto;display:flex;gap:6px}
+.tool-chips .btn{padding:0 8px;border-color:transparent;background:transparent;box-shadow:none;font-weight:500}
+.tool-chips .btn:hover{background:var(--hover)}
+
+/* search */
+.searchfield{height:50px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid var(--border)}
+.searchfield input{flex:1;min-width:0;border:0;outline:0;font-size:var(--fs-14);background:transparent}
+.sresults{padding:6px 0}
+.sresults h4{padding:6px 10px;color:var(--faint);font-size:var(--fs-11);font-weight:700}
+.sresults button{width:100%;min-height:46px;padding:6px 10px;display:grid;grid-template-columns:22px 1fr auto;
+  align-items:center;gap:10px;border-radius:var(--r-sm);text-align:left}
+.sresults button:hover{background:var(--subtle)}
+.sresults strong{display:block;font-size:var(--fs-13);font-weight:500}
+.sresults small{display:block;margin-top:1px;color:var(--faint);font-size:var(--fs-11)}
+kbd{padding:2px 5px;border:1px solid var(--border-strong);border-radius:var(--r-xs);background:var(--subtle);
+  color:var(--muted);font-size:10px;font-family:inherit}
+
+/* conflicts */
+.conflicts{display:grid;gap:var(--s2);margin-top:var(--s3)}
+.conflict{padding:var(--s3);display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;
+  border:1px solid var(--border);border-radius:var(--r-md)}
+.conflict.resolved{opacity:.5}
+.conflict strong{font-size:var(--fs-13)}
+.conflict p{margin-top:4px;color:var(--muted);font-size:var(--fs-12);line-height:1.45}
+.conflict .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--s2)}
+
+/* insights drawer */
+.icard{display:block;width:100%;margin-bottom:10px;padding:var(--s4);border:1px solid var(--border);
+  border-radius:var(--r-lg);background:var(--surface);text-align:left}
+.icard:hover{border-color:var(--border-strong)}
+.ikicker{color:var(--muted);font-size:var(--fs-11);font-weight:700;letter-spacing:.03em}
+.icard.late{border-color:transparent;background:var(--late-wash-deep)}
+.icard.late .ikicker{color:var(--late)}
+.ihead{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s3)}
+.ibig{font-size:var(--fs-26);font-weight:700;letter-spacing:-.02em}
+.trend{display:inline-flex;align-items:center;gap:3px;color:var(--ok);font-size:var(--fs-12);font-weight:600}
+.latelist{display:grid;gap:var(--s2)}
+.latelist > div{display:grid;grid-template-columns:7px minmax(0,1fr) auto;align-items:center;gap:var(--s2);
+  color:var(--muted);font-size:var(--fs-12)}
+.latelist i{width:6px;height:6px;border-radius:var(--r-full);background:var(--late)}
+.latelist span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.latelist time{color:var(--late);font-weight:600}
+.ilist{display:grid;gap:6px;color:var(--muted);font-size:var(--fs-12)}
+.ilist strong{color:var(--text);font-size:var(--fs-14)}
+
+/* toast
+   The visible rules live with the stack in additions.css. What stood here was
+   a single fixed toast that stayed at opacity:0 until a `show` class was added
+   — and nothing has ever added it, so every toast the product has raised has
+   been rendered, correct, and invisible. Deleted rather than overridden: an
+   override only holds while the stylesheets load in the order you expect. */
+.toast button{padding:6px 10px;border-radius:var(--r-sm);color:#fff;font-size:var(--fs-12);font-weight:600}
+
+.mobile-top,.mobile-nav{display:none}
+
+/* ==========================================================================
+   12. RESPONSIVE
+   v1 on a 375x812 phone: the first task started at y=609 — 75% of the screen
+   was chrome, and the toolbar alone was 101px tall on two wrapped rows.
+   ========================================================================== */
+@media (max-width:1080px){
+  .w8,.w6{grid-column:span 12}
+  .stackcol{grid-column:span 12;grid-template-columns:1fr 1fr}
+  .w4{grid-column:span 6}
+  .detail-body{grid-template-columns:1fr}
+  .detail-side{border-left:0;border-top:1px solid var(--border)}
+  :root{--sidebar-w:236px}
+  .page{padding-inline:24px}
+}
+
+@media (max-width:720px){
+  :root{--fs-26:22px}
+  .protonote{height:30px;font-size:var(--fs-11)}
+  .protonote span:last-child{display:none}
+  /* A column, not a block. A banner above the workspace used to push the
+     bottom of the app past the bottom of the screen, which is where the
+     navigation bar went: 64px of it, permanently out of reach. */
+  .app{height:100dvh;display:flex;flex-direction:column}
+  .sidebar{display:none}
+  .workspace{flex:1;min-height:0;height:auto;padding-bottom:0;display:flex;flex-direction:column}
+  .screen.active{flex:1;min-height:0;height:auto}
+  .expand-wrap{display:none!important}
+
+  .mobile-top{flex:0 0 auto;height:auto;min-height:48px;
+    padding:env(safe-area-inset-top) var(--s3) 0;
+    display:flex;align-items:center;justify-content:space-between;gap:var(--s2);
+    border-bottom:1px solid var(--border);background:var(--surface)}
+  .mobile-top strong{font-size:var(--fs-14);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    opacity:0;transform:translateY(4px);transition:opacity .15s ease,transform .15s ease}
+  /* Once the page's own heading has gone past the top of the screen. */
+  .mobile-top strong.shown{opacity:1;transform:none}
+
+  /* Room for the navigation bar and for whatever the phone puts below it. */
+  .page{padding:var(--s4) var(--s4) calc(80px + env(safe-area-inset-bottom))}
+  /* compact header: the subtitle and the duplicated "+ Add" are desktop-only —
+     on a phone the FAB already adds tasks, and the subtitle is orientation,
+     not information you need every time you open the view. */
+  /* The title takes a line and the controls take the next one, on every page.
+     They used to share a line when the title was short enough to allow it and
+     wrap when it was not, so Display and Insights moved between two places
+     depending on which page you were on and how long its name happened to be
+     — the one row of the page whose position you should never have to look
+     for. */
+  .phead{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2);margin-bottom:var(--s2)}
+  .phead-text,.pactions{flex:1 0 100%;min-width:0}
+  .pactions{display:flex;align-items:center;gap:var(--s2)}
+  .psub{display:none}
+  .pactions{margin-top:0}
+  .pactions .btn.primary{display:none}
+  .metrics{margin-bottom:var(--s2);gap:6px 10px;font-size:var(--fs-12)}
+  .metrics .sep{display:none}
+  .gname{white-space:nowrap}
+  .attention{margin-top:var(--s2);padding:8px 10px;font-size:var(--fs-13)}
+  .attention p span{display:none}
+
+  /* toolbar: one row, always. Display/Filter drop their labels only when the
+     row would otherwise wrap; the segmented control never collapses. */
+  .toolbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:var(--s2) 0;gap:10px}
+  /* the hit area reaches 44px even though the control still looks 32px */
+  .tb,.iconbtn,.btn{position:relative}
+  .tb::after,.iconbtn::after,.btn::after,.gtoggle::after{content:"";position:absolute;inset:-7px;border-radius:inherit}
+  .toolbar::-webkit-scrollbar{display:none}
+  .tb-spacer{display:none}
+  .chips{flex-wrap:nowrap}
+  .pop{position:fixed;top:auto;bottom:calc(76px + env(safe-area-inset-bottom));left:var(--s3);right:var(--s3);
+    width:auto;max-height:58vh;overflow:auto;transform-origin:bottom center}
+
+  .task{width:100%;margin-left:0;padding:10px 8px;grid-template-columns:20px minmax(0,1fr)}
+  .drag{display:none}
+  /* the duration is the whole point of this product — v1 hid it on mobile.
+     It moves into the meta row instead of disappearing. */
+  .task > .est{grid-column:2;justify-self:start;margin-top:6px;order:3}
+  .task:hover .est{visibility:visible}
+  .subtasks{margin-left:16px;padding-left:10px}
+  .group{padding-inline:0}
+  .group.tinted-late,.group.tinted-quick{padding-inline:10px}
+  /* a section action gets its own line rather than squeezing out the duration */
+  .ghead{flex-wrap:wrap}
+  .ghead .gcount{margin-left:auto}
+  .ghead .gactions{order:4;width:100%;margin:8px 0 0;justify-content:flex-start}
+
+
+  .cal{grid-template-columns:repeat(7,minmax(84px,1fr));overflow-x:auto}
+  .bento{grid-template-columns:minmax(0,1fr)}
+  .stackcol{grid-column:auto;grid-template-columns:1fr}
+  .settings{grid-template-columns:1fr;gap:var(--s4)}
+  .setnav{grid-auto-flow:column;grid-auto-columns:max-content;overflow-x:auto;padding-bottom:var(--s2)}
+  .prow{grid-template-columns:110px minmax(60px,1fr) 36px;gap:var(--s2)}
+
+  .sheet{width:100vw;max-height:100vh;min-height:100vh;border-radius:0}
+  .sheet-sm,.sheet-search{width:calc(100vw - 24px);min-height:0;border-radius:var(--r-lg);align-self:center;margin:0}
+  .detail-main{padding:var(--s4)}
+  .detail-desc,.detail-main .addrow,.detail-comments{margin-left:0}
+  .side-sheet{width:100%}
+
+  /* 5 destinations, 5 distinct icons, 5 labels.
+     v1 had unlabelled icons where "My week" and "Upcoming" were both calendars. */
+  /* Fixed to the window, not to a container that something above can push
+     down, and padded for the home indicator so the last row of it is not
+     sitting under the phone's own furniture. */
+  .mobile-nav{position:fixed;z-index:20;bottom:0;left:0;right:0;height:auto;
+    padding-bottom:env(safe-area-inset-bottom);
+    display:grid;grid-template-columns:repeat(5,1fr);align-items:center;
+    background:var(--surface);border-top:1px solid var(--border)}
+  .mobile-nav button{height:64px;display:grid;justify-items:center;align-content:center;gap:3px;
+    color:var(--muted);font-size:10px;font-weight:600}
+  .mobile-nav button[aria-current="page"]{color:var(--accent)}
+  .mobile-nav .fab{color:#fff}
+  .mobile-nav .fab i{width:46px;height:46px;display:grid;place-items:center;border-radius:var(--r-full);
+    background:var(--accent);box-shadow:0 2px 8px rgba(28,25,23,.16)}
+}
