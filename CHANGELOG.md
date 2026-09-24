@@ -6,6 +6,64 @@ Every line is marked with what it is: 🆕 something the app did not do before,
 🎨 something it already did, drawn, worded or done differently, 🐛 something
 that was wrong. New first, then changed, then fixed.
 
+## 1.14.0
+
+The keyboard on a selection, links and email addresses to copy, menus that
+fit on a board, sign-in on your own server, and automatic tests behind every
+release.
+
+🆕 **The task keys work on a selection.** With the cursor inside a selection,
+1–4 set every selected task's priority, ⇧T takes all their dates off, and T
+and V open the bulk bar's Date and Move panels. In those panels ↑ ↓ walk the
+choices, Enter picks and Esc closes, and the cursor comes back to the tasks.
+
+🆕 **⌘A selects every task in the list.** Outside a text field, ⌘A (Ctrl+A)
+picks every open task on the page in front and brings up the bulk-edit bar,
+instead of selecting the page's text. Inside a field it still selects the
+field's text.
+
+🆕 **Copy link.** Next to "Open in Todoist" in a task's menu: the task's
+Todoist address, on the clipboard.
+
+🆕 **Copy a project's email address.** In the project menu: anything emailed
+to that address becomes a task in the project.
+
+🆕 **Sign in with Todoist on your own copy.** A copy hosted elsewhere is built
+with `PUBLIC_URL=https://your.domain/ npm run build`, and the file Todoist
+reads to identify the app (`oauth/client.json`) then describes that copy. A
+copy built for another address says so on its sign-in screen instead of ending
+on Todoist's "Invalid redirect URI". See "Self-hosting" in the README.
+
+🆕 **Automatic tests.** Unit tests on the rules (estimates, conflicts, drops,
+order keys, recurrence, the matrix, synced settings, the sync queue) and
+journeys in a real browser on the demo. GitHub runs the tests and a build on
+every push, and the journeys on every pull request.
+
+🎨 **The shortcuts follow the keyboard, not the mouse.** The shortcuts sheet
+said "the task under the cursor", which reads as the mouse pointer; it now
+says the task picked with the arrow keys. Hovering a task never acts on it,
+so typing a search is always safe.
+
+🎨 **A new priority keeps the selection.** From the keys or from the bar, so
+the next change can follow on the same tasks.
+
+🎨 **The store is split by area.** No change in behaviour: one file per area
+instead of one 2,300-line file.
+
+🐛 **A second browser showed the walkthrough again.** Having been through the
+first run is now kept with the account's settings, so signing in elsewhere no
+longer asks again.
+
+🐛 **The cursor was lost when a task moved.** A priority that re-sorted the
+list dropped the keyboard cursor, and the next key opened the search.
+
+🐛 **Row menus were cut off on a short board.** Schedule and Move on the last
+cards of a board opened past its bottom edge (and past its left edge in the
+first column). They now fit inside the board.
+
+🐛 **Toasts covered the bulk-edit bar.** A bulk action's toast now sits above
+the bar and any panel open on it.
+
 ## 1.13.0
 
 Sign in with Todoist, settings that follow you without a task in your Inbox,
