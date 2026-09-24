@@ -160,3 +160,50 @@ test('⌘↓ and ⌘↑ move the task under the cursor, and the cursor goes with
   await page.keyboard.press('1');
   await expect(row(page, before[0]).getByRole('checkbox', { name: 'Complete task' })).toHaveClass(/\bp1\b/);
 });
+
+/** The top-level task titles of each group on the page, keyed by the group's name. */
+async function groupTitles(page: import('@playwright/test').Page): Promise<Array<[string, string[]]>> {
+  return page.locator('.screen.active [data-row-group]').evaluateAll((groups) => groups.map((group) => [
+    (group.querySelector('.gname') as HTMLInputElement | null)?.value
+      || group.querySelector('.gname')?.textContent?.trim() || '',
+    Array.from(group.querySelectorAll('[data-task-id]:not([data-depth]) .ttitle')).map((t) => t.textContent ?? ''),
+  ] as [string, string[]]));
+}
+
+test('⌘↓ at the end of a section carries the task into the next one, ⌘↑ brings it back', async ({ demo: page }) => {
+  await page.goto('/#/project/site');
+  await expect(page.locator('.screen.active [data-task-id]').first()).toBeVisible();
+  const groups = (await groupTitles(page)).filter(([, tasks]) => tasks.length > 0);
+  const [fromName, fromTasks] = groups[0];
+  const [toName, toTasks] = groups[1];
+  const moving = fromTasks[fromTasks.length - 1];
+
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  for (let at = 0; at < fromTasks.length; at += 1) await page.keyboard.press('ArrowDown');
+  await expect(row(page, moving)).toBeFocused();
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await expect.poll(async () => new Map(await groupTitles(page)).get(toName)?.[0]).toBe(moving);
+  await expect(row(page, moving)).toBeFocused();
+
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  await expect.poll(async () => new Map(await groupTitles(page)).get(fromName)?.at(-1)).toBe(moving);
+  expect(new Map(await groupTitles(page)).get(toName)).toEqual(toTasks);
+});
+
+test('in My week, ⌘↓ passes over the timed tasks into Anytime, and ⌘↑ never makes a task late', async ({ demo: page }) => {
+  const today = new Map(await groupTitles(page)).get('Today') ?? [];
+  expect(today.length).toBeGreaterThan(0);
+  const moving = today[today.length - 1];
+  await row(page, moving).focus();
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await expect.poll(async () => new Map(await groupTitles(page)).get('Anytime this week')?.[0]).toBe(moving);
+
+  // From the top of the first group that takes tasks, there is nowhere up to go.
+  const firstOpen = (await groupTitles(page)).find(([name, tasks]) => name !== 'Behind schedule' && tasks.length > 0)!;
+  const top = firstOpen[1][0];
+  const late = new Map(await groupTitles(page)).get('Behind schedule') ?? [];
+  await row(page, top).focus();
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  await page.waitForTimeout(300);
+  expect(new Map(await groupTitles(page)).get('Behind schedule') ?? []).toEqual(late);
+});
