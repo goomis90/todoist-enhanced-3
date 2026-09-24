@@ -104,21 +104,11 @@ function land(row: HTMLElement | undefined) {
   row.scrollIntoView({ block: 'nearest' });
 }
 
-/**
- * Keeps the cursor on a task that a change has moved.
- *
- * A new priority re-sorts the list, and a row the browser moves loses the
- * focus on the way — so the next key, meant for the same task, opened the
- * search instead. Once the list has been drawn again, a focus that fell to
- * nothing goes back to the row, wherever it now is.
- */
-function keepCursor(id: string) {
-  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
-    const lost = !document.activeElement || document.activeElement === document.body;
-    if (!lost) return;
-    land(rows().find((row) => row.dataset.taskId === id));
-  }));
-}
+/** Whether the focus has fallen to nothing, rather than been put somewhere. */
+const focusLost = (): boolean => !document.activeElement || document.activeElement === document.body;
+
+const rowById = (id: string): HTMLElement | undefined =>
+  rows().find((row) => row.dataset.taskId === id);
 
 /**
  * What the keyboard asks a row to do that only the row can do.
@@ -160,6 +150,37 @@ export function useKeyboard(bridge: KeyboardBridge) {
   useEffect(() => {
     /** Where the cursor was, so a row that finishes hands the place on. */
     let lastIndex = 0;
+    /**
+     * The task the cursor is on, remembered apart from the focus.
+     *
+     * A change that re-sorts the list (a priority) moves the row, and a row
+     * the browser moves drops the focus on the way: the next key, meant for
+     * the same task, opened the search. The cursor is only put down on
+     * purpose — a click somewhere, Escape, the focus going to a field — so a
+     * focus that merely fell to nothing still means this task.
+     */
+    let remembered: string | null = null;
+    const onFocusIn = (event: FocusEvent) => {
+      remembered = rowOf(event.target as Element | null)?.dataset.taskId ?? null;
+    };
+    const onPointerDown = () => { remembered = null; };
+    /** The row the keys are for: the focused one, or the one the focus fell from. */
+    const cursorRow = (): HTMLElement | null => {
+      const focused = rowOf(document.activeElement);
+      if (focused || !remembered || !focusLost()) return focused;
+      const row = rowById(remembered) ?? null;
+      if (row) row.focus({ preventScroll: true });
+      return row;
+    };
+    /* Puts the highlight back as soon as the moved row is drawn, so the cursor
+       is seen where the keys will act; the keys themselves do not wait for it. */
+    const keepCursor = (id: string) => {
+      for (const delay of [0, 120, 400]) {
+        window.setTimeout(() => {
+          if (focusLost() && remembered === id) land(rowById(id));
+        }, delay);
+      }
+    };
     /** `g` has been pressed and the app is waiting to hear where to go. */
     let goingTo = false;
     let goingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -206,7 +227,7 @@ export function useKeyboard(bridge: KeyboardBridge) {
          into it. */
       if (document.querySelector('.overlay.open, .rowmenu, .bulkpop')) return;
 
-      const current = rowOf(document.activeElement);
+      const current = cursorRow();
 
       if (e.key === 'Escape') {
         /* Escape gives back the outermost thing that can be given back: the
@@ -218,7 +239,7 @@ export function useKeyboard(bridge: KeyboardBridge) {
           store.clearSelection();
           return;
         }
-        if (current) { e.preventDefault(); current.blur(); }
+        if (current) { e.preventDefault(); remembered = null; current.blur(); }
         return;
       }
 
@@ -418,8 +439,12 @@ export function useKeyboard(bridge: KeyboardBridge) {
     };
 
     window.addEventListener('keydown', onKey);
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('pointerdown', onPointerDown, true);
     return () => {
       window.removeEventListener('keydown', onKey);
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('pointerdown', onPointerDown, true);
       stopGoing();
     };
   }, []);
