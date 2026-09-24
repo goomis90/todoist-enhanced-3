@@ -23,6 +23,15 @@ import type { ViewId } from '@/domain/types';
  * opened from — the dialog shell already returns focus to wherever it came
  * from, which is the behaviour the issue asked for, unwritten.
  *
+ * The mouse moves the cursor too. Todoist acts on the task the pointer is
+ * over, and people arrive with that habit: hovering a row and pressing `1`
+ * started a search instead, and only a row opened and closed again answered
+ * the keys — and then kept answering while the pointer moved on. So a row the
+ * pointer moves onto takes the focus, and gives it back when the pointer
+ * leaves it for somewhere that is not a row. It never takes it from a field
+ * being typed in, a dialog or a menu, and only a pointer that actually moved
+ * counts: a list scrolling under a still mouse is not a choice of row.
+ *
  * The cursor is not carried between pages. Restoring one on arrival would mean
  * taking focus on every navigation, which fights anyone tabbing through the
  * page for a keystroke they did not ask for; arriving on a page, the first
@@ -352,9 +361,46 @@ export function useKeyboard(bridge: KeyboardBridge) {
       to.openSearch(e.key);
     };
 
+    /** The row that has the focus because the pointer is on it, not the keys. */
+    let hovered: HTMLElement | null = null;
+    let lastX = NaN;
+    let lastY = NaN;
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.buttons !== 0) return;
+      if (e.clientX === lastX && e.clientY === lastY) return;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      if (document.querySelector('.overlay.open, .rowmenu')) return;
+      const active = document.activeElement as HTMLElement | null;
+      /* Only a focus that is nowhere, or on a row, is free to move: a field,
+         a button in the sidebar or anything in a dialog was put there on
+         purpose. A button inside a row is part of that row. */
+      const free = !active
+        || active === document.body
+        || (rowOf(active) !== null
+          && active.tagName !== 'INPUT'
+          && active.tagName !== 'TEXTAREA'
+          && !active.isContentEditable);
+      if (!free) return;
+
+      const row = rowOf(e.target as Element | null);
+      if (row) {
+        if (row.contains(active)) return;
+        row.focus({ preventScroll: true });
+        hovered = row;
+        return;
+      }
+      if (hovered && hovered === active) hovered.blur();
+      hovered = null;
+    };
+
     window.addEventListener('keydown', onKey);
+    document.addEventListener('pointermove', onPointerMove, { passive: true });
     return () => {
       window.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointermove', onPointerMove);
       stopGoing();
     };
   }, []);
