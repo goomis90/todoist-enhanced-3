@@ -836,6 +836,7 @@ export const fr: Record<TranslationKey, string> = {
   'keys.moveCursor': 'Tâche précédente et suivante',
   'keys.moveCursorAlt': 'Idem, sans quitter la rangée de repos',
   'keys.dropCursor': 'Quitter la liste',
+  'keys.extendSelection': 'Sélectionner aussi les tâches au-dessus ou en dessous',
   'keys.openTask': 'Ouvrir la tâche',
   'keys.setPriority': 'Priorité 1 à 4',
   'keys.select': 'Ajouter à la sélection',
