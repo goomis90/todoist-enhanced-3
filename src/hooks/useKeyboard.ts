@@ -125,6 +125,8 @@ const rowById = (id: string): HTMLElement | undefined =>
  */
 export type RowMenu = 'schedule' | 'move' | 'more';
 export const ROW_MENU_EVENT = 'enhanced:rowmenu';
+/** ⌘↑ / ⌘↓: the row is asked to move one place up (-1) or down (1). */
+export const ROW_MOVE_EVENT = 'enhanced:rowmove';
 
 /**
  * The same keys on a selection open the bulk bar's panels instead: T its Date,
@@ -275,6 +277,20 @@ export function useKeyboard(bridge: KeyboardBridge) {
           return;
         }
         if (current) { e.preventDefault(); remembered = null; current.blur(); }
+        return;
+      }
+
+      /* ⌘↑ and ⌘↓ move the task itself, as in Things: one place up or down
+         in its list, the cursor going with it. With no task under the
+         cursor the keys are the browser's own (the top or the end of the
+         page). */
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey
+        && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        if (!current) return;
+        e.preventDefault();
+        const id = current.dataset.taskId ?? '';
+        current.dispatchEvent(new CustomEvent(ROW_MOVE_EVENT, { detail: e.key === 'ArrowDown' ? 1 : -1 }));
+        keepCursor(id);
         return;
       }
 

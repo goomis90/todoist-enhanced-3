@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors,
   type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragStartEvent,
@@ -23,7 +23,7 @@ import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/comma
 import type { Item } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
 import { Icon } from '@/components/Icon';
-import type { RowList } from './RowList';
+import { type RowList, TASK_PLACE_EVENT, type TaskPlaceRequest } from './RowList';
 import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import { PRESS_HOLD_EVENT, projectRowAttr } from './ProjectRowSortable';
 import { byChildOrder, bySectionOrder, keyBetween, keysInOrder } from '@/domain/orderKey';
@@ -929,6 +929,27 @@ export function DragProvider({ children }: { children: ReactNode }) {
   const draggingTagName = draggingId?.startsWith(TAG_DRAG_PREFIX)
     ? draggingId.slice(TAG_DRAG_PREFIX.length)
     : null;
+
+  /* The keys' way to the same place a drop reaches (see TASK_PLACE_EVENT).
+     Read through a ref: the functions above close over this render's
+     snapshot, and the listener is registered once. */
+  const placeFromKeys = useRef<(request: TaskPlaceRequest) => void>(() => {});
+  placeFromKeys.current = ({ itemId, ontoId, list, subtask }) => {
+    const item = snapshot.items[itemId];
+    const row = snapshot.items[ontoId];
+    if (!item || !row) return;
+    if (subtask) { void reorderTask(item, row, list); return; }
+    if (list.viewKey) setViewPrefs(list.viewKey, { sort: 'manual' });
+    if (list.order === 'day') void orderInList(item, row, list);
+    else void reorderTask(item, row, list);
+  };
+  useEffect(() => {
+    const onPlace = (event: Event) => {
+      placeFromKeys.current((event as CustomEvent<TaskPlaceRequest>).detail);
+    };
+    window.addEventListener(TASK_PLACE_EVENT, onPlace);
+    return () => window.removeEventListener(TASK_PLACE_EVENT, onPlace);
+  }, []);
 
   return (
     <DndContext

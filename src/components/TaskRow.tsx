@@ -2,6 +2,8 @@ import { useDraggable } from '@dnd-kit/core';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './Icon';
 import { useRowTarget } from './dnd/useRowTarget';
+import { TASK_PLACE_EVENT, useRowList, type TaskPlaceRequest } from './dnd/RowList';
+import { ROW_MOVE_EVENT } from '@/hooks/useKeyboard';
 import { TaskActions } from './TaskActions';
 import { useT } from '@/hooks/useT';
 import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
@@ -62,6 +64,31 @@ export function TaskRow({
   dragRef, lifted = false,
 }: TaskRowProps) {
   const { setRowRef, nestOver, landing } = useRowTarget(item.id, { nestable });
+  const list = useRowList();
+  const rowEl = useRef<HTMLDivElement | null>(null);
+
+  /* ⌘↑ / ⌘↓ from the keyboard: this task takes the place of the one above or
+     below it — among the list's tasks, or among its parent's subtasks — the
+     same place a drop onto that neighbour would give it. */
+  useEffect(() => {
+    const node = rowEl.current;
+    if (!node) return;
+    const onMove = (event: Event) => {
+      if (!list) return;
+      const step = (event as CustomEvent<1 | -1>).detail;
+      const siblings = item.parent_id
+        ? childrenOf(item.parent_id).filter((task) => !task.checked).map((task) => task.id)
+        : list.ids;
+      const onto = siblings[siblings.indexOf(item.id) + step];
+      if (!onto) return;
+      const request: TaskPlaceRequest = {
+        itemId: item.id, ontoId: onto, list, subtask: Boolean(item.parent_id),
+      };
+      window.dispatchEvent(new CustomEvent(TASK_PLACE_EVENT, { detail: request }));
+    };
+    node.addEventListener(ROW_MOVE_EVENT, onMove);
+    return () => node.removeEventListener(ROW_MOVE_EVENT, onMove);
+  }, [item.id, item.parent_id, list, childrenOf]);
   const { t, locale } = useT();
   const snapshot = useStore((s) => s.snapshot);
   const hour12 = useStore((s) => s.prefs.hour12);
@@ -148,7 +175,7 @@ export function TaskRow({
   return (
     <>
       <div
-        ref={(node) => { setRowRef(node); dragRef?.(node); }}
+        ref={(node) => { rowEl.current = node; setRowRef(node); dragRef?.(node); }}
         className={`task${item.checked || settling ? ' done' : ''}${settling ? ' settling' : ''}${picked ? ' picked' : ''}${nestOver ? ' nesttarget' : ''}${landing ? ' landing' : ''}${lifted ? ' dragging' : ''}${gesture.className}`}
         role="button"
         tabIndex={0}
