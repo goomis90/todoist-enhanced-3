@@ -32,6 +32,8 @@ function BulkMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  /** Where the focus was when the panel opened, to give it back on closing. */
+  const opener = useRef<HTMLElement | null>(null);
 
   /* Opened from the keyboard, the panel takes the focus: its own field when it
      has one (Move's search already asks for it), otherwise its first choice. */
@@ -39,6 +41,7 @@ function BulkMenu({
     if (!name) return;
     const onAsk = (event: Event) => {
       if ((event as CustomEvent<BulkMenuName>).detail !== name) return;
+      opener.current = document.activeElement as HTMLElement | null;
       setOpen(true);
       window.requestAnimationFrame(() => {
         const panel = ref.current?.querySelector('.bulkpop');
@@ -73,18 +76,66 @@ function BulkMenu({
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
+      /* Closing takes the focused choice with it, and the cursor with that:
+         the next key then opened the search instead of acting on the tasks.
+         The focus goes back where it came from, when that is still there. */
+      const back = opener.current;
+      opener.current = null;
+      window.setTimeout(() => {
+        const lost = !document.activeElement || document.activeElement === document.body;
+        if (lost && back?.isConnected) back.focus({ preventScroll: true });
+      }, 0);
     };
   }, [open]);
 
+  /**
+   * The keyboard inside the panel. Up and Down walk every choice — the search
+   * field, the options, the tag boxes, the date field — and wrap; Enter and
+   * Space are the focused control's own. Escape closes the panel even from a
+   * field that keeps its other keys to itself (Move's search). Caught on the
+   * way down, before those fields see the key, and only for what is really in
+   * the panel: the date field's calendar is drawn elsewhere and has keys of
+   * its own.
+   */
+  const onPanelKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const panel = event.currentTarget;
+    const target = event.target as Node;
+    if (!panel.contains(target)) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+      return;
+    }
+    const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
+    if (step === 0) return;
+    const items = [...panel.querySelectorAll<HTMLElement>('input, button:not([disabled])')]
+      .filter((item) => item.offsetParent !== null);
+    if (items.length === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const at = items.indexOf(document.activeElement as HTMLElement);
+    const next = at < 0 ? (step > 0 ? 0 : items.length - 1) : (at + step + items.length) % items.length;
+    items[next].focus();
+    items[next].scrollIntoView({ block: 'nearest' });
+  };
+
   return (
     <div className="bulkmenu" ref={ref}>
-      <button className="btn sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button
+        className="btn sm"
+        aria-expanded={open}
+        onClick={() => {
+          if (!open) opener.current = document.activeElement as HTMLElement | null;
+          setOpen((v) => !v);
+        }}
+      >
         <Icon name={icon} size="sm" />
         {label}
         <Icon name="caret" size="sm" />
       </button>
       {open && (
-        <div className="popover bulkpop" role="menu" aria-label={label}>
+        <div className="popover bulkpop" role="menu" aria-label={label} onKeyDownCapture={onPanelKey}>
           {children(() => setOpen(false))}
         </div>
       )}
