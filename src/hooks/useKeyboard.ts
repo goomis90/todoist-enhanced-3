@@ -167,7 +167,10 @@ export function useKeyboard(bridge: KeyboardBridge) {
      */
     let remembered: string | null = null;
     const onFocusIn = (event: FocusEvent) => {
-      remembered = rowOf(event.target as Element | null)?.dataset.taskId ?? null;
+      const target = event.target as Element | null;
+      // A bulk panel opened from the keys is still about the same tasks.
+      if (target instanceof Element && target.closest('.bulkpop')) return;
+      remembered = rowOf(target)?.dataset.taskId ?? null;
     };
     const onPointerDown = () => { remembered = null; };
     /** The row the keys are for: the focused one, or the one the focus fell from. */

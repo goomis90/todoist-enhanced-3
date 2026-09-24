@@ -34,6 +34,13 @@ function BulkMenu({
   const ref = useRef<HTMLDivElement>(null);
   /** Where the focus was when the panel opened, to give it back on closing. */
   const opener = useRef<HTMLElement | null>(null);
+  /** Closes the panel and, from the keys, hands the focus straight back. */
+  const closeFromKeys = () => {
+    const back = opener.current;
+    if (back?.isConnected) back.focus({ preventScroll: true });
+    setOpen(false);
+  };
+
   /** Opened by a key, so the panel takes the focus once it is drawn. */
   const focusOnOpen = useRef(false);
 
@@ -93,7 +100,7 @@ function BulkMenu({
       }
       if (e.key !== 'Escape') return;
       e.stopPropagation();
-      setOpen(false);
+      closeFromKeys();
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -128,7 +135,7 @@ function BulkMenu({
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
-      setOpen(false);
+      closeFromKeys();
       return;
     }
     const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
