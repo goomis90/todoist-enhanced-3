@@ -38,6 +38,18 @@ export const row = (page: Page, title: string): Locator =>
 export const titles = (page: Page): Promise<string[]> =>
   page.locator('.screen.active [data-task-id] .ttitle').allInnerTexts();
 
+/**
+ * The titles of the one-off tasks on the page, top to bottom. A repeating
+ * task ticked off rolls on to its next date rather than closing, so it has
+ * nothing for an undo to reopen; journeys about undo leave those out. Which
+ * demo tasks come first depends on the time of day.
+ */
+export const oneOffTitles = (page: Page): Promise<string[]> =>
+  page.locator('.screen.active [data-task-id]')
+    .filter({ hasNot: page.locator('.repeatdot') })
+    .locator('.ttitle')
+    .allInnerTexts();
+
 /** Goes to a page by its address, the way a sidebar click does, without reloading. */
 export async function go(page: Page, hash: string): Promise<void> {
   await page.evaluate((to) => { window.location.hash = to; }, hash);

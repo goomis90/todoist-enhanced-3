@@ -1,7 +1,7 @@
-import { expect, row, rows, test, titles } from './demo';
+import { expect, oneOffTitles, row, test } from './demo';
 
 test('tick a task, then ⌘Z brings it back', async ({ demo: page }) => {
-  const [title] = await titles(page);
+  const [title] = await oneOffTitles(page);
   await row(page, title).getByRole('checkbox', { name: 'Complete task' }).click();
   await expect(row(page, title)).toHaveCount(0);
 
@@ -11,7 +11,7 @@ test('tick a task, then ⌘Z brings it back', async ({ demo: page }) => {
 });
 
 test('select three tasks, E, then one ⌘Z restores all three (#80)', async ({ demo: page }) => {
-  const picked = (await titles(page)).slice(0, 3);
+  const picked = (await oneOffTitles(page)).slice(0, 3);
   for (const title of picked) {
     await row(page, title).click({ modifiers: ['ControlOrMeta'] });
   }
@@ -25,7 +25,7 @@ test('select three tasks, E, then one ⌘Z restores all three (#80)', async ({ d
 });
 
 test('delete a task, then Undo within 8 s keeps it (#77)', async ({ demo: page }) => {
-  const [title] = await titles(page);
+  const [title] = await oneOffTitles(page);
   const target = row(page, title);
   await target.hover();
   await target.getByRole('button', { name: 'More actions' }).click();
