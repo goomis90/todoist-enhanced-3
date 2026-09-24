@@ -64,3 +64,14 @@ test('a row menu on a short board stays inside the board (#87)', async ({ demo: 
     await last.hover();
   }
 });
+
+test('a priority key sets every task of a selection', async ({ demo: page }) => {
+  const picked = (await titles(page)).slice(0, 3);
+  for (const title of picked) await row(page, title).click({ modifiers: ['ControlOrMeta'] });
+  await expect(page.getByRole('toolbar')).toContainText('3 selected');
+  await page.keyboard.press('2');
+  for (const title of picked) {
+    await expect(row(page, title).getByRole('checkbox', { name: 'Complete task' })).toHaveClass(/\bp2\b/);
+  }
+  await expect(page.locator('.toast')).toContainText('3 tasks set to P2');
+});
