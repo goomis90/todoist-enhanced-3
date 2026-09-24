@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors,
   type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragStartEvent,
@@ -252,12 +252,18 @@ export function DragProvider({ children }: { children: ReactNode }) {
    * how the project's menu opens.
    */
   const phone = usePhoneBehaviour();
+  /* A fresh object here every render (any store update — including a
+     Planning filter toggle — re-renders this provider) used to hand
+     useSensor a new activationConstraint each time. Stabilised, so the
+     pointer sensor it builds keeps its identity across unrelated renders
+     instead of the browser being left with a half-detached listener until
+     the next full page load. */
+  const activationConstraint = useMemo(
+    () => (phone ? { delay: HOLD_MS, tolerance: HOLD_SLOP_PX } : { distance: 6 }),
+    [phone],
+  );
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: phone
-        ? { delay: HOLD_MS, tolerance: HOLD_SLOP_PX }
-        : { distance: 6 },
-    }),
+    useSensor(PointerSensor, { activationConstraint }),
   );
 
   /**
