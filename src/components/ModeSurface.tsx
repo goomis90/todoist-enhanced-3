@@ -40,6 +40,13 @@ interface ModeSurfaceProps {
     onAddTask?: () => void;
     /** A day column knows its capacity, and shows its load against it. */
     capacityMinutes?: number | null;
+    /** Same meaning as TaskGroup's accent: a callout wash for the whole column. */
+    accent?: 'late' | 'quick' | 'deadline' | 'today' | 'tomorrow';
+    /** Overrides the surface-wide showProject for just this column — Planning's
+        Today/Tomorrow name a task's project; its own project column doesn't. */
+    showProject?: boolean;
+    /** Same meaning as TaskGroup's own: a short flagged line under the heading, alongside the load percentage. */
+    warning?: string;
   }>;
 }
 
@@ -184,16 +191,20 @@ function BoardSurface(props: ModeSurfaceProps) {
           ].filter((part): part is string => part !== null);
           // An empty column has nothing to measure; "0 %" under it is noise.
           if (column.items.length === 0) parts.length = 0;
+          const accentClass = column.accent ? ` accent-${column.accent}` : '';
           const body = (isOver: boolean) => (
-            <section className={`col${isOver ? ' dropping' : ''}`}>
+            <section className={`col${isOver ? ' dropping' : ''}${accentClass}`}>
             <div className="chead">
               <div className="chead-title">
                 <strong>{column.title}</strong>
                 <small>{t('metrics.tasks', { count: column.items.length })}</small>
               </div>
             </div>
-            {parts.length > 0 && (
-              <p className={`cload${load.level === 'over' ? ' over' : ''}`}>{parts.join(' · ')}</p>
+            {(parts.length > 0 || column.warning) && (
+              <p className={`cload${load.level === 'over' ? ' over' : ''}`}>
+                {parts.join(' · ')}
+                {column.warning && <span className="cload-warning">{column.warning}</span>}
+              </p>
             )}
             {column.items.map((item) => (
               <DraggableTask
@@ -201,7 +212,7 @@ function BoardSurface(props: ModeSurfaceProps) {
                 item={item}
                 childrenOf={props.childrenOf}
                 onOpen={props.onOpen}
-                showProject={props.showProject}
+                showProject={column.showProject ?? props.showProject}
                 surface="card"
               />
             ))}

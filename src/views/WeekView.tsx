@@ -11,7 +11,7 @@ import { useStore } from '@/store/store';
 import { useConfirm } from '@/components/overlays/Confirm';
 import { viewPrefs } from '@/store/prefs';
 import { applyFilters, rootItems, sortItems } from '@/store/selectors';
-import { anytimeItems, bucketOf, groupWeek, weekItems } from '@/domain/views';
+import { anytimeItems, bucketOf, groupWeek, groupWeekPersonal, weekItems } from '@/domain/views';
 import { summariseLoad, weeklyCapacity } from '@/domain/load';
 import { toApiDate } from '@/domain/dates';
 import { dueForDate } from '@/domain/recurrence';
@@ -70,6 +70,10 @@ function WeekBody({
   const { snapshot, items, childrenOf } = useData();
   const prefs = useStore((s) => s.prefs);
   const updateTask = useStore((s) => s.updateTask);
+  /* Board columns hide when empty, same as list groups — except while a task
+     is actually being dragged, when an empty Quick/Today column has to stay
+     put to be a place to drop it. Matches TaskGroup's own dragging check. */
+  const dragging = useStore((s) => s.draggingTaskId !== null);
   const toast = useStore((s) => s.toast);
   const confirm = useConfirm();
   /* Two pages, two sets of display preferences: a filter set on Today has no
@@ -80,11 +84,16 @@ function WeekBody({
   const scoped = useMemo(() => {
     const roots = rootItems(items);
     const now = new Date();
+    const todayStr = toApiDate(now);
     const inScope =
       scope === 'today'
         ? roots.filter((i) => {
             const bucket = bucketOf(i, now);
-            return bucket === 'overdue' || bucket === 'today';
+            // Widened on purpose: a task can carry today's deadline while due
+            // next week (or never), and would otherwise never reach the page
+            // at all — groupWeek/groupWeekPersonal decide from here which
+            // bucket it actually lands in.
+            return bucket === 'overdue' || bucket === 'today' || i.deadline?.date === todayStr;
           })
         : scope === 'anytime'
           ? anytimeItems(roots, now)
@@ -93,8 +102,17 @@ function WeekBody({
   }, [items, current.filters, snapshot, childrenOf, scope]);
 
   const groups = useMemo(
-    () => groupWeek(scoped, new Date(), prefs.showQuickGroup),
-    [scoped, prefs.showQuickGroup],
+    () => groupWeek(scoped, new Date(), prefs.showQuickGroup, scope === 'today'),
+    [scoped, prefs.showQuickGroup, scope],
+  );
+
+  /* Today's own alternative grouping: only ever computed on the Today page,
+     never on My week — a personal priority/routine split describes a day,
+     not a week that already has its own fixed order. */
+  const personal = scope === 'today' && current.group === 'personal';
+  const personalGroups = useMemo(
+    () => (personal ? groupWeekPersonal(scoped, new Date(), prefs.showQuickGroup, true) : null),
+    [personal, scoped, prefs.showQuickGroup],
   );
 
   /* Today is measured against today's hours, not the week's. A day page
@@ -151,10 +169,13 @@ function WeekBody({
      today are neither, so an empty one is just noise. */
   const weekColumns = useMemo(() => {
     const today = [
-      { id: 'overdue', title: t('group.overdue'), items: groups.overdue },
+      { id: 'overdue', title: t('group.overdue'), items: groups.overdue, accent: 'late' as const },
       ...(prefs.showQuickGroup
         ? [{ id: 'quick', title: t('group.quick'), items: groups.quick,
-            dropTarget: { kind: 'quick' as const } }]
+            dropTarget: { kind: 'quick' as const }, accent: 'quick' as const }]
+        : []),
+      ...(scope === 'today'
+        ? [{ id: 'deadline', title: t('group.deadline'), items: groups.deadline, accent: 'deadline' as const }]
         : []),
       { id: 'untimed', title: t('group.untimed'), items: groups.untimed,
         dropTarget: { kind: 'today' as const } },
@@ -167,12 +188,41 @@ function WeekBody({
     const columns =
       scope === 'today' ? today : scope === 'anytime' ? anytime : [...today, ...anytime];
     return columns
-      .filter((column) => column.items.length > 0 || column.dropTarget)
+      .filter((column) => column.items.length > 0 || (column.dropTarget && dragging))
       .map((column) => ({
         ...column, items: sortItems(column.items, current.sort, childrenOf, 'day', snapshot),
       }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, scope]);
+  }, [groups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, scope, dragging]);
+
+  /* Same shape as weekColumns, for the Personal grouping: overdue and quick
+     unchanged, "Today" replaced by four boards. */
+  const personalWeekColumns = useMemo(() => {
+    if (!personalGroups) return [];
+    const today = toApiDate(new Date());
+    const columns = [
+      { id: 'overdue', title: t('group.overdue'), items: personalGroups.overdue, accent: 'late' as const },
+      ...(prefs.showQuickGroup
+        ? [{ id: 'quick', title: t('group.quick'), items: personalGroups.quick,
+            dropTarget: { kind: 'quick' as const }, accent: 'quick' as const }]
+        : []),
+      { id: 'deadline', title: t('group.deadline'), items: groups.deadline, accent: 'deadline' as const },
+      { id: 'p1', title: t('common.p1'), items: personalGroups.p1,
+        onAddTask: () => onAddTaskTo({ date: today, priority: 1 }) },
+      { id: 'p2', title: t('common.p2'), items: personalGroups.p2,
+        onAddTask: () => onAddTaskTo({ date: today, priority: 2 }) },
+      { id: 'p3', title: t('common.p3'), items: personalGroups.p3,
+        onAddTask: () => onAddTaskTo({ date: today, priority: 3 }) },
+      { id: 'routines', title: t('group.routines'), items: personalGroups.routines },
+      { id: 'timed', title: t('group.timed'), items: personalGroups.timed },
+    ];
+    return columns
+      .filter((column) => column.items.length > 0 || ('dropTarget' in column && column.dropTarget && dragging))
+      .map((column) => ({
+        ...column, items: sortItems(column.items, current.sort, childrenOf, 'day', snapshot),
+      }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personalGroups, groups.deadline, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, onAddTaskTo, dragging]);
 
   return (
     <div className="page">
@@ -183,7 +233,11 @@ function WeekBody({
             <DisplayMenu
               viewKey={viewKey}
               modes={['list', 'board']}
-              groups={['none', 'project', 'priority', 'label', 'estimate']}
+              groups={
+                scope === 'today'
+                  ? ['none', 'personal', 'project', 'priority', 'label', 'estimate']
+                  : ['none', 'project', 'priority', 'label', 'estimate']
+              }
             />
             <button className="btn accent" onClick={onInsights}>
               <Icon name="trend" />
@@ -196,7 +250,7 @@ function WeekBody({
       />
 
 
-      {current.mode === 'list' && current.group === 'none' ? (
+      {current.mode === 'list' && (current.group === 'none' || current.group === 'personal') ? (
         <div className="mode">
           {scope !== 'anytime' && (
           <>
@@ -236,24 +290,86 @@ function WeekBody({
             />
           )}
 
-          <TaskGroup
-            title={t('group.untimed')}
-            items={sortedGroup(groups.untimed)}
-            childrenOf={childrenOf}
-            onOpen={onOpen}
-            reorderable={byHand}
-            viewKey={viewKey}
-            dropTarget={{ kind: 'today' }}
-            onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
-          />
+          {/* Deadline is its own field, independent of due date — a task can
+              carry it while due next week, so this reads from every root
+              item, not just what's already scoped to today/overdue. Today
+              page only: a week-wide deadline callout would just repeat
+              itself seven times over. */}
+          {scope === 'today' && (
+            <TaskGroup
+              title={t('group.deadline')}
+              items={sortedGroup(groups.deadline)}
+              childrenOf={childrenOf}
+              onOpen={onOpen}
+              accent="deadline"
+            />
+          )}
 
-          <TaskGroup
-            title={t('group.timed')}
-            items={groups.timed}
-            childrenOf={childrenOf}
-            onOpen={onOpen}
-            onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
-          />
+          {personal && personalGroups ? (
+            <>
+              <TaskGroup
+                title={t('common.p1')}
+                items={sortedGroup(personalGroups.p1)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                onAddTask={() => onAddTaskTo({ ...placementFor({ kind: 'today' }), priority: 1 })}
+              />
+              <TaskGroup
+                title={t('common.p2')}
+                items={sortedGroup(personalGroups.p2)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                onAddTask={() => onAddTaskTo({ ...placementFor({ kind: 'today' }), priority: 2 })}
+              />
+              <TaskGroup
+                title={t('common.p3')}
+                items={sortedGroup(personalGroups.p3)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                onAddTask={() => onAddTaskTo({ ...placementFor({ kind: 'today' }), priority: 3 })}
+              />
+              <TaskGroup
+                title={t('group.routines')}
+                items={sortedGroup(personalGroups.routines)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+              />
+              <TaskGroup
+                title={t('group.timed')}
+                items={personalGroups.timed}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
+              />
+            </>
+          ) : (
+            <>
+              <TaskGroup
+                title={t('group.untimed')}
+                items={sortedGroup(groups.untimed)}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                reorderable={byHand}
+                viewKey={viewKey}
+                dropTarget={{ kind: 'today' }}
+                onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
+              />
+
+              <TaskGroup
+                title={t('group.timed')}
+                items={groups.timed}
+                childrenOf={childrenOf}
+                onOpen={onOpen}
+                onAddTask={() => onAddTaskTo(placementFor({ kind: 'today' }))}
+              />
+            </>
+          )}
           </>
           )}
 
@@ -284,7 +400,9 @@ function WeekBody({
           /* Only when nothing else was asked for: a board grouped by project
              is a board of projects, not of the week's buckets. */
           boardColumns={
-            current.mode === 'board' && current.group === 'none' ? weekColumns : undefined
+            current.mode === 'board' && (current.group === 'none' || current.group === 'personal')
+              ? (personal ? personalWeekColumns : weekColumns)
+              : undefined
           }
           addToGroup={(key) => {
             const place = addToGroupFor(current.group, key);

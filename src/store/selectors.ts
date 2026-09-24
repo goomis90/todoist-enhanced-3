@@ -268,8 +268,21 @@ export function groupItems(
         break;
       case 'label': {
         const own = item.labels.filter((l) => !l.startsWith('est-'));
-        if (own.length === 0) push('none', labels.noLabel, item);
-        else for (const label of own) push(label, label, item);
+        if (own.length === 0) {
+          push('none', labels.noLabel, item);
+          break;
+        }
+        // A task with several labels shows up only once, under whichever of
+        // its labels sits highest on the Tags list (lowest item_order) —
+        // not once per label. Reuses the same name-keyed lookup the bucket
+        // ordering below already builds (labelOrder), since snapshot.labels
+        // is keyed by id while a task's own labels are names.
+        const primary = own.reduce((best, current) => {
+          const bestOrder = labelOrder?.get(best.toLowerCase()) ?? Number.POSITIVE_INFINITY;
+          const currentOrder = labelOrder?.get(current.toLowerCase()) ?? Number.POSITIVE_INFINITY;
+          return currentOrder < bestOrder ? current : best;
+        });
+        push(primary, primary, item);
         break;
       }
       case 'estimate': {
@@ -442,6 +455,24 @@ export function projectTree(snapshot: Snapshot): WorkspaceGroup[] {
     }))
     // The personal workspace leads, matching Todoist's own ordering.
     .sort((a, b) => (a.workspaceId === null ? -1 : b.workspaceId === null ? 1 : 0));
+}
+
+/**
+ * The sidebar's project order, flattened: every real project (not a folder —
+ * nothing lives directly in one), workspace by workspace, depth first. What
+ * Planning's project boards and its project filter both read, so the two
+ * always agree on order and on which projects exist.
+ */
+export function orderedProjects(snapshot: Snapshot): Project[] {
+  const out: Project[] = [];
+  const walk = (nodes: ProjectNode[]) => {
+    for (const node of nodes) {
+      if (!node.project.is_folder) out.push(node.project);
+      walk(node.children);
+    }
+  };
+  for (const group of projectTree(snapshot)) walk(group.roots);
+  return out;
 }
 
 /** How many open tasks each project holds, for the sidebar counters. */

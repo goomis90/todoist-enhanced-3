@@ -27,24 +27,28 @@ export const createTasksMoveSlice: Slice<TasksMoveSlice> = (_set, get) => ({
       return { ...snapshot, items: { ...snapshot.items, [id]: { ...current, ...fields } } };
     };
 
-    if (mutation.update) {
-      await get().apply([updateItem(id, mutation.update)], patch(mutation.update));
-    } else if (mutation.move) {
-      // One destination, and a move to a project or a section lands at its top level.
-      await get().apply(
-        [moveItem(id, moveArgs(mutation.move))],
-        patch({ ...mutation.move, parent_id: null }),
-      );
+    // Both can be present (a Planning-view drop clearing Today's date while
+    // moving the project), so this is no longer an either/or.
+    const commands: Command[] = [];
+    if (mutation.update) commands.push(updateItem(id, mutation.update));
+    if (mutation.move) commands.push(moveItem(id, moveArgs(mutation.move)));
+    if (commands.length > 0) {
+      await get().apply(commands, patch({
+        ...(mutation.update ?? {}),
+        ...(mutation.move ? { ...mutation.move, parent_id: null } : {}),
+      }));
     }
 
     /* A move is undone by a move, the same way DragProvider undoes a drop:
        `item_update` takes no project or section, so sending them there put the
        task back on screen and left it where it was on the server. */
-    const undo = !mutation.move
-      ? updateItem(id, { due: before.due, labels: before.labels })
-      : before.parent_id
+    const undo: Command[] = [];
+    if (mutation.update) undo.push(updateItem(id, { due: before.due, labels: before.labels }));
+    if (mutation.move) {
+      undo.push(before.parent_id
         ? moveItem(id, { parent_id: before.parent_id })
-        : moveItem(id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
+        : moveItem(id, moveArgs({ project_id: before.project_id, section_id: before.section_id })));
+    }
 
     /* A null destination asks for no toast. In a review the row answering the
        question is the feedback — it leaves the list, or its button lights up —
@@ -52,7 +56,7 @@ export const createTasksMoveSlice: Slice<TasksMoveSlice> = (_set, get) => ({
     if (destination === null) return;
     get().toast(
       translate(get().prefs.locale, 'task.movedTo', { destination }),
-      () => void get().apply([undo], patch(before)),
+      () => void get().apply(undo, patch(before)),
     );
   },
   /**
@@ -68,11 +72,15 @@ export const createTasksMoveSlice: Slice<TasksMoveSlice> = (_set, get) => ({
         const item = snapshot.items[id];
         if (!item) return null;
         const mutation = dropMutation(item, target);
-        if (!mutation?.update) return null;
+        if (!mutation?.update && !mutation?.move) return null;
         return {
           id,
           update: mutation.update,
-          before: { due: item.due, labels: item.labels },
+          move: mutation.move,
+          before: {
+            due: item.due, labels: item.labels,
+            project_id: item.project_id, section_id: item.section_id,
+          },
         };
       })
       .filter((change): change is NonNullable<typeof change> => change !== null);
@@ -84,9 +92,19 @@ export const createTasksMoveSlice: Slice<TasksMoveSlice> = (_set, get) => ({
     ) => (current: Snapshot): Snapshot =>
       changes.reduce((acc, change) => patchItem(acc, change.id, fields(change)), current);
 
+    // Same both-at-once fix as sendTo: a Planning bulk drop out of Today can
+    // clear the date and change the project for the same task.
+    const commands: Command[] = [];
+    for (const change of changes) {
+      if (change.update) commands.push(updateItem(change.id, change.update));
+      if (change.move) commands.push(moveItem(change.id, moveArgs(change.move)));
+    }
     await get().apply(
-      changes.map((change) => updateItem(change.id, change.update)),
-      patchAll((change) => change.update),
+      commands,
+      patchAll((change) => ({
+        ...(change.update ?? {}),
+        ...(change.move ? { ...change.move, parent_id: null } : {}),
+      })),
     );
 
     if (destination === null) return;
@@ -94,10 +112,23 @@ export const createTasksMoveSlice: Slice<TasksMoveSlice> = (_set, get) => ({
       translate(get().prefs.locale, 'task.movedManyTo', {
         count: changes.length, destination,
       }),
-      () => void get().apply(
-        changes.map((change) => updateItem(change.id, change.before)),
-        patchAll((change) => change.before as unknown as Record<string, unknown>),
-      ),
+      () => {
+        const undo: Command[] = [];
+        for (const change of changes) {
+          if (change.update) {
+            undo.push(updateItem(change.id, { due: change.before.due, labels: change.before.labels }));
+          }
+          if (change.move) {
+            undo.push(moveItem(change.id, moveArgs({
+              project_id: change.before.project_id, section_id: change.before.section_id,
+            })));
+          }
+        }
+        void get().apply(
+          undo,
+          patchAll((change) => change.before as unknown as Record<string, unknown>),
+        );
+      },
     );
   },
   async updateMany(ids, fieldsFor, message) {

@@ -137,7 +137,7 @@ export function mergeSynced(
 
 /** The views that make sense as a landing page: no view that needs an id. */
 export const HOME_VIEWS = [
-  'week', 'today', 'inbox', 'upcoming', 'someday', 'dashboard', 'insights', 'labels',
+  'week', 'today', 'inbox', 'upcoming', 'someday', 'dashboard', 'insights', 'labels', 'planning',
 ] as const satisfies readonly ViewId[];
 
 export type HomeView = (typeof HOME_VIEWS)[number];

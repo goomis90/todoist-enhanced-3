@@ -269,7 +269,9 @@ export type ViewId =
   | 'label'
   | 'labels'
   | 'matrix'
-  | 'insights';
+  | 'insights'
+  /** Today plus every project, each its own board/group, side by side. */
+  | 'planning';
 
 export type DisplayMode = 'list' | 'board' | 'focus';
 
@@ -286,7 +288,9 @@ export type GroupKey =
   | 'section'
   | 'priority'
   | 'label'
-  | 'estimate';
+  | 'estimate'
+  /** Today's own priority/routine split — only ever offered on the Today page. */
+  | 'personal';
 
 export type SortKey =
   | 'manual'
@@ -310,6 +314,13 @@ export interface ViewFilters {
   showSubtasks: boolean;
   /** A project page only: also lists the project's completed tasks. */
   showCompleted: boolean;
+  /**
+   * Planning only: hides a dated task from its project column, since Today
+   * and Tomorrow already show it there. Deliberately separate from
+   * `includeScheduled` above, which also hides it from Today/Tomorrow
+   * themselves — exactly the two places a date is the point.
+   */
+  hideScheduledInProjects: boolean;
 }
 
 export const defaultFilters = (): ViewFilters => ({
@@ -321,6 +332,7 @@ export const defaultFilters = (): ViewFilters => ({
   includeScheduled: true,
   showSubtasks: true,
   showCompleted: false,
+  hideScheduledInProjects: false,
 });
 
 export interface ViewPrefs {

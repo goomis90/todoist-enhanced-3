@@ -471,6 +471,7 @@ export function Sidebar({
           {navItem('week', 'week', 'nav.week', counts.week, { kind: 'anytime' })}
           {navItem('upcoming', 'upcoming', 'nav.upcoming', counts.upcoming)}
           {navItem('someday', 'someday', 'nav.someday', counts.someday, { kind: 'someday' })}
+          {navItem('planning', 'board', 'nav.planning', 0)}
           {navItem('review', 'check', 'nav.review', 0)}
           {eisenhowerEnabled && navItem('matrix', 'dashboard', 'nav.matrix', 0)}
           {navItem('labels', 'tag', 'nav.labels', 0)}

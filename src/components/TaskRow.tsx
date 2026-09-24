@@ -44,6 +44,9 @@ export const COMPLETION_LINGER_MS = 420;
 
 const ShowSubtasks = createContext(true);
 
+/** How long an undated task sits before it's flagged as going stale. */
+const STALE_AFTER_DAYS = 14;
+
 export const SubtasksProvider = ShowSubtasks.Provider;
 
 interface TaskRowProps {
@@ -180,6 +183,15 @@ export function TaskRow({
   const deadline = deadlineDate(item);
   const late = isOverdue(item);
   const project = snapshot.projects[item.project_id];
+  /* A task with no date sitting in a project isn't wrong the way an overdue
+     one is — nobody committed it to a day — but if nobody's touched it in a
+     while either, it's worth a quiet flag rather than discovering a few
+     hundred of them at once during a cleanup. Dated tasks are excluded: a
+     date already says when it's meant to happen. */
+  const staleDays = !item.due && item.added_at
+    ? Math.floor((Date.now() - new Date(item.added_at).getTime()) / 86400000)
+    : null;
+  const stale = staleDays !== null && staleDays >= STALE_AFTER_DAYS;
 
   /**
    * The DOM is the final truth about range order.
@@ -357,6 +369,13 @@ export function TaskRow({
               <span className="deadline">
                 <Icon name="deadline" />
                 {formatRelativeDay(deadline, locale)}
+              </span>
+            )}
+
+            {stale && (
+              <span className="stale" title={t('task.staleHint', { days: staleDays as number })}>
+                <Icon name="clock" size="sm" />
+                {t('task.staleAge', { days: staleDays as number })}
               </span>
             )}
 

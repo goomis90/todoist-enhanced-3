@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors,
   type CollisionDetection, type DragEndEvent, type DragMoveEvent, type DragStartEvent,
@@ -19,7 +19,7 @@ import { SUBTASK_DRAG_PREFIX } from '@/components/TaskRow';
 import {
   TAG_DRAG_PREFIX, TAG_DROP_PREFIX, TAG_TOP_DROP_ID, tagOrderFor,
 } from '@/components/dnd/DraggableTag';
-import { updateItem, moveItem, reorderItems, updateDayOrders } from '@/api/commands';
+import { updateItem, moveItem, reorderItems, updateDayOrders, type Command } from '@/api/commands';
 import type { Item } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
 import { Icon } from '@/components/Icon';
@@ -254,12 +254,18 @@ export function DragProvider({ children }: { children: ReactNode }) {
    * how the project's menu opens.
    */
   const phone = usePhoneBehaviour();
+  /* A fresh object here every render (any store update — including a
+     Planning filter toggle — re-renders this provider) used to hand
+     useSensor a new activationConstraint each time. Stabilised, so the
+     pointer sensor it builds keeps its identity across unrelated renders
+     instead of the browser being left with a half-detached listener until
+     the next full page load. */
+  const activationConstraint = useMemo(
+    () => (phone ? { delay: HOLD_MS, tolerance: HOLD_SLOP_PX } : { distance: 6 }),
+    [phone],
+  );
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: phone
-        ? { delay: HOLD_MS, tolerance: HOLD_SLOP_PX }
-        : { distance: 6 },
-    }),
+    useSensor(PointerSensor, { activationConstraint }),
   );
 
   /**
@@ -284,6 +290,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       case 'someday':
         return t('drop.someday');
       case 'project':
+      case 'planning-project':
         return t('drop.toProject', { name: snapshot.projects[target.projectId]?.name ?? '' });
       /* A section drop names the section; a drop above the first one is a drop
          on the project, and says so. */
@@ -309,6 +316,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
       case 'someday': return t('nav.someday');
       case 'label': return `@${target.label}`;
       case 'project': return snapshot.projects[target.projectId]?.name ?? '';
+      case 'planning-project': return snapshot.projects[target.projectId]?.name ?? '';
       case 'section': {
         const project = snapshot.projects[target.projectId]?.name ?? '';
         const section = target.sectionId ? snapshot.sections[target.sectionId]?.name : null;
@@ -651,24 +659,37 @@ export function DragProvider({ children }: { children: ReactNode }) {
       items: { ...snap.items, [item.id]: { ...snap.items[item.id], ...fields } as Item },
     });
 
-    if (mutation.update) {
-      await apply([updateItem(item.id, mutation.update)], patch(mutation.update));
-    } else if (mutation.move) {
-      // A move to a project or a section lands at its top level.
-      await apply([moveItem(item.id, moveArgs(mutation.move))], patch({ ...mutation.move, parent_id: null }));
+    // Both can be present (a Planning-view drop clearing Today's date while
+    // moving the project); the two used to be an either/or, since nothing
+    // before needed both. Each still applies as its own command, in the
+    // order below, so the visible effect is order-independent either way.
+    const commands: Command[] = [];
+    if (mutation.update) commands.push(updateItem(item.id, mutation.update));
+    if (mutation.move) commands.push(moveItem(item.id, moveArgs(mutation.move)));
+    if (commands.length > 0) {
+      await apply(commands, patch({
+        ...(mutation.update ?? {}),
+        ...(mutation.move ? { ...mutation.move, parent_id: null } : {}),
+      }));
     }
 
     /* A move is undone by a move. `item_update` does not take a project or a
        section, so undoing a drop between columns used to put the card back on
        screen and leave it where it was dropped on the server. */
-    const undo = !mutation.move
-      ? updateItem(item.id, { due: before.due, labels: before.labels })
-      : before.parent_id
-        ? moveItem(item.id, { parent_id: before.parent_id })
-        : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id }));
-    toast(whatHappened(target) ?? item.content, () => {
-      void apply([undo], patch(before));
-    });
+    const undoCommands: Command[] = [];
+    if (mutation.update) undoCommands.push(updateItem(item.id, { due: before.due, labels: before.labels }));
+    if (mutation.move) {
+      undoCommands.push(
+        before.parent_id
+          ? moveItem(item.id, { parent_id: before.parent_id })
+          : moveItem(item.id, moveArgs({ project_id: before.project_id, section_id: before.section_id })),
+      );
+    }
+    if (undoCommands.length > 0) {
+      toast(whatHappened(target) ?? item.content, () => {
+        void apply(undoCommands, patch(before));
+      });
+    }
   }
 
   /**

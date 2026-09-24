@@ -43,6 +43,14 @@
   --late-wash-deep:#ffefec;
   --late-badge:#f4c7c2;
   --late-tint:#fdf8f6;
+  --deadline:#7c3aed;
+  --deadline-dark:#6425d0;
+  --deadline-wash:#f6f2fe;
+  --deadline-badge:#ddd0f8;
+  --planning-today:#2f9e57;
+  --planning-today-wash:#f1faf4;
+  --planning-tomorrow:#2f7dce;
+  --planning-tomorrow-wash:#f0f7fd;
 
   --p1:#d1453b; --p2:#eb8909; --p3:#246fe0; --p4:#808080;
   --ok:#2f7d32; --ok-soft:#d7e7d7;
@@ -165,6 +173,14 @@
   --late-wash-deep:#34211f;
   --late-badge:#5c302c;
   --late-tint:#271f1e;
+  --deadline:#a78bfa;
+  --deadline-dark:#c4b5fd;
+  --deadline-wash:#251f38;
+  --deadline-badge:#4c3575;
+  --planning-today:#3fb56c;
+  --planning-today-wash:#1c2b21;
+  --planning-tomorrow:#4a90d9;
+  --planning-tomorrow-wash:#1a2733;
 
   --p1:#e8625a; --p2:#f09a2a; --p3:#5592f0; --p4:#8c8c8c;
   --ok:#3f9143; --ok-soft:#1f3321;
@@ -765,6 +781,7 @@ ul{margin:0;padding:0;list-style:none}
 .meta .repeatdot,.meta .hash{display:inline-grid;place-items:center}
 .meta .late{color:var(--late)}
 .meta .deadline{color:var(--deadline)}
+.meta .stale{color:var(--faint)}
 .meta .at{color:var(--info)}
 /* A tag wears its own colour: the glyph in it, the chip a wash of it. Todoist
    holds a colour for every tag and the row is where it earns its keep. */

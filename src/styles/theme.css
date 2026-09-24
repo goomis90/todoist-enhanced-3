@@ -420,6 +420,12 @@
 .group.accent-late .gheadblock{border-bottom-color:var(--late)}
 .group.accent-quick .gname{color:var(--p3)}
 .group.accent-quick .gheadblock{border-bottom-color:var(--p3)}
+.group.accent-deadline .gname{color:var(--deadline-dark)}
+.group.accent-deadline .gheadblock{border-bottom-color:var(--deadline)}
+.group.accent-today .gname{color:var(--planning-today)}
+.group.accent-today .gheadblock{border-bottom-color:var(--planning-today)}
+.group.accent-tomorrow .gname{color:var(--planning-tomorrow)}
+.group.accent-tomorrow .gheadblock{border-bottom-color:var(--planning-tomorrow)}
 
 /* A heavier tick reads better at this size. */
 .check .ic{stroke-width:2.6}
@@ -774,7 +780,10 @@
 
 /* ---------- Behind schedule and Quick read as callouts ---------- */
 .group.accent-late,
-.group.accent-quick{
+.group.accent-quick,
+.group.accent-deadline,
+.group.accent-today,
+.group.accent-tomorrow{
   padding:var(--s4) 20px;
   /* The bleed covers the padding, so the text inside lands on exactly the
      same left edge as an unframed section. */
@@ -784,13 +793,35 @@
 }
 .group.accent-late{background:var(--late-wash)}
 .group.accent-quick{background:var(--wash-quick-deep)}
+.group.accent-deadline{background:var(--deadline-wash)}
+.group.accent-today{background:var(--planning-today-wash)}
+.group.accent-tomorrow{background:var(--planning-tomorrow-wash)}
 /* A count sitting on a wash needs its own chip, or it disappears. */
 .group.accent-late .gcount{color:var(--late-dark);background:var(--late-badge)}
+.group.accent-deadline .gcount{color:var(--deadline-dark);background:var(--deadline-badge)}
 /* Inside a callout the heading no longer needs its own rule to stand out. */
 .group.accent-late .gheadblock,
-.group.accent-quick .gheadblock{border-bottom-color:transparent}
+.group.accent-quick .gheadblock,
+.group.accent-deadline .gheadblock,
+.group.accent-today .gheadblock,
+.group.accent-tomorrow .gheadblock{border-bottom-color:transparent}
 .group.accent-late .task,
-.group.accent-quick .task{border-bottom-color:var(--row-line-on-wash)}
+.group.accent-quick .task,
+.group.accent-deadline .task,
+.group.accent-today .task,
+.group.accent-tomorrow .task{border-bottom-color:var(--row-line-on-wash)}
+
+/* ---------- Same callouts, as whole Board columns ---------- */
+.col.accent-late{border-color:var(--late);background:var(--late-wash)}
+.col.accent-late .chead strong{color:var(--late-dark)}
+.col.accent-quick{border-color:var(--p3);background:var(--wash-quick-deep)}
+.col.accent-quick .chead strong{color:var(--p3)}
+.col.accent-deadline{border-color:var(--deadline);background:var(--deadline-wash)}
+.col.accent-deadline .chead strong{color:var(--deadline-dark)}
+.col.accent-today{border-color:var(--planning-today);background:var(--planning-today-wash)}
+.col.accent-today .chead strong{color:var(--planning-today)}
+.col.accent-tomorrow{border-color:var(--planning-tomorrow);background:var(--planning-tomorrow-wash)}
+.col.accent-tomorrow .chead strong{color:var(--planning-tomorrow)}
 
 /* ---------- The repeat rule, in the task panel ----------
    A field rather than a line of text: the rule is the thing being edited, and
@@ -855,6 +886,8 @@
 /* A column's load sits under its heading in the same quiet type as the count. */
 .cload{margin:-4px 0 10px;color:var(--faint);font-size:var(--fs-11);font-variant-numeric:tabular-nums}
 .cload.over{color:var(--accent-dark);font-weight:600}
+.cload-warning{margin-left:8px;color:var(--late-dark);font-weight:600}
+.cload-warning:first-child{margin-left:0}
 
 /* A parent and its subtasks are one card, not several. */
 .col .taskwrap{
