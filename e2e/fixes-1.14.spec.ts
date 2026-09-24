@@ -139,3 +139,24 @@ test('Shift+↓ and Shift+↑ grow and shrink the selection from the cursor', as
   await page.keyboard.press('4');
   await expect(page.locator('.toast')).toContainText('2 tasks set to P4');
 });
+
+test('⌘↓ and ⌘↑ move the task under the cursor, and the cursor goes with it', async ({ demo: page }) => {
+  await page.goto('/#/project/home');
+  await expect(page.locator('.screen.active [data-task-id]').first()).toBeVisible();
+  const before = await titles(page);
+  expect(before.length).toBeGreaterThan(2);
+
+  // Nothing focused (a project's title is an editable field, so no click on it).
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await expect.poll(() => titles(page)).toEqual([before[1], before[0], ...before.slice(2)]);
+  await page.keyboard.press('ControlOrMeta+ArrowDown');
+  await expect.poll(() => titles(page)).toEqual([before[1], before[2], before[0], ...before.slice(3)]);
+  await page.keyboard.press('ControlOrMeta+ArrowUp');
+  await expect.poll(() => titles(page)).toEqual([before[1], before[0], ...before.slice(2)]);
+
+  // Still on the moved task: a priority key lands on it.
+  await page.keyboard.press('1');
+  await expect(row(page, before[0]).getByRole('checkbox', { name: 'Complete task' })).toHaveClass(/\bp1\b/);
+});
