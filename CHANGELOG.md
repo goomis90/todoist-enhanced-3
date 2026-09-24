@@ -17,6 +17,10 @@ release.
 and V open the bulk bar's Date and Move panels. In those panels ↑ ↓ walk the
 choices, Enter picks and Esc closes, and the cursor comes back to the tasks.
 
+🆕 **⌘↑ and ⌘↓ move a task, as in Things.** The task under the cursor takes
+the place of the one above or below it, the same as dropping it there: a
+sorted list switches to your own order, and the cursor goes with the task.
+
 🆕 **Shift+↑ and Shift+↓ extend the selection.** From the task you started
 on to the cursor, growing and shrinking with each step, on top of anything
 already picked with Cmd+click.
