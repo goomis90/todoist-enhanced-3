@@ -8,6 +8,7 @@ import { navigate } from '@/hooks/useRoute';
 import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import type { Project } from '@/domain/types';
 import { copyPending, isTemporaryId, projectEmail } from '@/api/links';
+import { ApiError } from '@/api/client';
 
 export interface ProjectMenuProps {
   project: Project;
@@ -192,9 +193,22 @@ export function ProjectMenu({
           role="menuitem"
           onClick={() => {
             onClose();
-            void copyPending(projectEmail(project.id)).then((ok) => toast(ok
-              ? t('project.emailCopied', { name: project.name })
-              : t('project.emailNotCopied')));
+            const address = projectEmail(project.id);
+            void copyPending(address).then(async (ok) => {
+              if (ok) { toast(t('project.emailCopied', { name: project.name })); return; }
+              /* Todoist's own words when it refused, so a missing permission
+                 or a plan limit can be told from a fault here. */
+              const reason = await address.then(
+                () => '',
+                (error: unknown) => {
+                  console.error('Project email refused', error);
+                  return error instanceof ApiError ? `${error.status} · ${error.detail}` : String(error);
+                },
+              );
+              toast(reason
+                ? t('project.emailRefused', { reason })
+                : t('project.emailNotCopied'));
+            });
           }}
         >
           <Icon name="mail" size="sm" /><span>{t('project.copyEmail')}</span>
