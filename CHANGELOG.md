@@ -18,8 +18,17 @@ and V open the bulk bar's Date and Move panels. In those panels ↑ ↓ walk the
 choices, Enter picks and Esc closes, and the cursor comes back to the tasks.
 
 🆕 **⌘↑ and ⌘↓ move a task, as in Things.** The task under the cursor takes
-the place of the one above or below it, the same as dropping it there: a
-sorted list switches to your own order, and the cursor goes with the task.
+the place of the one above or below it, the same as dropping it there: at the
+end of a section it goes on into the next one, in My week from Today into
+Anytime this week, passing over the groups a drag cannot drop into (Behind
+schedule, timed tasks). A sorted list switches to your own order, and the
+cursor goes with the task. ⌥⌘↑ and ⌥⌘↓ send it to the top or the bottom.
+
+🆕 **More of Things' keys.** ⌘S opens the date menu and ⇧⌘M the move menu;
+^] and ^[ push the date a day later or earlier (with ⇧, a week), on a whole
+selection too, keeping the time and the repeat rule; ⌥↑ and ⌥↓ jump to the
+first or last task, and ⌥⇧↑ / ⌥⇧↓ select up to there; ⌘/ shows or hides the
+sidebar.
 
 🆕 **Shift+↑ and Shift+↓ extend the selection.** From the task you started
 on to the cursor, growing and shrinking with each step, on top of anything
