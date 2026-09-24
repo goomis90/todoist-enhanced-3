@@ -826,10 +826,10 @@ export const fr: Record<TranslationKey, string> = {
   /* Le clavier. Les touches de Todoist, partout où Todoist en a une. */
   'keys.or': 'ou',
   'keys.title': 'Raccourcis clavier',
-  'keys.typingHint': 'Sans tâche sous le curseur, une lettre lance une recherche — projets, étiquettes et vues compris.',
+  'keys.typingHint': 'Sans tâche choisie avec les flèches (↑ ↓ ou J K), une lettre lance une recherche — projets, étiquettes et vues compris.',
   'keys.anywhere': 'Partout',
   'keys.moving': 'Se déplacer dans une liste',
-  'keys.onATask': 'Sur la tâche sous le curseur',
+  'keys.onATask': 'Sur la tâche choisie avec les flèches',
   'keys.thisList': 'Cette liste',
   'keys.moveCursor': 'Tâche précédente et suivante',
   'keys.moveCursorAlt': 'Idem, sans quitter la rangée de repos',
