@@ -1,17 +1,20 @@
 import { expect, go, row, rows, test, titles } from './demo';
 
-test('the task under the pointer answers 1–4 without opening the search (#90)', async ({ demo: page }) => {
-  const [, second] = await titles(page);
-  const target = row(page, second);
-  await target.hover();
+test('task shortcuts follow the arrow keys, never the mouse pointer (#90)', async ({ demo: page }) => {
+  const [first, second] = await titles(page);
+  await page.locator('h1').first().click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
   await page.keyboard.press('1');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(target.getByRole('checkbox', { name: 'Complete task' })).toHaveClass(/\bp1\b/);
+  await expect(row(page, second).getByRole('checkbox', { name: 'Complete task' })).toHaveClass(/\bp1\b/);
 
-  // Off the rows, a letter is typing again.
-  await page.locator('.pageheader, h1').first().hover();
-  await page.keyboard.press('v');
+  // Hovering another task does not move the cursor: letters still search.
+  await page.locator('h1').first().click();
+  await row(page, first).hover();
+  await page.keyboard.press('e');
   await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(row(page, first)).toBeVisible();
 });
 
 test('⌘A selects every open task in the list (#89)', async ({ demo: page }) => {
