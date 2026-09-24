@@ -45,4 +45,25 @@ export interface TaskPlaceRequest {
   list: RowList;
   /** A subtask moves among its own siblings, by its parent's numbering. */
   subtask: boolean;
+  /** Coming from another list: land after the neighbour rather than before. */
+  after?: boolean;
 }
+
+/** From the keyboard: the task goes to a place with no row to aim at (an empty section). */
+export const TASK_DROP_EVENT = 'enhanced:taskdrop';
+export interface TaskDropRequest {
+  itemId: string;
+  target: DropTarget;
+}
+
+/**
+ * What each group on the page takes, found from its element: ⌘↑ / ⌘↓ at the
+ * edge of a group step into the next group that takes a drop, and the
+ * keyboard only has the page to go by.
+ */
+export interface GroupAnswer {
+  list: RowList | null;
+  target?: DropTarget;
+}
+export const groupAnswers = new WeakMap<Element, GroupAnswer>();
+export const GROUP_ATTR = 'data-row-group';
