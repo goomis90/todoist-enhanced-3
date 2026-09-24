@@ -1,10 +1,8 @@
 # Changelog
-
-What changed in each version, newest first.
-
-Every line is marked with what it is: 🆕 something the app did not do before,
-🎨 something it already did, drawn, worded or done differently, 🐛 something
-that was wrong. New first, then changed, then fixed.
+The changelog marks every line with :
+- 🆕 something the app did not do before,
+- 🎨 something existing that has been redesigned or reworded
+- 🐛 a bug or regression that was fixed
 
 ## 1.14.0
 
