@@ -2185,6 +2185,9 @@
 .dateday.today{box-shadow:inset 0 0 0 1px var(--border-strong);font-weight:700}
 .dateday.chosen{background:var(--accent);color:#fff;font-weight:700;box-shadow:none}
 .dateday.chosen:hover{background:var(--accent-dark)}
+/* The day the keyboard is on. Outside the cell, so it still reads on the
+   filled chosen day and beside today's ring. */
+.dateday:focus-visible{outline:2px solid var(--accent);outline-offset:1px;position:relative;z-index:1}
 /* A day outside the field's bounds: still drawn, so the edge of what can
    be picked is visible, but plainly not a choice. */
 .dateday:disabled{color:var(--faint);opacity:.4;cursor:default}

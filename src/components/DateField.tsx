@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  addDays, addMonths, endOfMonth, format, isSameDay, isSameMonth,
+  addDays, addMonths, addYears, endOfMonth, endOfWeek, format, isSameDay, isSameMonth,
   startOfDay, startOfMonth, startOfWeek,
 } from 'date-fns';
 import { Icon } from './Icon';
@@ -74,6 +74,14 @@ export function DateField({
   const [month, setMonth] = useState(() => startOfMonth(parse(value) ?? new Date()));
   const [query, setQuery] = useState('');
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  /* The day the keyboard is on in the grid. It is the grid's one tab stop, so
+     Tab reaches the calendar once and the arrows move within it, the way a
+     date grid is expected to behave. */
+  const [cursor, setCursor] = useState(() => startOfDay(parse(value) ?? new Date()));
+  const gridRef = useRef<HTMLDivElement>(null);
+  /* Set by a key that moved the cursor, so the day it lands on takes the
+     focus once it is drawn — even when that meant drawing another month. */
+  const focusCursor = useRef(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -92,12 +100,25 @@ export function DateField({
   // Opening lands on the month being edited, not on wherever it was left.
   useEffect(() => {
     if (open) {
-      setMonth(startOfMonth(parse(value) ?? new Date()));
+      const start = startOfDay(parse(value) ?? new Date());
+      setMonth(startOfMonth(start));
+      setCursor(start);
       setQuery('');
       setActiveSuggestion(-1);
+      /* With no field to type in, the calendar is the panel, so the keyboard
+         starts on it rather than on the page behind. */
       if (searchable) requestAnimationFrame(() => searchRef.current?.focus());
+      else focusCursor.current = true;
     }
   }, [open, value, searchable]);
+
+  useLayoutEffect(() => {
+    if (!focusCursor.current) return;
+    const day = gridRef.current?.querySelector<HTMLElement>('[tabindex="0"]');
+    if (!day) return;
+    focusCursor.current = false;
+    day.focus({ preventScroll: true });
+  });
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -125,7 +146,12 @@ export function DateField({
       setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.stopPropagation(); setOpen(false); }
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      /* Leaving from inside the panel hands the focus back to the field it
+         opened from, rather than to the page once the panel is gone. */
+      if (panelRef.current?.contains(document.activeElement)) buttonRef.current?.focus();
+      setOpen(false);
     };
     document.addEventListener('mousedown', dismiss);
     document.addEventListener('keydown', onKey);
@@ -160,6 +186,55 @@ export function DateField({
     buttonRef.current?.focus();
   }
 
+  /* The cursor, while it is on the month shown and can be picked. Paging with
+     the arrows above, or a bound, can leave it elsewhere; the grid's tab stop
+     is then the month's first day that can be chosen. */
+  const anchor = isSameMonth(cursor, month) && !outOfRange(cursor)
+    ? cursor
+    : days.find((day) => isSameMonth(day, month) && !outOfRange(day)) ?? cursor;
+
+  /**
+   * A button that acts on the press of the mouse, so the field keeps its
+   * focus, and on Enter or Space too — a keyboard click has no press.
+   */
+  const press = (act: () => void) => ({
+    onMouseDown: (event: React.MouseEvent) => { event.preventDefault(); act(); },
+    onClick: (event: React.MouseEvent) => { if (event.detail === 0) act(); },
+  });
+
+  /** Moves the grid's cursor, turning the page when it leaves the month. */
+  function moveCursor(next: Date) {
+    const day = startOfDay(next);
+    if (outOfRange(day)) return;
+    setCursor(day);
+    if (!isSameMonth(day, month)) setMonth(startOfMonth(day));
+    focusCursor.current = true;
+  }
+
+  function onGridKey(event: React.KeyboardEvent) {
+    const step: Record<string, () => Date> = {
+      ArrowLeft: () => addDays(anchor, -1),
+      ArrowRight: () => addDays(anchor, 1),
+      ArrowUp: () => addDays(anchor, -7),
+      ArrowDown: () => addDays(anchor, 7),
+      Home: () => startOfWeek(anchor, { weekStartsOn: 1 }),
+      End: () => endOfWeek(anchor, { weekStartsOn: 1 }),
+      // Shift turns a year, as in every other date grid that has one.
+      PageUp: () => (event.shiftKey ? addYears(anchor, -1) : addMonths(anchor, -1)),
+      PageDown: () => (event.shiftKey ? addYears(anchor, 1) : addMonths(anchor, 1)),
+    };
+    if (step[event.key]) {
+      event.preventDefault();
+      /* The list behind has its own arrows, and they are not this grid's. */
+      event.stopPropagation();
+      moveCursor(step[event.key]());
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!outOfRange(anchor)) pick(anchor);
+    }
+  }
+
   function commitTyped(at = activeSuggestion) {
     const candidate = (at >= 0 ? suggestions[at]?.date : suggestions[0]?.date)
       ?? reading?.date.slice(0, 10);
@@ -192,7 +267,13 @@ export function DateField({
             onChange={(event) => { setQuery(event.target.value); setActiveSuggestion(-1); }}
             onKeyDown={(event) => {
               event.stopPropagation();
-              if (event.key === 'ArrowDown' && suggestions.length > 0) {
+              if (event.key === 'ArrowDown' && query.trim() === '') {
+                /* Nothing typed, so nothing to walk through: Down goes on to
+                   the calendar below. */
+                event.preventDefault();
+                focusCursor.current = true;
+                setCursor((at) => new Date(at));
+              } else if (event.key === 'ArrowDown' && suggestions.length > 0) {
                 event.preventDefault();
                 setActiveSuggestion((at) => (at + 1) % suggestions.length);
               } else if (event.key === 'ArrowUp' && suggestions.length > 0) {
@@ -247,7 +328,7 @@ export function DateField({
             key={shortcut.key}
             type="button"
             disabled={outOfRange(addDays(startOfDay(new Date()), shortcut.days))}
-            onMouseDown={(e) => { e.preventDefault(); pick(addDays(startOfDay(new Date()), shortcut.days)); }}
+            {...press(() => pick(addDays(startOfDay(new Date()), shortcut.days)))}
           >
             {t(`date.${shortcut.key}` as TranslationKey)}
           </button>
@@ -260,7 +341,7 @@ export function DateField({
           className="iconbtn"
           aria-label={t('date.previousMonth')}
           disabled={floor !== null && startOfMonth(floor) >= month}
-          onMouseDown={(e) => { e.preventDefault(); setMonth((m) => addMonths(m, -1)); }}
+          {...press(() => setMonth((m) => addMonths(m, -1)))}
         >
           <Icon name="arrow-left" size="sm" />
         </button>
@@ -272,7 +353,7 @@ export function DateField({
           className="iconbtn"
           aria-label={t('date.nextMonth')}
           disabled={ceiling !== null && startOfMonth(ceiling) <= month}
-          onMouseDown={(e) => { e.preventDefault(); setMonth((m) => addMonths(m, 1)); }}
+          {...press(() => setMonth((m) => addMonths(m, 1)))}
         >
           <Icon name="arrow-right" size="sm" />
         </button>
@@ -282,18 +363,21 @@ export function DateField({
         {weekdays.map((day, at) => <span key={at}>{day}</span>)}
       </div>
 
-      <div className="datepanel-grid">
+      <div className="datepanel-grid" ref={gridRef} onKeyDown={onGridKey}>
         {days.map((day) => {
           const outside = !isSameMonth(day, month);
           const isToday = isSameDay(day, new Date());
           const isChosen = selected !== null && isSameDay(day, selected);
           const barred = outOfRange(day);
+          const isCursor = isSameDay(day, anchor);
           return (
             <button
               key={day.toISOString()}
               type="button"
               className={`dateday${outside ? ' outside' : ''}${isToday ? ' today' : ''}${isChosen ? ' chosen' : ''}`}
               aria-pressed={isChosen}
+              aria-label={formatDayOrName(day, locale, dateFormat)}
+              tabIndex={isCursor ? 0 : -1}
               disabled={barred}
               onMouseDown={(e) => { e.preventDefault(); pick(day); }}
             >
@@ -307,7 +391,7 @@ export function DateField({
         <button
           type="button"
           className="datepanel-clear"
-          onMouseDown={(e) => { e.preventDefault(); onChange(''); setOpen(false); }}
+          {...press(() => { onChange(''); setOpen(false); buttonRef.current?.focus(); })}
         >
           <Icon name="close" size="sm" />
           {t('date.clear')}

@@ -272,6 +272,10 @@ export function TaskRow({
           onOpen(item.id);
         }}
         onKeyDown={(e) => {
+          /* Enter on a control inside the row — a menu's "Pick a date", one
+             of its options — is that control's own press, not a request to
+             open the task. */
+          if (e.target !== e.currentTarget) return;
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             if (e.shiftKey) { pickRange(e.metaKey || e.ctrlKey); return; }
