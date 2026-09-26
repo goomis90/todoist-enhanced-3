@@ -489,7 +489,7 @@
   display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
   gap:var(--s3);padding-top:var(--s2);border-top:1px solid var(--border);
 }
-.cfield{display:grid;gap:4px;min-width:0}
+.cfield{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
 .cfield > span:first-child{font-size:var(--fs-11);font-weight:600;color:var(--faint)}
 .cfield input,.cfield select{
   height:32px;box-sizing:border-box;padding:0 8px;width:100%;
@@ -1131,10 +1131,12 @@
 /* ==========================================================================
    Select — one control, drawn by us rather than by the operating system
    ========================================================================== */
-.fselect{position:relative;display:grid;gap:4px;min-width:0}
+/* One column that can shrink below its content: a long "project / section"
+   is cut with an ellipsis rather than widening the form around it (#102). */
+.fselect{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
 .fselect-label{font-size:var(--fs-11);font-weight:600;color:var(--faint)}
 .fselect-face{
-  width:100%;min-height:34px;padding:0 10px;display:flex;align-items:center;gap:8px;
+  width:100%;min-width:0;min-height:34px;padding:0 10px;display:flex;align-items:center;gap:8px;
   border:1px solid var(--border);border-radius:var(--r-sm);
   background:var(--surface);color:var(--text);font-size:var(--fs-13);font-weight:600;
   text-align:left;cursor:pointer;
@@ -2146,7 +2148,7 @@
 .listbox .opt.sectionopt .ic{color:var(--faint)}
 
 /* ---------- The calendar ---------- */
-.datefield{display:grid;gap:4px;min-width:0}
+.datefield{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
 .datepanel{position:fixed;z-index:95;width:278px;padding:var(--s3)}
 .datepanel .pickersearch{position:static;margin:calc(var(--s3) * -1) calc(var(--s3) * -1) var(--s3);padding:var(--s2) var(--s3)}
 .pickersuggestions{display:grid;margin:-4px 0 var(--s3);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
