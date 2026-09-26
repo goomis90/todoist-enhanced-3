@@ -138,6 +138,10 @@
   background:var(--row-marked);
   box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
 }
+/* Picked rows that touch are one block: the ends they share are square, so
+   the tint runs through the seam (#106, marked by useSelectionBlocks). */
+.task.picked.join-down{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.task.picked.join-up{border-top-left-radius:0;border-top-right-radius:0}
 
 .task:last-child{border-bottom:0}
 .ttitle{font-size:var(--fs-14);font-weight:400;color:var(--text)}
