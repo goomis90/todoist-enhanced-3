@@ -110,6 +110,42 @@ export function renderInlineMarkdown(source: string, options?: InlineOptions): s
   return inline(line, options);
 }
 
+/**
+ * Renders a task's title: Todoist titles take the inline Markdown a
+ * description does — `[label](url)`, a bare address, bold, italic, code — and
+ * its own app shows them formatted, with the links clickable (#101).
+ */
+export function renderTitle(content: string, options?: InlineOptions): string {
+  return inline(content, options);
+}
+
+/**
+ * A title as plain words, for the places that draw it as text (a breadcrumb,
+ * a toast, a search result): a link reads as its label, and the emphasis
+ * markers go, so none of them shows `[label](https://…)`.
+ */
+export function plainTitle(content: string): string {
+  return content
+    .replace(/\[([^\]]+)\]\((?:[^)\s]+)\)/g, '$1')
+    .replace(/\*\*([^*]+)\*\*|__([^_]+)__/g, (_m, a?: string, b?: string) => a ?? b ?? '')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/`([^`]+)`/g, '$1');
+}
+
+/** The links a title carries, labelled, in the order they are written. */
+export function titleLinks(content: string): Array<{ label: string; href: string }> {
+  const found: Array<{ label: string; href: string }> = [];
+  const rest = content.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_match, label: string, url: string) => {
+    const href = safeUrl(url);
+    if (href) found.push({ label, href });
+    return ' ';
+  });
+  for (const match of rest.matchAll(/(?:^|[\s(])(https?:\/\/[^\s<>"')]+)/g)) {
+    found.push({ label: match[1], href: match[1] });
+  }
+  return found;
+}
+
 /** Renders a description to HTML that is safe to insert. */
 export function renderMarkdown(source: string): string {
   if (!source.trim()) return '';

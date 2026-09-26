@@ -22,6 +22,7 @@ import { markerStyle } from '@/domain/colors';
 import { toDisplayPriority, type CompletedItem } from '@/domain/types';
 import type { TranslationKey } from '@/i18n';
 import { byChildOrder } from '@/domain/orderKey';
+import { plainTitle } from '@/domain/markdown';
 
 type Tab = 'overview' | 'logbook';
 type LogGroup = 'day' | 'project' | 'priority';
@@ -687,7 +688,7 @@ function Logbook({ completed }: { completed: CompletedItem[] }) {
                 return (
                   <div className="logrow" key={`${task.id}-${task.completed_at}`}>
                     <span className={`logtick p${priority}`}><Icon name="check" size="sm" /></span>
-                    <span className="logname">{task.content}</span>
+                    <span className="logname">{plainTitle(task.content)}</span>
                     {project && (
                       <span className="logmeta" style={markerStyle(project.color, false)}>
                         #{project.name}

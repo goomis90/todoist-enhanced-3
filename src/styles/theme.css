@@ -227,7 +227,25 @@
   text-align:left;font:inherit;font-size:var(--fs-14);line-height:1.6;color:var(--text);
 }
 .descview:hover{border-color:var(--border-strong)}
+.descview{cursor:text}
+.descview:focus-visible{outline:2px solid var(--accent);outline-offset:-1px}
+.descview a{cursor:pointer}
 .descview.placeholder{color:var(--faint)}
+
+/* A title's links, under it: the field shows the Markdown as written, and
+   these are the same links ready to follow (#101). */
+.titlelinks{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+.titlelinks a{
+  display:inline-flex;align-items:center;gap:5px;max-width:100%;
+  padding:2px 8px;border-radius:999px;background:var(--hover);
+  color:var(--info);font-size:var(--fs-12);text-decoration:none;
+}
+.titlelinks a span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.titlelinks a:hover{text-decoration:underline}
+/* A link in a row's title reads as one, and is still part of the title. */
+.ttitle a{color:inherit;text-decoration:underline;text-decoration-color:var(--info);text-underline-offset:2px}
+.ttitle a:hover{color:var(--info)}
+.ttitle code{font-size:.92em;padding:0 3px;border-radius:3px;background:var(--hover)}
 .descfield{
   width:calc(100% + 12px);margin:var(--s2) 0 0 -6px;padding:6px;
   /* The height is set from the text as it is typed, so the field and the
