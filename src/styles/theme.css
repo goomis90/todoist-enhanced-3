@@ -133,15 +133,27 @@
  * border reads as "the keyboard is here" without borrowing picked's colour
  * for it, so the two states can no longer be mistaken for each other.
  */
+/*
+ * A plain `outline` was tried first: `outline-offset` pushes a ring out on
+ * all four sides alike, and there is no gutter above or below a row the way
+ * there is one on each side of it — rows sit flush against their neighbours,
+ * so the same offset that reaches picked's own width on the sides also spilt
+ * into the row above and below, reading as a border taller than the row it
+ * was meant to mark. A pseudo-element sized by hand keeps the two axes
+ * apart: flush top and bottom, out to picked's own edge on the sides.
+ */
 .task:focus-visible{
-  outline:2px solid var(--accent);
-  /* Picked's fill bleeds 10px past the row on each side, into the list's own
-     gutter, so a run of picked rows reaches the same edge a single one does.
-     The cursor's ring is pushed out to that same edge (8px gap + 2px width),
-     so the two read as the same width apart rather than the border looking
-     drawn in tighter (#106 follow-up). */
-  outline-offset:8px;
+  outline:none;
+  position:relative;
   border-radius:var(--r-md);
+}
+.task:focus-visible::after{
+  content:'';
+  position:absolute;
+  inset:0 -10px;
+  border-radius:inherit;
+  box-shadow:inset 0 0 0 2px var(--accent);
+  pointer-events:none;
 }
 /* A row reached by Tab rather than by the arrows is the same place; the mouse
    clicking one is not, and `:focus-visible` is exactly that distinction. */
