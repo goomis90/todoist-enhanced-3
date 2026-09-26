@@ -841,6 +841,8 @@ export const en = {
   'drop.anytime': 'Moved to anytime this week',
   'drop.someday': 'Moved to Someday',
   'drop.toProject': 'Moved to #{name}',
+  'drop.blockMoved': '{count} tasks · {what}',
+  'drop.blockReordered': '{count} tasks moved',
   'drop.toSection': 'Moved to {name}',
   'drop.tagged': 'Tagged @{label}',
   'drop.nested': 'Became a subtask of {name}',

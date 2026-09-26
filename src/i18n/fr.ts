@@ -841,6 +841,8 @@ export const fr: Record<TranslationKey, string> = {
   'drop.anytime': 'Déplacée dans cette semaine',
   'drop.someday': 'Déplacée vers Un jour',
   'drop.toProject': 'Déplacée vers #{name}',
+  'drop.blockMoved': '{count} tâches · {what}',
+  'drop.blockReordered': '{count} tâches déplacées',
   'drop.toSection': 'Déplacée vers {name}',
   'drop.tagged': 'Étiquetée @{label}',
   'drop.nested': 'Devenue sous-tâche de {name}',

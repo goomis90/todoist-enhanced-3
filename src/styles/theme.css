@@ -2555,3 +2555,24 @@
 @media (min-width:721px) and (max-width:1080px){
   .dashboard-bento > .card.w6:has(.chart-plot.compare){grid-column:1 / -1}
 }
+
+/* A selection carried by a drag (#105): the dragged card on a stack of two
+   more, with the count in a badge, and the picked rows left behind faded. */
+.dragoverlay.stacked{position:relative;overflow:visible}
+.dragtitle{display:block;overflow:hidden;text-overflow:ellipsis}
+.dragoverlay.stacked::before,
+.dragoverlay.stacked::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  border-radius:inherit;background:var(--surface);
+  border:1px solid var(--border);box-shadow:var(--shadow-sm, 0 1px 2px rgba(0,0,0,.08));
+}
+.dragoverlay.stacked::before{transform:translate(5px,5px)}
+.dragoverlay.stacked::after{transform:translate(10px,10px);z-index:-2}
+.dragcount{
+  position:absolute;top:-9px;right:-9px;z-index:1;
+  min-width:22px;height:22px;padding:0 6px;border-radius:999px;
+  display:grid;place-items:center;
+  background:var(--accent);color:#fff;font-size:var(--fs-12);font-weight:700;
+  font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--surface);
+}
+.carrying-selection .task.picked{opacity:.45}
