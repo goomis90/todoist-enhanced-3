@@ -134,9 +134,14 @@
  * for it, so the two states can no longer be mistaken for each other.
  */
 .task:focus-visible{
-  outline:none;
+  outline:2px solid var(--accent);
+  /* Picked's fill bleeds 10px past the row on each side, into the list's own
+     gutter, so a run of picked rows reaches the same edge a single one does.
+     The cursor's ring is pushed out to that same edge (8px gap + 2px width),
+     so the two read as the same width apart rather than the border looking
+     drawn in tighter (#106 follow-up). */
+  outline-offset:8px;
   border-radius:var(--r-md);
-  box-shadow:inset 0 0 0 2px var(--accent);
 }
 /* A row reached by Tab rather than by the arrows is the same place; the mouse
    clicking one is not, and `:focus-visible` is exactly that distinction. */
@@ -152,7 +157,7 @@
 /* Picked and the cursor at once: the fill stays, the border joins it rather
    than replacing it. */
 .task.picked:focus-visible{
-  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked), inset 0 0 0 2px var(--accent);
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
 }
 /* Picked rows that touch are one block: the ends they share are square, so
    the tint runs through the seam (#106, marked by useSelectionBlocks). */
