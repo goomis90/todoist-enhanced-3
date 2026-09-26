@@ -153,6 +153,8 @@ export const fr: Record<TranslationKey, string> = {
   'group.day': 'Jour',
   'group.week': 'Semaine',
   'group.month': 'Mois',
+  'group.thisWeek': 'Cette semaine',
+  'group.weekOf': 'Semaine du {date}',
   'group.workspace': 'Espace de travail',
   'group.project': 'Projet',
   'group.section': 'Section',

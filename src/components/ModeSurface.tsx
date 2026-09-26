@@ -8,6 +8,7 @@ import { useStore } from '@/store/store';
 import type { DisplayMode, GroupKey, Item, SortKey } from '@/domain/types';
 import { groupItems, sortItems } from '@/store/selectors';
 import { formatRelativeDay } from '@/domain/dates';
+import { differenceInCalendarWeeks } from 'date-fns';
 import { formatDuration } from '@/domain/estimates';
 import { summariseLoad } from '@/domain/load';
 import { Droppable } from './dnd/Droppable';
@@ -72,6 +73,18 @@ function useGrouped(props: ModeSurfaceProps) {
       noLabel: t('common.none'),
       priority: (p) => t(`common.p${p}` as TranslationKey),
       day: (d) => (d ? formatRelativeDay(d, locale) : t('common.none')),
+      week: (monday) => {
+        const weeks = differenceInCalendarWeeks(monday, new Date(), { weekStartsOn: 1 });
+        if (weeks === 0) return t('group.thisWeek');
+        if (weeks === 1) return t('date.nextWeek');
+        return t('group.weekOf', {
+          date: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(monday),
+        });
+      },
+      month: (first) => {
+        const name = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(first);
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      },
       scheduled: t('section.scheduled'),
       available: t('section.available'),
     });

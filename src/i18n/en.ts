@@ -151,6 +151,8 @@ export const en = {
   'group.day': 'Day',
   'group.week': 'Week',
   'group.month': 'Month',
+  'group.thisWeek': 'This week',
+  'group.weekOf': 'Week of {date}',
   'group.workspace': 'Workspace',
   'group.project': 'Project',
   'group.section': 'Section',

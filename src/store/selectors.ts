@@ -5,6 +5,7 @@ import {
 } from '@/domain/types';
 import { estimateOf, effectiveEstimate } from '@/domain/estimates';
 import { dueDate } from '@/domain/dates';
+import { startOfMonth, startOfWeek } from 'date-fns';
 import { hasLabel, isOpen } from '@/domain/views';
 import type { RowOrder } from '@/domain/dnd';
 import { PREFERENCES_TASK_CONTENT } from './prefs';
@@ -226,6 +227,9 @@ export function groupItems(
     noLabel: string;
     priority: (p: number) => string;
     day: (d: Date | null) => string;
+    /** A week's title, from its Monday; a month's, from its first day. */
+    week?: (monday: Date) => string;
+    month?: (first: Date) => string;
     scheduled: string;
     available: string;
   },
@@ -280,9 +284,15 @@ export function groupItems(
       case 'day':
       case 'week':
       case 'month': {
+        /* A week runs Monday to Sunday and is named for itself, not for
+           whichever of its days came first; so is a month (#98). */
         const d = dueDate(item);
         const key = d ? bucketDateKey(d, group) : 'none';
-        push(key, labels.day(d), item);
+        const start = d && (group === 'week' ? startOfWeek(d, { weekStartsOn: 1 }) : startOfMonth(d));
+        const title = !start ? labels.day(null)
+          : group === 'week' ? (labels.week ?? labels.day)(start)
+          : (labels.month ?? labels.day)(start);
+        push(key, title, item);
         break;
       }
       default:
@@ -328,8 +338,8 @@ function bucketDateKey(date: Date, group: 'day' | 'week' | 'month'): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   if (group === 'month') return `${y}-${m}`;
   if (group === 'week') {
-    const week = Math.ceil((date.getDate() + new Date(y, date.getMonth(), 1).getDay()) / 7);
-    return `${y}-${m}-w${week}`;
+    // The week's Monday, so a week that straddles two months stays one week.
+    return bucketDateKey(startOfWeek(date, { weekStartsOn: 1 }), 'day');
   }
   return `${y}-${m}-${String(date.getDate()).padStart(2, '0')}`;
 }
