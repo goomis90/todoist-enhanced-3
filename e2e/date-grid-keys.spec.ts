@@ -59,7 +59,9 @@ test('#97 the composer calendar: Down from the field, arrows, Enter picks', asyn
 
   // Home and End stay within the week of the day the keyboard is on.
   await page.keyboard.press('Enter');
+  await expect(page.locator('.datepanel input')).toBeFocused();
   await page.keyboard.press('ArrowDown');
+  await expect(page.locator('.datepanel-grid .dateday:focus')).toBeVisible();
   await page.keyboard.press('End');
   const end = await focusedDay(page);
   await page.keyboard.press('Home');
