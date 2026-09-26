@@ -13,7 +13,7 @@ import {
   effectiveEstimate, formatDuration, withEstimate,
 } from '@/domain/estimates';
 import { deadlineDate, dueDate, formatRelativeDay, toApiDate } from '@/domain/dates';
-import { renderMarkdown } from '@/domain/markdown';
+import { plainTitle, renderMarkdown, titleLinks } from '@/domain/markdown';
 import { parseShorthand, type TextRange } from '@/domain/shorthand';
 import { dueForDate, readRecurrence } from '@/domain/recurrence';
 import { EstimateField } from '../EstimateField';
@@ -210,7 +210,7 @@ function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) 
       ) : (
         <button className="subtasktitle" onClick={() => onOpen(child.id)}>
           <span style={child.checked ? { textDecoration: 'line-through', color: 'var(--faint)' } : undefined}>
-            {displayTaskContent(child)}
+            {plainTitle(displayTaskContent(child))}
           </span>
         </button>
       )}
@@ -432,6 +432,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
   if (!item) return null;
 
+  const links = titleLinks(item.content);
   const priority = toDisplayPriority(item.priority);
   const due = dueDate(item);
   const deadline = deadlineDate(item);
@@ -593,7 +594,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
             <span className="crumbstep" key={parent.id}>
               <span className="crumb-sep">/</span>
               <button className="crumblink" onClick={() => onOpen(parent.id)}>
-                {parent.content}
+                {plainTitle(parent.content)}
               </button>
             </span>
           ))}
@@ -603,7 +604,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
               one sentence. */}
           <span className="crumbstep crumbself">
             <span className="crumb-sep">/</span>
-            <span className="crumbhere" aria-current="page">{displayTaskContent(item)}</span>
+            <span className="crumbhere" aria-current="page">{plainTitle(displayTaskContent(item))}</span>
           </span>
         </nav>
 
@@ -710,6 +711,20 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                 * up afterwards. Enter saves, Escape puts it back, and the two
                 * buttons say so for anyone who does neither.
                 */}
+              {/* The title is edited as written, so its links are kept
+                  under it, ready to follow, as Todoist shows them clickable
+                  in its task view (#101). */}
+              {!titleDirty && links.length > 0 && (
+                <div className="titlelinks">
+                  {links.map((link, at) => (
+                    <a key={`${link.href}-${at}`} href={link.href} target="_blank" rel="noopener noreferrer">
+                      <Icon name="link" size="sm" />
+                      <span>{link.label}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+
               {titleDirty && (
                 <div className="titleactions">
                   {/* Pressed before the field can lose the caret, or the blur
@@ -755,9 +770,25 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                   }}
                 />
               ) : (
-                <button
+                /* Not a <button>: the description holds links, and a link
+                   inside a button is followed by some browsers and swallowed
+                   by others (#101). A click on a link follows it; anywhere
+                   else, or Enter, edits. */
+                <div
+                  role="button"
+                  tabIndex={0}
                   className={`descview${item.description ? '' : ' placeholder'}`}
-                  onClick={() => setEditingDescription(true)}
+                  onClick={(e) => {
+                    if ((e.target as Element).closest('a[href]')) return;
+                    setEditingDescription(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setEditingDescription(true);
+                    }
+                  }}
                   aria-label={t('detail.description')}
                 >
                   {item.description ? (
@@ -765,7 +796,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                   ) : (
                     t('detail.descriptionPlaceholder')
                   )}
-                </button>
+                </div>
               )}
             </div>
           </div>
