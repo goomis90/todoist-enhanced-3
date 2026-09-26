@@ -455,11 +455,14 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   }
 
   /* When it was completed: its own date once ticked, or the Logbook's for a
-     recurring task, which rolled on and is shown as its next occurrence. */
+     recurring task, which rolled on and is shown as its next occurrence. A
+     one-off task unticked from the Logbook is just active again — it has no
+     "next occurrence" to explain, so the banner has nothing left to say. */
   const fromLogbook = logbookEntry && (logbookEntry.task_id ?? logbookEntry.id) === item.id
     ? logbookEntry : null;
-  const completedOn = item.checked ? (item.completed_at ?? fromLogbook?.completed_at ?? null)
-    : fromLogbook?.completed_at ?? null;
+  const completedOn = item.checked
+    ? (item.completed_at ?? fromLogbook?.completed_at ?? null)
+    : (item.due?.is_recurring ? fromLogbook?.completed_at ?? null : null);
 
   const priority = toDisplayPriority(item.priority);
   const due = dueDate(item);
