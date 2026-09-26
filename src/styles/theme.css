@@ -2590,3 +2590,6 @@
 .detail-done .ic{color:var(--accent)}
 .detail-missing{margin:0;padding:var(--s5) var(--s4);color:var(--muted);text-align:center}
 .detail-missing.loading{color:var(--faint)}
+/* ▲ ▼ in the task panel's header, beside its menu (#104). */
+.detail-walk{display:inline-flex;gap:2px;margin-right:4px}
+.detail-walk .iconbtn:disabled{opacity:.35;cursor:default}
