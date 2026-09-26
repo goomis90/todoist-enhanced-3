@@ -219,6 +219,11 @@ export const en = {
 
   /* Detail panel */
   'detail.title': 'Task',
+  'detail.loading': 'Opening the task…',
+  'detail.gone': 'This task no longer exists in Todoist.',
+  'detail.offline': 'This task can’t be opened offline. Try again once you’re back online.',
+  'detail.completedOn': 'Completed on {date}',
+  'detail.completedNext': 'Completed on {date} — this is its next occurrence',
   'detail.description': 'Description',
   'detail.descriptionPlaceholder': 'Add a description',
   'detail.project': 'Project',
