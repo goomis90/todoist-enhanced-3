@@ -246,9 +246,11 @@
 }
 .titlelinks a span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .titlelinks a:hover{text-decoration:underline}
-/* A link in a row's title reads as one, and is still part of the title. */
-.ttitle a{color:inherit;text-decoration:underline;text-decoration-color:var(--info);text-underline-offset:2px}
-.ttitle a:hover{color:var(--info)}
+/* A link in a row's title reads as one, and is still part of the title:
+   the same colour as the rest of it, underlined, as Todoist draws it — not
+   the blue of an ordinary hyperlink, which read as a different task
+   altogether sitting inside this one's title. */
+.ttitle a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .ttitle code{font-size:.92em;padding:0 3px;border-radius:3px;background:var(--hover)}
 .descfield{
   width:calc(100% + 12px);margin:var(--s2) 0 0 -6px;padding:6px;
@@ -1489,6 +1491,10 @@
 /* A guess has no colour of its own. A duration has none either: an estimate is
    a number, not a thing with a colour in Todoist. */
 .nmark.duration{--mark:var(--faint)}
+/* A link is not a chip: nothing here is being taken out of the name and
+   handed to a field, it stays exactly as typed. An underline is all Todoist
+   draws for one while it is being written, so that is all this draws too. */
+.nmark.link{background:transparent;box-shadow:none;text-decoration:underline;text-decoration-color:var(--text);text-underline-offset:3px}
 
 /* The list that opens on @ or #. */
 .namepicker{
