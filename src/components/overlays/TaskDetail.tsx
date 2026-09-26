@@ -295,6 +295,30 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
   const item = taskId ? snapshot.items[taskId] : null;
 
+  /* The list the panel walks with ▲ ▼ (#104): the rows of the page behind it,
+     top to bottom, as they are drawn. Remembered, so a task ticked off or
+     moved out of the list still knows where it was and ▼ goes on from there.
+     A task opened from nowhere in the list (search, the Logbook) has none. */
+  const walk = useRef<{ ids: string[]; at: number } | null>(null);
+  const walked = useRef(false);
+  const onPage = taskId
+    ? [...new Set([...document.querySelectorAll<HTMLElement>('.screen.active [data-task-id]')]
+      .map((row) => row.dataset.taskId ?? ''))].filter(Boolean)
+    : [];
+  const here = taskId ? onPage.indexOf(taskId) : -1;
+  if (here >= 0) walk.current = { ids: onPage, at: here };
+  else if (walk.current && walk.current.ids[walk.current.at] !== taskId) walk.current = null;
+  const previousId = walk.current && walk.current.at > 0 ? walk.current.ids[walk.current.at - 1] : null;
+  const nextId = walk.current && walk.current.at < walk.current.ids.length - 1
+    ? walk.current.ids[walk.current.at + 1] : null;
+  const step = (id: string | null) => {
+    if (!id) return;
+    walked.current = true;
+    onOpen(id);
+  };
+  const stepRef = useRef({ previousId, nextId, step });
+  stepRef.current = { previousId, nextId, step };
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [editingDescription, setEditingDescription] = useState(false);
@@ -369,6 +393,16 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
       if (event.key === '.') {
         event.preventDefault();
         setMenuOpen((open) => !open);
+        return;
+      }
+
+      /* The next and previous task, as Todoist's ▲ ▼ and its J / K. */
+      const walkTo = event.key === 'ArrowDown' || event.key === 'j' ? stepRef.current.nextId
+        : event.key === 'ArrowUp' || event.key === 'k' ? stepRef.current.previousId
+          : undefined;
+      if (walkTo !== undefined) {
+        event.preventDefault();
+        stepRef.current.step(walkTo);
         return;
       }
 
@@ -562,7 +596,14 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   }
 
   return (
-    <Overlay open onClose={onClose} label={t('detail.title')}>
+    <Overlay
+      open
+      onClose={onClose}
+      label={t('detail.title')}
+      returnFocusTo={() => (walked.current && taskId
+        ? document.querySelector<HTMLElement>(`.screen.active [data-task-id="${taskId}"]`)
+        : null)}
+    >
       <header className="detail-top">
         {/*
           * Where the task is, as the way back rather than as a caption.
@@ -608,6 +649,28 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
         </nav>
 
         <div className="detail-tools">
+          {walk.current && (
+            <span className="detail-walk">
+              <button
+                className="iconbtn"
+                aria-label={t('detail.previousTask')}
+                title={`${t('detail.previousTask')} (K)`}
+                disabled={!previousId}
+                onClick={() => step(previousId)}
+              >
+                <Icon name="caret-up" />
+              </button>
+              <button
+                className="iconbtn"
+                aria-label={t('detail.nextTask')}
+                title={`${t('detail.nextTask')} (J)`}
+                disabled={!nextId}
+                onClick={() => step(nextId)}
+              >
+                <Icon name="caret" />
+              </button>
+            </span>
+          )}
           <div className="menuwrap">
             <button
               className="iconbtn"

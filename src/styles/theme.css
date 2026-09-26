@@ -2555,3 +2555,7 @@
 @media (min-width:721px) and (max-width:1080px){
   .dashboard-bento > .card.w6:has(.chart-plot.compare){grid-column:1 / -1}
 }
+
+/* ▲ ▼ in the task panel's header, beside its menu (#104). */
+.detail-walk{display:inline-flex;gap:2px;margin-right:4px}
+.detail-walk .iconbtn:disabled{opacity:.35;cursor:default}

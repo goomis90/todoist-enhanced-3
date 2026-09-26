@@ -219,6 +219,8 @@ export const en = {
 
   /* Detail panel */
   'detail.title': 'Task',
+  'detail.previousTask': 'Previous task',
+  'detail.nextTask': 'Next task',
   'detail.description': 'Description',
   'detail.descriptionPlaceholder': 'Add a description',
   'detail.project': 'Project',
@@ -870,6 +872,7 @@ export const en = {
   'keys.goTo': 'Go to',
   'keys.saveTask': 'Save the task being written',
   'keys.inAnOpenTask': 'In an open task',
+  'keys.walkTasks': 'Previous and next task in the list',
   'walkthrough.restInSettings': 'The accent colour and how much room a list gives each task are in Settings, whenever you want them.',
   'walkthrough.welcomeBodyPhone': 'Your tasks are already here — this is a different way of looking at them, built around planning a week rather than a day. One choice before you start: light or dark. It changes the page behind this one as you make it.',
   'keys.then': 'then',
