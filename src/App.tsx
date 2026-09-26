@@ -535,7 +535,7 @@ function AppShell({
             <ProjectView projectId={route.id} revealSectionId={route.sectionId} {...viewProps} />
           )}
           {route.view === 'review' && <ReviewView onOpen={openTask} />}
-          {route.view === 'insights' && <InsightsView />}
+          {route.view === 'insights' && <InsightsView onOpen={openTask} />}
           {route.view === 'settings' && <SettingsView />}
         </section>
 

@@ -223,6 +223,11 @@ export const fr: Record<TranslationKey, string> = {
 
   /* Detail panel */
   'detail.title': 'Tâche',
+  'detail.loading': 'Ouverture de la tâche…',
+  'detail.gone': 'Cette tâche n’existe plus dans Todoist.',
+  'detail.offline': 'Cette tâche ne peut pas s’ouvrir hors ligne. Réessayez une fois la connexion revenue.',
+  'detail.completedOn': 'Terminée le {date}',
+  'detail.completedNext': 'Terminée le {date} — voici sa prochaine occurrence',
   'detail.description': 'Description',
   'detail.descriptionPlaceholder': 'Ajouter une description',
   'detail.project': 'Projet',

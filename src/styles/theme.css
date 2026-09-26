@@ -681,6 +681,10 @@
   border-bottom:1px solid var(--border);font-size:var(--fs-13);
 }
 .logrow .ic{color:var(--ok)}
+/* A row that opens its task says so the way a task row does. */
+.logrow.opens{cursor:pointer;border-radius:var(--r-sm)}
+.logrow.opens:hover{background:var(--hover)}
+.logrow.opens:focus-visible{outline:none;background:var(--hover);box-shadow:inset 0 0 0 2px var(--accent)}
 /* Inside a filled tick the glyph is white, whatever the row's default is. */
 .logrow .logtick .ic{color:#fff}
 /* A project keeps its own colour here as it does everywhere else; this rule
@@ -2576,3 +2580,13 @@
 @media (min-width:721px) and (max-width:1080px){
   .dashboard-bento > .card.w6:has(.chart-plot.compare){grid-column:1 / -1}
 }
+
+/* A task opened from the Logbook (#103): when it was completed, above its
+   title, and what the panel says while it is fetched or when it is gone. */
+.detail-done{
+  display:flex;align-items:center;gap:6px;margin:0 0 var(--s2);
+  color:var(--muted);font-size:var(--fs-12);
+}
+.detail-done .ic{color:var(--accent)}
+.detail-missing{margin:0;padding:var(--s5) var(--s4);color:var(--muted);text-align:center}
+.detail-missing.loading{color:var(--faint)}

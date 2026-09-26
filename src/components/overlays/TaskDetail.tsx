@@ -294,6 +294,19 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const confirm = useConfirm();
 
   const item = taskId ? snapshot.items[taskId] : null;
+  const loadTask = useStore((s) => s.loadTask);
+  const logbookEntry = useStore((s) => s.logbookEntry);
+  /* A task completed before the last sync is not in the snapshot: it is
+     fetched from Todoist, and the panel says so meanwhile (#103). */
+  const [missing, setMissing] = useState<'loading' | 'gone' | 'offline' | null>(null);
+  const present = !!item;
+  useEffect(() => {
+    if (!taskId || present) { setMissing(null); return; }
+    let live = true;
+    setMissing('loading');
+    void loadTask(taskId).then((result) => { if (live) setMissing(result === 'ready' ? null : result); });
+    return () => { live = false; };
+  }, [taskId, present, loadTask]);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -430,7 +443,23 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
     [item?.description],
   );
 
-  if (!item) return null;
+  if (!item) {
+    if (!taskId || !missing) return null;
+    return (
+      <Overlay open onClose={onClose} label={t('detail.title')}>
+        <p className={`detail-missing${missing === 'loading' ? ' loading' : ''}`} role="status">
+          {t(missing === 'loading' ? 'detail.loading' : missing === 'gone' ? 'detail.gone' : 'detail.offline')}
+        </p>
+      </Overlay>
+    );
+  }
+
+  /* When it was completed: its own date once ticked, or the Logbook's for a
+     recurring task, which rolled on and is shown as its next occurrence. */
+  const fromLogbook = logbookEntry && (logbookEntry.task_id ?? logbookEntry.id) === item.id
+    ? logbookEntry : null;
+  const completedOn = item.checked ? (item.completed_at ?? fromLogbook?.completed_at ?? null)
+    : fromLogbook?.completed_at ?? null;
 
   const links = titleLinks(item.content);
   const priority = toDisplayPriority(item.priority);
@@ -658,6 +687,15 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
       <div className="detail-body" ref={panelRef}>
         <div className="detail-main">
+          {completedOn && (
+            <p className="detail-done">
+              <Icon name="check" size="sm" />
+              {t(item.checked ? 'detail.completedOn' : 'detail.completedNext', {
+                date: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
+                  .format(new Date(completedOn)),
+              })}
+            </p>
+          )}
           <div className={`detail-headline${item.checked ? ' done' : ''}`}>
             {isUncompletable(item) ? (
               <span className={`check p${priority} nocheck`} aria-hidden="true" />

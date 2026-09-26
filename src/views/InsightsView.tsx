@@ -8,6 +8,7 @@ import {
   type SliceDatum,
 } from '@/components/charts';
 import { useT } from '@/hooks/useT';
+import { useStore } from '@/store/store';
 import { useData } from '@/hooks/useData';
 import { useCompleted } from '@/hooks/useCompleted';
 import { navigate, useRoute } from '@/hooks/useRoute';
@@ -49,7 +50,7 @@ function firstBest(values: number[]): number {
   return best;
 }
 
-export function InsightsView() {
+export function InsightsView({ onOpen }: { onOpen?: (id: string) => void }) {
   const { t, locale } = useT();
   const { snapshot, items } = useData();
   const [period, setPeriod] = useState<Period>('week');
@@ -448,7 +449,7 @@ export function InsightsView() {
         </div>
       )}
 
-      {!loading && tab === 'logbook' && <Logbook completed={completed} />}
+      {!loading && tab === 'logbook' && <Logbook completed={completed} onOpen={onOpen} />}
 
       {/* The foot of a page that has been read to the bottom. */}
     </div>
@@ -517,7 +518,15 @@ function countByDay(items: CompletedItem[]): Map<string, number> {
 
 /* ------------------------------------------------------------------ */
 
-function Logbook({ completed }: { completed: CompletedItem[] }) {
+function Logbook({ completed, onOpen }: { completed: CompletedItem[]; onOpen?: (id: string) => void }) {
+  const setLogbookEntry = useStore((s) => s.setLogbookEntry);
+  /* A row opens its task, as a row does anywhere else (#103). The entry goes
+     with it: the panel needs its date, and in the demo it is all there is. */
+  const open = (task: CompletedItem) => {
+    if (!onOpen) return;
+    setLogbookEntry(task);
+    onOpen(task.task_id ?? task.id);
+  };
   const { t, locale } = useT();
   const { snapshot } = useData();
   const [group, setGroup] = useState<LogGroup>('day');
@@ -686,7 +695,17 @@ function Logbook({ completed }: { completed: CompletedItem[] }) {
                 const minutes = task.labels ? estimateOf({ labels: task.labels } as never) : null;
                 const priority = toDisplayPriority(task.priority ?? 1);
                 return (
-                  <div className="logrow" key={`${task.id}-${task.completed_at}`}>
+                  <div
+                    className={`logrow${onOpen ? ' opens' : ''}`}
+                    key={`${task.id}-${task.completed_at}`}
+                    role={onOpen ? 'button' : undefined}
+                    tabIndex={onOpen ? 0 : undefined}
+                    onClick={onOpen ? () => open(task) : undefined}
+                    onKeyDown={onOpen ? (e) => {
+                      if (e.target !== e.currentTarget) return;
+                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(task); }
+                    } : undefined}
+                  >
                     <span className={`logtick p${priority}`}><Icon name="check" size="sm" /></span>
                     <span className="logname">{plainTitle(task.content)}</span>
                     {project && (
