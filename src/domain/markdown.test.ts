@@ -25,3 +25,30 @@ describe('task titles with links (#101)', () => {
     expect(titleLinks('no links here')).toEqual([]);
   });
 });
+
+describe('bare domains without a scheme (#101 follow-up)', () => {
+  it('links a bare domain typed with no http:// in front of it', () => {
+    const html = renderTitle('Voir free.fr pour le tarif');
+    expect(html).toContain('<a href="https://free.fr" target="_blank" rel="noopener noreferrer">free.fr</a>');
+  });
+
+  it('keeps the path, but not trailing punctuation from the sentence', () => {
+    expect(renderTitle('Voir example.com/tarifs.'))
+      .toContain('<a href="https://example.com/tarifs" target="_blank" rel="noopener noreferrer">example.com/tarifs</a>');
+  });
+
+  it('never turns an abbreviation, an initial or a decimal into a link', () => {
+    for (const text of ['e.g. see the docs', 'M. Dupont a appelé', 'Verse 3.5 says']) {
+      expect(renderTitle(text)).not.toContain('<a');
+    }
+  });
+
+  it('leaves the domain half of an email address alone', () => {
+    expect(renderTitle('Contact user@example.com')).not.toContain('<a');
+  });
+
+  it('is listed by titleLinks and plainTitle keeps its own text', () => {
+    expect(titleLinks('Voir free.fr')).toEqual([{ label: 'free.fr', href: 'https://free.fr' }]);
+    expect(plainTitle('Voir free.fr')).toBe('Voir free.fr');
+  });
+});

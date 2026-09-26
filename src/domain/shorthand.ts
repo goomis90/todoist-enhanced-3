@@ -1,4 +1,5 @@
 import { readNaturalDate } from './nlp';
+import { findLinks } from './markdown';
 import { readRecurrence, type RecurrenceLang } from './recurrence';
 import { parseDurationInput } from './estimates';
 import { colorValue } from './colors';
@@ -29,7 +30,7 @@ import type { DisplayPriority, Snapshot } from './types';
  */
 
 export type HighlightKind =
-  'date' | 'recurrence' | 'project' | 'priority' | 'label' | 'duration';
+  'date' | 'recurrence' | 'project' | 'priority' | 'label' | 'duration' | 'link';
 
 export interface Highlight {
   start: number;
@@ -41,6 +42,12 @@ export interface Highlight {
    * prose has none and wears the accent instead.
    */
   tone?: string;
+  /**
+   * A link is shown, not read: it stays in the name that is saved, so it
+   * only ever gets an underline in the mirror, never a claim on the text
+   * `strip` takes out.
+   */
+  keep?: boolean;
 }
 
 /** A stretch of the name, by position in it. */
@@ -79,8 +86,8 @@ export function parseShorthand(
   raw: string, snapshot: Snapshot, naturalDates: boolean, refused: TextRange[] = [],
 ): Shorthand {
   const ranges: Highlight[] = [];
-  const claim = (start: number, length: number, kind: HighlightKind, tone?: string) =>
-    ranges.push({ start, end: start + length, kind, tone });
+  const claim = (start: number, length: number, kind: HighlightKind, tone?: string, keep?: boolean) =>
+    ranges.push({ start, end: start + length, kind, tone, keep });
 
   /** Whether a candidate covers ground the caller has already turned down. */
   const isRefused = (start: number, length: number) =>
@@ -220,6 +227,14 @@ export function parseShorthand(
     }
   }
 
+  /* A link, marked last and never over ground something else already
+     claimed — a URL's own `#fragment` is not a project, but a name typed
+     with both is read as whichever came first. */
+  for (const span of findLinks(raw)) {
+    if (isRefused(span.start, span.end - span.start)) continue;
+    claim(span.start, span.end - span.start, 'link', undefined, true);
+  }
+
   const clean = dedupe(ranges);
   return {
     content: strip(raw, clean),
@@ -288,7 +303,7 @@ const mask = (raw: string, ranges: TextRange[]): string => {
 const strip = (raw: string, ranges: Highlight[]): string => {
   let out = '';
   let cursor = 0;
-  for (const range of [...ranges].sort((a, b) => a.start - b.start)) {
+  for (const range of [...ranges].filter((r) => !r.keep).sort((a, b) => a.start - b.start)) {
     out += raw.slice(cursor, range.start);
     cursor = range.end;
   }

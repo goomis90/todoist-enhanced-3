@@ -321,7 +321,9 @@ export function TaskNameField({
    */
   const clicked = (at: number) => {
     const span = spans.find((s) => at > s.start && at < s.end);
-    if (!span) return;
+    // A link is shown, not read — there is nothing here for a click to turn
+    // down and hand back to plain text; it is plain text already.
+    if (!span || span.kind === 'link') return;
     if (span.refused) restore(span.refused);
     else if (span.kind) refuse({ start: span.start, end: span.end, kind: span.kind });
   };
