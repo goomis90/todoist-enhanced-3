@@ -121,11 +121,22 @@
 /* One statement, one colour. */
 .task{--row-marked:color-mix(in srgb, var(--accent) 13%, var(--surface));}
 
+/*
+ * The cursor is a border, picked is a fill.
+ *
+ * They used to share one look — a filled background, both — on the idea
+ * that one clear way of saying "this row" beat two competing marks. In
+ * practice that made deselecting a row from the keyboard (⌘-click to drop
+ * it out of a selection) look like it had not worked: the row kept the
+ * cursor from the click, and the cursor wore picked's own fill, so a picked
+ * row that stopped being picked could still look exactly as it had. A
+ * border reads as "the keyboard is here" without borrowing picked's colour
+ * for it, so the two states can no longer be mistaken for each other.
+ */
 .task:focus-visible{
   outline:none;
   border-radius:var(--r-md);
-  background:var(--row-marked);
-  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
+  box-shadow:inset 0 0 0 2px var(--accent);
 }
 /* A row reached by Tab rather than by the arrows is the same place; the mouse
    clicking one is not, and `:focus-visible` is exactly that distinction. */
@@ -137,6 +148,11 @@
   border-bottom-color:transparent;
   background:var(--row-marked);
   box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked);
+}
+/* Picked and the cursor at once: the fill stays, the border joins it rather
+   than replacing it. */
+.task.picked:focus-visible{
+  box-shadow:-10px 0 0 0 var(--row-marked), 10px 0 0 0 var(--row-marked), inset 0 0 0 2px var(--accent);
 }
 /* Picked rows that touch are one block: the ends they share are square, so
    the tint runs through the seam (#106, marked by useSelectionBlocks). */
