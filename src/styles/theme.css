@@ -2155,6 +2155,24 @@
 .pickersuggestions small{color:var(--faint)}
 .pickerreading{margin:-4px 0 var(--s3);padding:7px 8px;border-radius:var(--r-sm);background:var(--hover);font-size:var(--fs-12)}
 .pickerreading.none{color:var(--faint)}
+
+/* The row's own typed date field (⌘S / the schedule icon): the same look as
+   the calendar's own search, so the highlighted candidate is actually
+   visible while walking the list with the arrow keys (#97 follow-up — this
+   had no styling at all, so the highlight moved with nothing to show it). */
+.schedulefield{
+  width:100%;padding:8px 10px;margin-bottom:var(--s2);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  background:var(--surface);color:var(--text);font-size:var(--fs-13);
+}
+.schedulefield:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.schedulesuggest{display:grid;margin:-4px 0 var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.scheduleoption{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;text-align:left;font-size:var(--fs-12)}
+.scheduleoption:hover,.scheduleoption.on{background:var(--hover)}
+.scheduleoption small{color:var(--faint)}
+.schedulepreview{margin:-4px 0 var(--s2);padding:7px 8px;border-radius:var(--r-sm);background:var(--hover);font-size:var(--fs-12)}
+.schedulepreview.none{color:var(--faint)}
+
 .datepanel-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--s3)}
 .datepanel-quick button{
   min-height:28px;padding:0 10px;border-radius:var(--r-full);
