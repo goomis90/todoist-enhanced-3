@@ -20,3 +20,22 @@ test('#106 picked rows next to each other are joined into one block', async ({ d
   await rows(page).nth(1).click({ modifiers: ['ControlOrMeta'] });
   await expect(page.locator('.screen.active .task.picked.join-up')).toHaveCount(0);
 });
+
+test('#106 follow-up: the cursor is a border, so deselecting a row leaves no fill behind', async ({ demo: page }) => {
+  await go(page, '#/inbox');
+  const first = rows(page).first();
+
+  // A plain cursor (arrow keys, no selection) is a border, not the picked fill.
+  await page.keyboard.press('ArrowDown');
+  await expect(first).toBeFocused();
+  const cursorShadow = await first.evaluate((el) => getComputedStyle(el).boxShadow);
+  expect(cursorShadow).toContain('inset');
+  expect(await first.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+
+  // ⌘-click picks it, a second ⌘-click drops it — nothing picked-looking left.
+  await first.click({ modifiers: ['ControlOrMeta'] });
+  await expect(first).toHaveClass(/picked/);
+  await first.click({ modifiers: ['ControlOrMeta'] });
+  await expect(first).not.toHaveClass(/picked/);
+  expect(await first.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+});
