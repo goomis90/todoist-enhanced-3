@@ -16,7 +16,7 @@ import { useConfirm } from './overlays/Confirm';
 import { withEstimate, effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { EstimateField } from './EstimateField';
 import { DateField } from './DateField';
-import { formatDay, formatDayOrName, toApiDate } from '@/domain/dates';
+import { formatDay, formatDayOrName, toApiDate, weekdayName } from '@/domain/dates';
 import { readNaturalDate } from '@/domain/nlp';
 import { dueForDate, readRecurrence } from '@/domain/recurrence';
 import { dateSuggestions, type DateSuggestion } from '@/domain/dateWords';
@@ -27,10 +27,6 @@ import { updateItem, moveItem } from '@/api/commands';
 import type { Item, Snapshot } from '@/domain/types';
 import { byChildOrder, bySectionOrder } from '@/domain/orderKey';
 
-/** "Tuesday", for a date whose number is already on the line beside it. */
-const weekdayName = (date: Date, locale: 'en' | 'fr'): string =>
-  new Intl.DateTimeFormat(locale === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long' })
-    .format(date);
 
 /** A word with its case and accents set aside, so "Été" is found by "ete". */
 const fold = (value: string): string =>
