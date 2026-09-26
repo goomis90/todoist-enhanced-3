@@ -100,6 +100,16 @@ const ACCEPTS: Record<ReturnType<typeof dragKind>, Array<ReturnType<typeof dropK
  * row is as wide as the page and by area it always beat the narrow sidebar
  * destinations.
  */
+/**
+ * The page still scrolls up and down under a drag; a board does not scroll
+ * sideways by itself. Held near its edge, dnd-kit's scroll sped up until it
+ * reached the last column, and the drop landed there whatever the pointer
+ * had been aiming at (#100). The board turns its own pages instead.
+ */
+const AUTO_SCROLL = {
+  canScroll: (element: Element) => !element.classList.contains('board'),
+};
+
 const collisionsForKind: CollisionDetection = (args) => {
   const accepted = ACCEPTS[dragKind(String(args.active.id))];
   const hits = pointerWithin(args).filter(
@@ -979,6 +989,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
     <DndContext
       sensors={sensors}
       collisionDetection={collisionsForKind}
+      autoScroll={AUTO_SCROLL}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
       onDragEnd={onDragEnd}

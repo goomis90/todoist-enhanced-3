@@ -827,26 +827,24 @@
 .crepeat:hover{border-color:var(--accent)}
 
 /* ---------- Kanban ---------- */
-/* Columns keep one width and the board scrolls sideways when there are more
-   than fit, the way a board is expected to behave. Wrapping them onto a
-   second row kept the page's width but turned a board into a grid, and a
-   column squeezed to fit four across left its titles unreadable. */
+/* The board turns in pages: its width is shared out so that a whole number
+   of columns fills it exactly (--colw, measured in ModeSurface), and a scroll
+   always comes to rest on a column's edge. A column cut in half at the right
+   read as a layout fault and was a trap for a drop (#99, #100). Wrapping the
+   columns onto a second row was tried first and turned a board into a grid. */
 .board{
   display:flex;
   gap:var(--s4);
   overflow-x:auto;
   overscroll-behavior-x:contain;
-  scroll-snap-type:x proximity;
+  scroll-snap-type:x mandatory;
   padding-bottom:var(--s3);
   align-items:flex-start;
   scrollbar-width:thin;
 }
 /* Each column is wrapped by its drop zone, so the wrapper is the flex item.
-   A column takes its share of whatever width the board has, down to 272px and
-   no further — below that a title stops being readable, and past 420px a
-   column stops reading as a column. Grow, never shrink: seven days across a
-   laptop still scroll rather than being squeezed into slivers. */
-.board > *{flex:1 0 min(272px,80vw);max-width:420px;min-width:0;scroll-snap-align:start}
+   Before the first measure it falls back to the old share: 272px at least. */
+.board > *{flex:0 0 var(--colw,min(272px,80vw));min-width:0;scroll-snap-align:start}
 .col{max-width:none;max-height:none}
 /* The arrows sit above the board on the right, and only when there is
    somewhere to go. */
