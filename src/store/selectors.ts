@@ -113,6 +113,22 @@ const manualCompare = (a: Item, b: Item, order: RowOrder): number =>
       || a.id.localeCompare(b.id)
     : byChildOrder(a, b) || a.id.localeCompare(b.id);
 
+/**
+ * A date sort's own order: the sooner date first, an undated task always
+ * after every dated one. 0 when both are undated, so a caller that only
+ * wants this as a tiebreaker (priority sorted by date next) falls through
+ * to its own order between two undated tasks rather than treating them as
+ * equal.
+ */
+const compareDue = (a: Item, b: Item): number => {
+  const da = dueDate(a)?.getTime();
+  const db = dueDate(b)?.getTime();
+  if (da === undefined && db === undefined) return 0;
+  if (da === undefined) return 1;
+  if (db === undefined) return -1;
+  return da - db;
+};
+
 /** Todoist stores labels by id while a task carries their names. */
 const labelOrderByName = (snapshot: Snapshot): Map<string, number> => {
   /* A rank rather than `item_order` itself: the labels are put in order the
@@ -155,16 +171,11 @@ export function sortItems(
     switch (sort) {
       case 'priority':
         // Todoist stores 4 as the most urgent, so the higher number comes first.
-        return b.priority - a.priority || manualCompare(a, b, order);
-      case 'due': {
-        const da = dueDate(a)?.getTime();
-        const db = dueDate(b)?.getTime();
-        // Undated tasks sink to the bottom rather than jumping to the top.
-        if (da === undefined && db === undefined) return manualCompare(a, b, order);
-        if (da === undefined) return 1;
-        if (db === undefined) return -1;
-        return da - db || manualCompare(a, b, order);
-      }
+        // Same priority, then the sooner date: two P1s read in the order
+        // they are due, not in whatever order they happen to sit in.
+        return b.priority - a.priority || compareDue(a, b) || manualCompare(a, b, order);
+      case 'due':
+        return compareDue(a, b) || manualCompare(a, b, order);
       case 'added-asc':
       case 'added-desc': {
         const direction = sort === 'added-asc' ? 1 : -1;
