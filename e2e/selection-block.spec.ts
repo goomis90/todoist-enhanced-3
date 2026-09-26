@@ -28,8 +28,8 @@ test('#106 follow-up: the cursor is a border, so deselecting a row leaves no fil
   // A plain cursor (arrow keys, no selection) is a border, not the picked fill.
   await page.keyboard.press('ArrowDown');
   await expect(first).toBeFocused();
-  const cursorShadow = await first.evaluate((el) => getComputedStyle(el).boxShadow);
-  expect(cursorShadow).toContain('inset');
+  const cursorOutline = await first.evaluate((el) => getComputedStyle(el).outlineStyle);
+  expect(cursorOutline).toBe('solid');
   expect(await first.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
 
   // ⌘-click picks it, a second ⌘-click drops it — nothing picked-looking left.
