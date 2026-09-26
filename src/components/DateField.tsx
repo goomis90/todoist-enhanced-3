@@ -7,7 +7,7 @@ import {
 import { Icon } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
-import { formatDayOrName, toApiDate } from '@/domain/dates';
+import { formatDay, formatDayOrName, toApiDate, weekdayName } from '@/domain/dates';
 import { dateSuggestions } from '@/domain/dateWords';
 import { readNaturalDate } from '@/domain/nlp';
 import type { TranslationKey } from '@/i18n';
@@ -307,8 +307,15 @@ export function DateField({
                   onMouseEnter={() => setActiveSuggestion(at)}
                   onMouseDown={(event) => { event.preventDefault(); pick(day); }}
                 >
-                  <span>{suggestion.word ?? format(day, 'd')}</span>
-                  <small>{formatDayOrName(day, locale, dateFormat)}</small>
+                  {/* A bare day of the month, typed with several matching
+                      dates, used to show just the number three times over —
+                      the very thing it could not tell apart. The full date
+                      is the label now, the weekday its hint, matching the
+                      row's own schedule field (#97 follow-up). */}
+                  <span>{suggestion.word ?? formatDay(day, locale, dateFormat)}</span>
+                  <small>
+                    {suggestion.word ? formatDayOrName(day, locale, dateFormat) : weekdayName(day, locale)}
+                  </small>
                 </button>
               );
             })}
