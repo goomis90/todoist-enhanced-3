@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDndMonitor } from '@dnd-kit/core';
 import { TaskGroup } from './TaskGroup';
 import { Icon } from './Icon';
@@ -149,6 +150,18 @@ function BoardSurface(props: ModeSurfaceProps) {
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [reach, setReach] = useState({ left: false, right: false });
+  /* The page header's metrics line keeps a slot for the arrows, so they sit
+     beside the task count instead of pushing the board down the moment the
+     columns stop fitting — which also stopped the board sitting lower on some
+     pages than on others. A page without that header keeps them above. */
+  const [navSlot, setNavSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const board = boardRef.current;
+    setNavSlot((board?.closest('.page')?.querySelector('.metrics-slot') as HTMLElement | null) ?? null);
+  }, []);
+  /* While a task is carried every column stretches to full height, so any of
+     them is an easy target; otherwise a column is only as tall as its tasks. */
+  const dragging = useStore((st) => st.draggingTaskId !== null);
   /* How many columns make a page, and how wide each one is so that exactly
      that many fill the board: no column is ever half on screen (#99). */
   const [page, setPage] = useState<{ count: number; width: number } | null>(null);
@@ -204,6 +217,8 @@ function BoardSurface(props: ModeSurfaceProps) {
     const observer = new ResizeObserver(size);
     const page = board.closest('.page');
     if (page?.firstElementChild) observer.observe(page.firstElementChild);
+    const metrics = page?.querySelector('.metrics');
+    if (metrics) observer.observe(metrics);
     return () => {
       window.removeEventListener('resize', size);
       observer.disconnect();
@@ -261,11 +276,7 @@ function BoardSurface(props: ModeSurfaceProps) {
 
   if (columns.length === 0) return <p className="empty">{t('task.noTasks')}</p>;
 
-  return (
-    /* A board runs past the reading measure, to the right; what is read
-       above it does not. */
-    <div className="mode">
-      {(reach.left || reach.right) && (
+  const pager = (
         <div className="boardnav">
           <span className="pager">
             <button
@@ -288,9 +299,15 @@ function BoardSurface(props: ModeSurfaceProps) {
             </button>
           </span>
         </div>
-      )}
+  );
+
+  return (
+    /* A board runs past the reading measure, to the right; what is read
+       above it does not. */
+    <div className="mode">
+      {(reach.left || reach.right) && (navSlot ? createPortal(pager, navSlot) : pager)}
       <div
-        className={`board${props.group === 'day' ? ' days' : ''}`}
+        className={`board${props.group === 'day' ? ' days' : ''}${dragging ? ' dragging' : ''}`}
         ref={boardRef}
         style={page ? ({ '--colw': `${page.width}px` } as React.CSSProperties) : undefined}
       >

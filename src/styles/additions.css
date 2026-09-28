@@ -1208,7 +1208,7 @@
    long column never carries the short ones — and their drop zones — off
    screen. The heading stays put while its column scrolls. */
 .board .col{
-  height:var(--colh,auto);
+  max-height:var(--colh,none);
   overflow-y:auto;
   overscroll-behavior-y:contain;
   scrollbar-width:thin;
@@ -1226,3 +1226,14 @@
 @media (min-width:721px){
   .page:has(.board){padding-bottom:var(--s4)}
 }
+
+/* A column is as tall as its tasks — a lone task doesn't get a screen-tall
+   panel. It stretches to full height while a task is being carried (an easy
+   drop target) and while one of its tasks has a menu open (so the menu has
+   room instead of being cut by the column's own scroll). */
+.board.dragging .col,
+.board .col:has(.popover){height:var(--colh,auto)}
+
+/* The board's page arrows sit at the end of the metrics line. */
+.metrics-slot{margin-left:auto;display:flex;align-items:center}
+.metrics-slot .boardnav{margin:0}
