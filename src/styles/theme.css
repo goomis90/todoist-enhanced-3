@@ -541,27 +541,7 @@
 }
 .composer-desc:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
 
-.composer-fields{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:var(--s3);padding-top:var(--s2);border-top:1px solid var(--border);
-}
-.cfield{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
-.cfield > span:first-child{font-size:var(--fs-11);font-weight:600;color:var(--faint)}
-.cfield input,.cfield select{
-  height:32px;box-sizing:border-box;padding:0 8px;width:100%;
-  border:1px solid var(--border-strong);border-radius:var(--r-sm);
-  background:var(--surface);color:var(--text);font:inherit;font-size:var(--fs-13);
-}
-.cfield input:focus,.cfield select:focus{outline:2px solid var(--accent);outline-offset:-1px}
-.cfield .estfield{width:100%}
-.cfield .estfield .estinput{flex:1 1 auto;width:auto;height:32px}
-
 .composer-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;position:relative}
-.composer-tags .pill{
-  display:inline-flex;align-items:center;gap:5px;padding:3px 8px;
-  border:1px solid var(--border-strong);border-radius:var(--r-sm);font-size:var(--fs-12);
-}
-.composer-tags .pill:hover{border-color:var(--accent);color:var(--accent-dark)}
 .tagpicker{top:34px;left:0;min-width:220px;max-height:220px;overflow-y:auto;padding:var(--s2)}
 
 .composer-actions{display:flex;justify-content:flex-end;gap:var(--s2);padding-top:var(--s2)}
@@ -1283,19 +1263,6 @@
    Composer — what the name carries, and the subtasks that go with it
    ========================================================================== */
 
-/* A read-back of everything the parser took out of the name, so the task
-   never gains a date the user did not realise they had typed. */
-.composer-read{display:flex;flex-wrap:wrap;gap:6px}
-.readchip{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:3px 9px;border-radius:var(--r-full);
-  background:var(--subtle);color:var(--muted);
-  font-size:var(--fs-12);font-weight:600;
-}
-.readchip .ic{width:12px;height:12px;color:var(--faint)}
-.readchip.date{background:var(--accent-tint);color:var(--accent-dark)}
-.readchip.date .ic{color:var(--accent)}
-
 .composer-subs{display:grid;gap:2px;padding-top:var(--s2);border-top:1px solid var(--border)}
 .composer-subs .fieldlabel{margin:0 0 4px}
 .composer-sub{
@@ -1489,7 +1456,7 @@
 .namefield{position:relative}
 .namefield .composer-name,
 .namemirror{
-  font:inherit;font-size:var(--fs-16);font-weight:600;
+  font:inherit;font-size:18px;font-weight:650;
   line-height:1.4;letter-spacing:normal;
   padding:9px 0;border:0;
   white-space:pre;overflow-x:auto;

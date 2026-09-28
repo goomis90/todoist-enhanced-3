@@ -265,6 +265,10 @@ export const fr: Record<TranslationKey, string> = {
   'composer.project': 'Projet',
   'composer.duration': 'Estimation',
   'composer.labels': 'Tags',
+  'composer.tag': 'Tag',
+  'composer.removeTag': 'Retirer le tag {name}',
+  'composer.planning': 'Planification',
+  'composer.hintAdd': 'pour ajouter',
 
   /* Search */
   'search.placeholder': 'Rechercher une tâche, un projet ou une étiquette…',

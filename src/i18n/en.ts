@@ -263,6 +263,10 @@ export const en = {
   'composer.project': 'Project',
   'composer.duration': 'Estimate',
   'composer.labels': 'Tags',
+  'composer.tag': 'Tag',
+  'composer.removeTag': 'Remove the tag {name}',
+  'composer.planning': 'Planning',
+  'composer.hintAdd': 'to add',
 
   /* Search */
   'search.placeholder': 'Search tasks, projects or tags…',

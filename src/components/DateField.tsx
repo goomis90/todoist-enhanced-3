@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { endOfMonth } from 'date-fns';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { formatDayOrName } from '@/domain/dates';
@@ -30,6 +30,10 @@ interface DateFieldProps {
   clearable?: boolean;
   /** The quick choices, when the field's context has its own (see DatePicker). */
   shortcuts?: DateShortcut[];
+  /** A field, or a chip in the composer's planning line (#113). */
+  variant?: 'field' | 'chip';
+  /** The glyph beside the value: a calendar, or the deadline's flag. */
+  icon?: IconName;
 }
 
 /**
@@ -43,7 +47,9 @@ interface DateFieldProps {
  */
 export function DateField({
   value, onChange, label, placeholder, min, max, clearable = true, shortcuts,
+  variant = 'field', icon = 'calendar',
 }: DateFieldProps) {
+  const chip = variant === 'chip';
   const { t, locale } = useT();
   const dateFormat = useStore((s) => s.prefs.dateFormat);
   const [open, setOpen] = useState(false);
@@ -147,17 +153,17 @@ export function DateField({
   );
 
   return (
-    <span className="datefield">
+    <span className={`datefield${chip ? ' inchips' : ''}`}>
       <button
         type="button"
         ref={buttonRef}
-        className={`fselect-face${open ? ' open' : ''}${value ? '' : ' empty'}`}
+        className={`fselect-face${chip ? ' chipface' : ''}${chip && !value ? ' unset' : ''}${open ? ' open' : ''}${value ? '' : ' empty'}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={label}
         onClick={() => setOpen((v) => !v)}
       >
-        <Icon name="calendar" size="sm" />
+        <Icon name={chip && !value ? 'plus' : icon} size="sm" />
         <span className="fselect-value">
           {/* A date one day away has a name, and the name is what the reader
               wants: "17 sept. 2026" is a date you have to work out is
@@ -165,7 +171,7 @@ export function DateField({
               settings ask for. */}
           {selected ? formatDayOrName(selected, locale, dateFormat) : (placeholder ?? label)}
         </span>
-        <Icon name="caret" size="sm" />
+        {!chip && <Icon name="caret" size="sm" />}
       </button>
       {panel && createPortal(panel, document.body)}
     </span>

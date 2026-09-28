@@ -64,7 +64,7 @@ implementations.
 | --- | --- |
 | Row schedule menu (hover → calendar, ⌘S, T) | `DatePicker` in a `.rowmenu` |
 | Bulk bar → Date (T on a selection) | `DatePicker` in a `.bulkpop` |
-| Composer: Date, Deadline | `DateField` → `DatePicker` in a `.datepanel` |
+| Composer: Date, Deadline | `DateField variant="chip"` → `DatePicker` in a `.datepanel` |
 | Task panel: Start date, Deadline | `DateField` → `DatePicker` |
 | Insights: custom range | `DateField` with `min`/`max`, `clearable={false}` |
 
@@ -88,6 +88,14 @@ Canonical to converge on: one **destination list** (projects, each followed
 by its sections, typed filter on both names, the current one marked) used by
 Move, bulk Move and `PlacementField`. The title's `#` list stays its own
 variant: it is inline autocomplete, not a menu.
+
+### Chips — a variant, not a family (#113)
+
+The composer's planning line draws `DateField`, `PlacementField` and
+`Select` with `variant="chip"`: the same pickers, a rounded face that says
+the value, or a dashed "+ Deadline" while nothing is set (`unset`). The
+estimate chip opens `EstimateField` in place. A new planning value in the
+composer is one more chip on that line, using the same variant.
 
 ### Priority — 🟡
 

@@ -50,7 +50,7 @@ async function intoMonth(page: import('@playwright/test').Page) {
 
 test('#97 the composer calendar: Down from the field, arrows, Enter picks', async ({ demo: page }) => {
   await page.keyboard.press('q');
-  const face = page.locator('.composer-fields .datefield button').first();
+  const face = page.locator('.composer-chips .datefield button').first();
   await expect(face).toBeVisible();
   await face.focus();
   await page.keyboard.press('Enter');

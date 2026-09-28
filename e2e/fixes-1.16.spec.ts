@@ -116,7 +116,7 @@ test('a tag typed in the composer is one tag, not one per letter', async ({ demo
   // Typed a letter at a time, the way a person types it.
   await page.keyboard.type('Water the plants @week', { delay: 20 });
   await page.keyboard.press('Escape'); // closes the @ list, not the composer
-  const pills = page.locator('.composer-tags .pill');
+  const pills = page.locator('.composer-chips .tagchip');
   await expect(pills).toHaveCount(1);
   await expect(pills.first()).toHaveText('week');
 
