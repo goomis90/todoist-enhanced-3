@@ -125,6 +125,8 @@ function ListSurface(props: ModeSurfaceProps) {
 
 /** A column is never narrower than this: below it a title stops being readable. */
 const COLUMN_MIN = 272;
+/** Below this a column scrolls too soon to be useful; the page scrolls instead. */
+const COLUMN_MIN_HEIGHT = 320;
 /** Nor wider than this, past which a column stops reading as a column. */
 const COLUMN_MAX = 420;
 /** How close to the board's edge a held card has to be to turn the page. */
@@ -173,6 +175,37 @@ function BoardSurface(props: ModeSurfaceProps) {
     observer.observe(board);
     return () => {
       board.removeEventListener('scroll', measure);
+      observer.disconnect();
+    };
+  }, [columns.length]);
+
+  /* Each column scrolls on its own, sized to what's left of the screen below
+     the board's top. Scrolling the page instead moved every column at once,
+     so reaching the bottom of one long column carried the short ones — and
+     their drop zones — off screen. A fixed height, not a maximum: a short
+     column still gets the full height, so a task's menu always has room to
+     open inside it rather than being cut off by the column's own scroll. */
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const size = () => {
+      const scroller = (board.closest('.screen') as HTMLElement | null)
+        ?? (document.scrollingElement as HTMLElement);
+      const page = board.closest('.page') as HTMLElement | null;
+      const top = board.getBoundingClientRect().top
+        - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      const pagePad = page ? parseFloat(getComputedStyle(page).paddingBottom) || 0 : 0;
+      const boardPad = parseFloat(getComputedStyle(board).paddingBottom) || 0;
+      const height = Math.max(COLUMN_MIN_HEIGHT, scroller.clientHeight - top - pagePad - boardPad - 2);
+      board.style.setProperty('--colh', `${Math.floor(height)}px`);
+    };
+    size();
+    window.addEventListener('resize', size);
+    const observer = new ResizeObserver(size);
+    const page = board.closest('.page');
+    if (page?.firstElementChild) observer.observe(page.firstElementChild);
+    return () => {
+      window.removeEventListener('resize', size);
       observer.disconnect();
     };
   }, [columns.length]);
