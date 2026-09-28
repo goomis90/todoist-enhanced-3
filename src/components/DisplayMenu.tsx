@@ -76,12 +76,13 @@ export function DisplayMenu({
   /* A grouping this page no longer offers reads as its first one, which is
      what the page draws. */
   const shownGroup = groups.includes(current.group) ? current.group : groups[0];
-  // How many settings this view carries beyond the defaults.
+  /* How many settings narrow or reorder this view beyond its defaults. List
+     or board, and a board's width, are how the page is drawn, not a filter
+     on what it shows: they are visible at a glance and do not count. */
   const changed =
     countActiveFilters(current.filters) +
     (shownGroup !== base.group ? 1 : 0) +
-    (current.sort !== base.sort ? 1 : 0) +
-    (current.mode !== base.mode ? 1 : 0);
+    (current.sort !== base.sort ? 1 : 0);
 
   const tags = Object.values(snapshot.labels).filter((l) => !l.name.startsWith('est-'));
   const workspaces = Object.values(snapshot.workspaces);
