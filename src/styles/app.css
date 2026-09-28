@@ -108,6 +108,16 @@
   --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px;
   --fs-16:16px; --fs-20:20px; --fs-26:26px; --fs-32:32px;
 
+  /* Controls (#114): one height per density of control, whatever family it
+     belongs to. Content may still make an instance taller. */
+  --ctl-h-sm:28px; --ctl-h:34px; --ctl-h-touch:44px;
+  /* Icons: 14px beside a label or in a dense control, 16px on their own,
+     20px as a page-level glyph — the three sizes Icon already draws. */
+  --ic-sm:14px; --ic-md:16px; --ic-lg:20px;
+  /* Focus: a field or control that has the keyboard wears the accent as its
+     edge and this soft ring outside it. */
+  --focus-ring:0 0 0 3px var(--accent-soft);
+
   /* elevation */
   --sh-sm:0 1px 2px rgba(28,25,23,.07);
   --sh-md:0 6px 20px rgba(28,25,23,.10);

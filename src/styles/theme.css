@@ -2185,17 +2185,28 @@
   max-width:min(340px,calc(100vw - 16px));max-height:min(320px,60vh);
   overflow-y:auto;padding:var(--s2);
 }
+/* The typed field at the top of every menu and picker (#114): the date
+   picker, the row's Move menu, the bulk bar's Move and Tags, a searchable
+   select, the tag pickers. One bordered field, the same height, the same
+   focus ring, wherever a menu lets you type to narrow it. It stays at the
+   top of a list that scrolls, on a band of the menu's own surface so rows
+   never show through around it. */
 .pickersearch{
   position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:7px;
-  margin:calc(var(--s2) * -1) calc(var(--s2) * -1) var(--s2);
-  padding:var(--s2);border-bottom:1px solid var(--border);background:var(--surface);
+  min-height:var(--ctl-h);margin:0 0 var(--s2);padding:0 10px;
+  border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);
+  box-shadow:0 0 0 var(--s2) var(--surface);
+}
+.pickersearch:focus-within{
+  border-color:var(--accent);
+  box-shadow:var(--focus-ring), 0 0 0 var(--s2) var(--surface);
 }
 .pickersearch > .ic{flex:0 0 auto;color:var(--faint)}
 .pickersearch input{
-  width:100%;min-width:0;height:30px;padding:0;border:0;outline:0;
-  background:transparent;color:var(--text);font:inherit;font-size:var(--fs-13);
+  width:100%;min-width:0;height:calc(var(--ctl-h) - 2px);padding:0;border:0;outline:0;
+  background:transparent;color:var(--text);font:inherit;font-size:var(--fs-13);font-weight:600;
 }
-.pickersearch input::placeholder{color:var(--faint)}
+.pickersearch input::placeholder{color:var(--faint);font-weight:400}
 .listbox .menuhint{padding:8px}
 .listbox .opt{
   width:100%;display:flex;align-items:center;gap:8px;justify-content:flex-start;
@@ -2229,12 +2240,6 @@
    the calendar's own search, so the highlighted candidate is actually
    visible while walking the list with the arrow keys (#97 follow-up — this
    had no styling at all, so the highlight moved with nothing to show it). */
-.schedulefield{
-  width:100%;padding:8px 10px;margin-bottom:var(--s2);
-  border:1px solid var(--border);border-radius:var(--r-sm);
-  background:var(--surface);color:var(--text);font-size:var(--fs-13);
-}
-.schedulefield:focus{outline:2px solid var(--accent);outline-offset:-1px}
 
 
 .datepanel-head{

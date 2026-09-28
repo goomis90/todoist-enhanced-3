@@ -535,8 +535,9 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
                 the first thing here and it already has the caret — the same
                 gesture the schedule menu asks for. The heading goes: the field's
                 placeholder says what the menu is for. */}
+            <div className="pickersearch">
+            <Icon name="search" size="sm" />
             <input
-              className="schedulefield"
               autoFocus
               value={dest}
               placeholder={t('task.typeDestination')}
@@ -569,6 +570,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
                 if (e.key === 'Escape') setMenu('none');
               }}
             />
+            </div>
 
             <div className="movelist" role="listbox">
               {matches.map((destination, at) => (

@@ -659,7 +659,6 @@
   scrollbar-width:none;
 }
 .bulkpop-list::-webkit-scrollbar{width:0;height:0}
-.bulkpop-list > .pickersearch{margin-left:0;margin-right:0}
 .bulkpop .opt > span{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .bulkpop .opt .hash{flex:0 0 auto}
 .bulkpop-list .opt{width:100%;min-width:0;overflow:hidden}
@@ -784,14 +783,6 @@
 /* No heading: the field says what the menu is for, and a label above a thing
    that is already obvious was most of the space this menu was wasting. */
 .schedulemenu{min-width:252px;padding:6px}
-.schedulefield{
-  width:100%;box-sizing:border-box;min-height:34px;padding:0 10px;
-  border:1px solid var(--border-strong);border-radius:var(--r-sm);
-  background:var(--surface);color:var(--text);
-  font:inherit;font-size:var(--fs-13);font-weight:600;
-}
-.schedulefield::placeholder{color:var(--faint);font-weight:400}
-.schedulefield:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
 .schedulemenu .opt{min-height:30px}
 .schedulemenu hr{margin:4px 0}
 
@@ -1092,7 +1083,7 @@
   padding:var(--s2) var(--s2) var(--s3);
 }
 .rowsheet .rowmenu.asSheet .opt{min-height:44px}
-.rowsheet .rowmenu.asSheet .schedulefield{min-height:44px}
+.rowsheet .rowmenu.asSheet .pickersearch{min-height:var(--ctl-h-touch)}
 .rowsheet .rowmenu.asSheet .movelist{max-height:44vh}
 .rowsheet .estimatesheet h5{
   margin:0 0 var(--s2);font-size:var(--fs-11);font-weight:700;letter-spacing:.06em;
@@ -1230,13 +1221,6 @@
    one per line with the day each lands on, the month, then the context's
    own actions. Only the container differs. */
 .datepicker{display:grid;min-width:0;text-align:left}
-.datepicker .pickersearch.datepicker-field{
-  position:static;margin:0 0 6px;padding:0 10px;min-height:34px;
-  border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);
-}
-.datepicker .pickersearch.datepicker-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.datepicker .pickersearch input{height:32px;font-weight:600}
-.datepicker .pickersearch input::placeholder{font-weight:400}
 .datepicker .pickersuggestions,
 .datepicker .pickerreading{margin:0 0 6px}
 .datepicker .pickerreading{display:flex;align-items:center;gap:6px}
