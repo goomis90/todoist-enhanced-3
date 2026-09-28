@@ -940,6 +940,10 @@
   font-size:var(--fs-12);
 }
 .col .taskwrap .task ~ .task .ttitle{font-size:var(--fs-12);font-weight:400}
+/* A subtask's title is a 12px line, not the parent's 14px one: its check sits
+   on that line's middle, not on the parent's (#109). */
+.col .taskwrap .check{margin-top:2px}
+.col .taskwrap .task ~ .task .check{margin-top:0}
 /* The controls sit on the card's first line, in its top corner, the way a
    list row keeps them beside its title (#109). They are painted in the
    card's own surface, with a short fade on their left where they meet the
@@ -954,7 +958,7 @@
 .col .task{--card-bg:var(--surface)}
 .col .task.picked{--card-bg:var(--row-marked)}
 .col .trow-end{
-  position:absolute;top:-5px;right:-6px;z-index:1;
+  position:absolute;top:-4px;right:-6px;z-index:1;
   margin-top:0;justify-self:auto;
   padding-left:22px;
   background:linear-gradient(to right, transparent, var(--card-bg) 20px);
@@ -964,6 +968,9 @@
   visibility:hidden;
 }
 .col .trow-end .trow-actions > button{width:28px;height:28px}
+/* On a subtask row the first line starts below the row's 7px top padding
+   and is 12px type, so the actions come down to sit on its middle. */
+.col .taskwrap .task ~ .task .trow-end{top:2px}
 .col .task:hover .trow-end,
 .col .task:focus-within .trow-end{visibility:visible}
 /* On a board the whole card is the handle, as in Todoist's own board. */
