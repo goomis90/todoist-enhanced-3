@@ -95,12 +95,33 @@ test('#115 the changelog opens from Settings, in the app', async ({ demo: page }
   // Settings shows the author's avatar from GitHub; this journey is not about it.
   await page.route('https://github.com/**', (route) => route.fulfill({ status: 204 }));
   await go(page, '#/settings');
-  await page.getByRole('button', { name: 'Read it' }).click();
+  await page.getByRole('button', { name: 'See the changes' }).click();
   const dialog = page.getByRole('dialog', { name: 'Changelog' });
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('.whatsnew-release').first()).toContainText('Version');
   await expect(dialog.locator('.whatsnew-change.new').first()).toContainText('🆕');
   await expect(dialog.getByRole('button', { name: 'Continue' })).toBeFocused();
+  // A pill per release jumps to it.
+  await dialog.getByRole('button', { name: '1.12.0', exact: true }).click();
+  await expect(dialog.getByRole('button', { name: '1.12.0', exact: true })).toHaveAttribute('aria-current', 'true');
+  await expect(dialog.getByRole('region', { name: 'Version 1.12.0' })).toBeInViewport();
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
+});
+
+test('a tag typed in the composer is one tag, not one per letter', async ({ demo: page }) => {
+  await page.keyboard.press('q');
+  const name = page.locator('.composer-name');
+  await expect(name).toBeFocused();
+  // Typed a letter at a time, the way a person types it.
+  await page.keyboard.type('Water the plants @week', { delay: 20 });
+  await page.keyboard.press('Escape'); // closes the @ list, not the composer
+  const pills = page.locator('.composer-tags .pill');
+  await expect(pills).toHaveCount(1);
+  await expect(pills.first()).toHaveText('week');
+
+  // Taking the pill off turns the reading down: nothing is left to save.
+  await pills.first().click();
+  await expect(pills).toHaveCount(0);
+  await expect(page.locator('.namefield .nmark.label')).toHaveCount(0);
 });

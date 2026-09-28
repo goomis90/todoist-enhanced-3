@@ -4,61 +4,34 @@ The changelog marks every line with :
 - 🎨 something existing that has been redesigned or reworded
 - 🐛 a bug or regression that was fixed
 
+The app shows each release's lines in its "What's new" window, so they are
+written for the people using it: say where the thing is (the page, the
+button, the key), what it does for them, in plain words, and keep em dashes
+out. The French translation lives in CHANGELOG.fr.md.
+
 ## 1.15.0
 
-The calendar and boards work from the keyboard, links in titles and
-descriptions open, a completed task opens from the Logbook, a selection
-drags as one, and the task panel walks the list it was opened from.
+Dates and boards now work from the keyboard, links open, and you can go from one task to the next without closing it.
 
-🆕 **The calendar grid works from the keyboard.** Arrow keys move the
-focused day, Home/End jump to the ends of its week, Page Up/Down turn a
-month (⇧: a year), and Enter or Space picks it — everywhere a date is
-picked: a task row, the bulk bar, the composer, the task panel. The typed
-field's own suggestions are now visible while walking them with the arrow
-keys, and the bulk bar's date field opens with its typed field already
-there instead of a closed button needing a second click.
+🆕 **Pick a date without the mouse.** Wherever you choose a date (a task's date button, the bar that shows up when several tasks are selected, the new task window, the task panel), the arrow keys move through the days of the month. Page Up and Page Down change the month, and Enter picks the day.
 
-🆕 **Boards turn in pages.** A board's width is shared out so a whole
-number of columns always fills it — no column is ever left half on screen —
-and the arrows turn a full page at a time. A card held at the board's edge
-during a drag turns the page itself, instead of racing to the last column.
+🆕 **Boards scroll one page at a time.** In Board view, the columns always fit the screen, so you never see half a column. The arrows above the board move a whole page. Drag a card to the edge of the board and it turns the page for you.
 
-🆕 **Upcoming groups by day, week or month**, in the list and on the board,
-sorted by date inside each group by default.
+🆕 **Upcoming can be grouped by day, week or month.** Open Display on the Upcoming page and pick the grouping you want, in the list and on the board.
 
-🆕 **Links in task titles and descriptions open.** `[label](url)`, a bare
-`https://` address, and now a bare address with no scheme (`free.fr`) are
-all read as links, drawn as part of the title — the same colour, underlined
-— rather than in an ordinary hyperlink's blue.
+🆕 **Links in your tasks open.** A link in a task's title or description opens with a click, whether it's written `[label](address)`, as a full `https://` address, or just `site.fr`. It keeps the colour of the text, underlined.
 
-🆕 **A completed task opens from the Logbook.** A click or Enter opens its
-task panel, ticked and struck through; ↑ / ↓ walk the Logbook's own rows
-too. Unticking a one-off task there no longer shows a "next occurrence"
-line meant for a recurring one.
+🆕 **Open a finished task from the Logbook.** In Insights, click a finished task in the Logbook (or press Enter) to open it in the task panel. The up and down arrows move through the Logbook too.
 
-🆕 **▲ ▼ walk the list from the task panel.** Two arrows in its header,
-and J / K or ↑ / ↓ from the keyboard, open the previous or next task in the
-order of the page behind it, remembering that order even once a task is
-ticked off or moved out of it.
+🆕 **Go to the next task from the task panel.** Two small arrows at the top of the task panel (or J / K, ↑ / ↓) open the previous or next task of the list you came from, even after you've ticked off or moved some of them.
 
-🆕 **Dragging a selection carries all of it.** The dragged card sits on a
-stack with a badge giving the count, the rest of the picked rows fade while
-it is held, and dropping between two rows lands the whole selection there
-as one block, in the order it was drawn.
+🆕 **Drag several tasks at once.** Select tasks with ⌘-click, then drag one of them: they move together as a stack with a count, and land in the order you selected them.
 
-🎨 **A `#project` picked from the composer's list is always read**, whatever
-characters its name has (`aliasdigital.`, `R&D`, an emoji), and a long
-"project / section" value in a field is cut with an ellipsis instead of
-scrolling the composer sideways.
+🎨 **Projects with unusual names work in the new task window.** Picking a `#project` from the list always works, even with a dot, an ampersand or an emoji in its name. A long "project / section" is cut short instead of pushing the window sideways.
 
-🎨 **Selected rows next to each other read as one block**, as in Things,
-rather than a stack of separate pills with a notch at every seam.
+🎨 **Selected tasks next to each other look like one block**, like in Things, instead of a stack of separate pills.
 
-🐛 **The keyboard cursor and a picked row no longer share one look.** A
-row that had just stopped being picked used to keep the picked colour from
-the click that dropped it — the cursor is a border now, picked a fill, flush
-with the row itself top and bottom and out to picked's own edge on the
-sides.
+🐛 **The keyboard highlight and a selected task no longer look the same.** The task the keyboard is on now has an outline, and a selected task has a coloured background, so you can see straight away when you unselect one.
 
 ## 1.14.0
 

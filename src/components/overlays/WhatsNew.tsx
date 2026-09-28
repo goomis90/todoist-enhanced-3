@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Overlay } from './Overlay';
 import { Icon } from '../Icon';
 import { useT } from '@/hooks/useT';
@@ -54,6 +54,9 @@ const KIND_LABEL: Record<ChangeKind, TranslationKey> = {
   fix: 'whatsNew.kind.fix',
 };
 
+/** The id a release's section carries, for the pills that jump to it. */
+const anchorOf = (version: string) => `whatsnew-${version.replace(/\./g, '-')}`;
+
 /**
  * What changed, said inside the app (#115).
  *
@@ -62,11 +65,19 @@ const KIND_LABEL: Record<ChangeKind, TranslationKey> = {
  * carries, with the same three marks, in the reader's language where the
  * release has been translated. The title and the buttons hold still while
  * the list scrolls between them.
+ *
+ * After an update the title names the version, and a single release is its
+ * list and nothing else: a heading repeating the version and a paragraph
+ * summing up the list below it were two ways of saying the title again. The
+ * whole history, from Settings, keeps a heading per release and a row of
+ * pills to jump from one to the next.
  */
 export function WhatsNew({ scope, onClose }: WhatsNewProps) {
   const { t, locale } = useT();
   const open = scope !== null;
   const all = useChangelog(open, locale);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState<string | null>(null);
 
   const shown = useMemo(() => {
     if (!all || !scope) return [];
@@ -75,24 +86,56 @@ export function WhatsNew({ scope, onClose }: WhatsNewProps) {
   }, [all, scope]);
 
   const history = scope === 'all';
+  /* One release after an update: no heading of its own, the title says it. */
+  const headings = history || shown.length > 1;
+  const titleText = history
+    ? t('whatsNew.historyTitle')
+    : t('whatsNew.title', { version: VERSION });
+
+  /* The pill of the release being read follows the scroll. */
+  useEffect(() => {
+    if (!history || shown.length === 0) return;
+    setCurrent(shown[0].version);
+    const body = bodyRef.current;
+    if (!body) return;
+    const onScroll = () => {
+      const top = body.getBoundingClientRect().top;
+      let at = shown[0].version;
+      for (const release of shown) {
+        const section = body.querySelector<HTMLElement>(`#${anchorOf(release.version)}`);
+        if (section && section.getBoundingClientRect().top - top <= 24) at = release.version;
+      }
+      setCurrent(at);
+    };
+    body.addEventListener('scroll', onScroll, { passive: true });
+    return () => body.removeEventListener('scroll', onScroll);
+  }, [history, shown]);
+
+  /* The pill of the release being read stays in the row's view. */
+  const pillsRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!current) return;
+    pillsRef.current
+      ?.querySelector<HTMLElement>('[aria-current="true"]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [current]);
+
+  const jump = (version: string) => {
+    const body = bodyRef.current;
+    const section = body?.querySelector<HTMLElement>(`#${anchorOf(version)}`);
+    if (!body || !section) return;
+    body.scrollTo({
+      top: section.offsetTop - body.offsetTop - 8,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
+    setCurrent(version);
+  };
 
   return (
-    <Overlay
-      open={open}
-      onClose={onClose}
-      label={t(history ? 'whatsNew.historyTitle' : 'whatsNew.title')}
-      size="sm"
-    >
+    <Overlay open={open} onClose={onClose} label={titleText} size="sm">
       <div className="whatsnew">
         <div className="sheet-head whatsnew-head">
-          <div>
-            <h2>{t(history ? 'whatsNew.historyTitle' : 'whatsNew.title')}</h2>
-            <p>
-              {history
-                ? t('whatsNew.historyLead')
-                : t('whatsNew.lead', { version: VERSION })}
-            </p>
-          </div>
+          <h2>{titleText}</h2>
           <button
             className="iconbtn"
             aria-label={t('common.close')}
@@ -103,17 +146,40 @@ export function WhatsNew({ scope, onClose }: WhatsNewProps) {
           </button>
         </div>
 
-        <div className="whatsnew-body">
+        {history && shown.length > 1 && (
+          <nav className="whatsnew-pills" ref={pillsRef} aria-label={t('whatsNew.versions')}>
+            {shown.map((release) => (
+              <button
+                key={release.version}
+                type="button"
+                className="whatsnew-pill"
+                aria-current={current === release.version ? 'true' : undefined}
+                onClick={() => jump(release.version)}
+              >
+                {release.version}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        <div className="whatsnew-body" ref={bodyRef}>
           {all === null && <p className="whatsnew-loading">{t('common.loading')}</p>}
           {shown.map((release) => (
-            <section className="whatsnew-release" key={release.version}>
-              <h3>
-                {t('whatsNew.version', { version: release.version })}
-                {release.untranslated && (
-                  <small className="whatsnew-lang">{t('whatsNew.untranslated')}</small>
-                )}
-              </h3>
-              {release.intro && <p className="whatsnew-intro">{release.intro}</p>}
+            <section
+              className="whatsnew-release"
+              key={release.version}
+              id={anchorOf(release.version)}
+              aria-label={t('whatsNew.version', { version: release.version })}
+            >
+              {headings && (
+                <h3>
+                  {t('whatsNew.version', { version: release.version })}
+                  {release.untranslated && (
+                    <small className="whatsnew-lang">{t('whatsNew.untranslated')}</small>
+                  )}
+                </h3>
+              )}
+              {history && release.intro && <p className="whatsnew-intro">{release.intro}</p>}
               <ul>
                 {release.changes.map((change, at) => (
                   <li className={`whatsnew-change ${change.kind}`} key={at}>
@@ -133,7 +199,7 @@ export function WhatsNew({ scope, onClose }: WhatsNewProps) {
               </ul>
             </section>
           ))}
-          {history && (
+          {history && all !== null && (
             <p className="whatsnew-more">
               <a href={`${GITHUB_URL}/blob/main/CHANGELOG.md`} target="_blank" rel="noreferrer noopener">
                 <Icon name="external" size="sm" />

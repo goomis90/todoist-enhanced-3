@@ -1170,23 +1170,36 @@
 .dragoverlay.tag .ic{color:var(--muted);flex:0 0 auto}
 
 /* What's new (#115). The title and the buttons hold still; the list scrolls
-   between them. The sheet itself stops scrolling so there is one scroller. */
+   between them. The sheet itself stops scrolling so there is one scroller,
+   and it is no taller than the composer, with the composer's side room. */
 .sheet:has(> .whatsnew){overflow:hidden;display:flex}
-.whatsnew{display:flex;flex-direction:column;width:100%;max-height:calc(100vh - 56px);min-height:0}
-.whatsnew-head{flex:0 0 auto}
-.whatsnew-head p{margin-top:4px;color:var(--muted);font-size:var(--fs-13)}
-.whatsnew-body{flex:1 1 auto;min-height:0;overflow:auto;padding:var(--s4);display:grid;gap:var(--s5);align-content:start}
+.whatsnew{display:flex;flex-direction:column;width:100%;max-height:min(620px, calc(100vh - 56px));min-height:0}
+.whatsnew-head{flex:0 0 auto;align-items:center;padding:var(--s4) var(--s5)}
+.whatsnew-pills{
+  flex:0 0 auto;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+  padding:var(--s3) var(--s5);border-bottom:1px solid var(--border);
+}
+.whatsnew-pills::-webkit-scrollbar{display:none}
+.whatsnew-pill{
+  flex:0 0 auto;min-height:26px;padding:0 10px;border-radius:var(--r-full);
+  border:1px solid var(--border-strong);background:var(--surface);
+  color:var(--muted);font-size:var(--fs-12);font-weight:600;font-variant-numeric:tabular-nums;
+}
+.whatsnew-pill:hover{color:var(--text);background:var(--hover)}
+.whatsnew-pill[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark)}
+.whatsnew-pill:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.whatsnew-body{flex:1 1 auto;min-height:0;overflow:auto;padding:var(--s4) var(--s5) var(--s5);display:grid;gap:var(--s5);align-content:start}
 .whatsnew-loading{color:var(--muted);font-size:var(--fs-13)}
 .whatsnew-release h3{display:flex;align-items:baseline;gap:8px;font-size:var(--fs-16);font-weight:700;margin-bottom:6px}
 .whatsnew-lang{font-size:var(--fs-12);font-weight:500;color:var(--faint)}
 .whatsnew-intro{color:var(--muted);font-size:var(--fs-13);line-height:1.5;margin-bottom:var(--s3)}
-.whatsnew-release ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.whatsnew-change{display:grid;grid-template-columns:22px 1fr;gap:6px;font-size:var(--fs-13);line-height:1.5}
-.whatsnew-mark{line-height:1.5}
+.whatsnew-release ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.whatsnew-change{display:grid;grid-template-columns:24px 1fr;gap:6px;font-size:var(--fs-13);line-height:1.55}
+.whatsnew-mark{line-height:1.55}
 .whatsnew-change code{font-size:.92em;padding:0 4px;border-radius:4px;background:var(--hover)}
 .whatsnew-change a{color:inherit;text-decoration:underline}
 .whatsnew-more a{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-13);color:var(--muted)}
-.whatsnew-foot{flex:0 0 auto;position:static}
+.whatsnew-foot{flex:0 0 auto;position:static;padding:var(--s3) var(--s5)}
 /* The coffee is an offer, never the way out: a quiet yellow, next to the
    button that closes the dialog. */
 .btn.coffee{border-color:transparent;background:#fff8d6;color:#342e10;text-decoration:none}
