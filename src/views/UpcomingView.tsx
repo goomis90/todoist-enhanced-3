@@ -120,6 +120,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
           items={scoped}
           childrenOf={childrenOf}
           mode={current.mode === 'board' ? 'board' : 'list'}
+          wide={current.wide}
           group={group}
           sort={current.sort}
           order="day"
@@ -130,6 +131,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
           items={scoped}
           childrenOf={childrenOf}
           mode="board"
+          wide={current.wide}
           group="day"
           sort={current.sort}
           order="day"

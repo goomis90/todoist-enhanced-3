@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './components/Icon';
 import { Sidebar } from './components/Sidebar';
 import { BulkBar } from './components/BulkBar';
@@ -25,6 +25,9 @@ import { EisenhowerView } from './views/EisenhowerView';
 import { ConnectView } from './views/ConnectView';
 import { Walkthrough } from './components/overlays/Walkthrough';
 import { Tour } from './components/overlays/Tour';
+import { WhatsNew, type WhatsNewScope } from './components/overlays/WhatsNew';
+import { hasNews, parseChangelog, unseenReleases } from './domain/changelog';
+import { VERSION } from './app-info';
 import { hasOnboarded } from './domain/onboarding';
 import { useStore } from './store/store';
 import type { Accent, Theme } from './store/prefs';
@@ -61,6 +64,14 @@ export function App() {
   const endTourPreview = useStore((s) => s.endTourPreview);
   const toasts = useStore((s) => s.toasts);
   const dismissToast = useStore((s) => s.dismissToast);
+  const syncState = useStore((s) => s.syncState);
+  const whatsNewOn = useStore((s) => s.prefs.whatsNew);
+  const seenVersion = useStore((s) => s.prefs.seenVersion);
+  const setPrefs = useStore((s) => s.setPrefs);
+  const [whatsNew, setWhatsNew] = useState<WhatsNewScope | null>(null);
+  /** The account's own settings have been read at least once since loading. */
+  const [settled, setSettled] = useState(false);
+  const syncing = useRef(false);
 
   const route = useRoute();
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
@@ -133,10 +144,50 @@ export function App() {
   useEffect(() => {
     if (ready && (connected || demo) && !hasOnboarded(userId) && !onboardingStarted) {
       setOnboardingStarted(true);
+      /* Somebody meeting the app for the first time is getting the tour; a
+         list of what changed since a version they never used is not news. */
+      if (!demo) setPrefs({ seenVersion: VERSION });
       navigate('week');
       window.setTimeout(() => setTourOpen(true), 100);
     }
-  }, [ready, connected, demo, userId, onboardingStarted]);
+  }, [ready, connected, demo, userId, onboardingStarted, setPrefs]);
+
+  /* The first sync after loading is what brings the account's settings — and
+     with them the version already seen on another device. Asked before it,
+     every new browser would announce a release the account had already read
+     about elsewhere. */
+  useEffect(() => {
+    if (syncState === 'syncing') syncing.current = true;
+    else if (syncing.current && syncState === 'idle') setSettled(true);
+  }, [syncState]);
+
+  /* What's new, once per release that brings something new (#115). Never on
+     top of the first run, and never in the demo, which has no account to
+     remember having shown it. */
+  useEffect(() => {
+    if (!ready || !connected || demo || !settled || !hasOnboarded(userId)) return;
+    if (tourOpen || walkthroughOpen || whatsNew) return;
+    if (seenVersion === VERSION) return;
+    let cancelled = false;
+    void import('../CHANGELOG.md?raw').then(({ default: source }) => {
+      if (cancelled) return;
+      const unseen = unseenReleases(parseChangelog(source), VERSION, seenVersion);
+      if (whatsNewOn && hasNews(unseen)) {
+        setWhatsNew({ versions: unseen.map((release) => release.version) });
+      } else {
+        // Nothing new to say, or not wanted: this release counts as read.
+        setPrefs({ seenVersion: VERSION });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [ready, connected, demo, settled, userId, tourOpen, walkthroughOpen, whatsNew,
+    seenVersion, whatsNewOn, setPrefs]);
+
+  useEffect(() => {
+    const show = () => setWhatsNew('all');
+    window.addEventListener('enhanced:changelog', show);
+    return () => window.removeEventListener('enhanced:changelog', show);
+  }, []);
 
   if (!ready) {
     return <div className="connect"><p className="empty">{t('common.loading')}</p></div>;
@@ -189,6 +240,13 @@ export function App() {
         onDone={() => {
           setTourOpen(false);
           setWalkthrough(true);
+        }}
+      />
+      <WhatsNew
+        scope={whatsNew}
+        onClose={() => {
+          if (whatsNew !== 'all') setPrefs({ seenVersion: VERSION });
+          setWhatsNew(null);
         }}
       />
 

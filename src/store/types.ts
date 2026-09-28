@@ -226,7 +226,8 @@ export interface AppState {
   updateProjectFields: (id: string, args: Record<string, unknown>) => Promise<void>;
   updateSectionFields: (id: string, args: Record<string, unknown>) => Promise<void>;
   /** Creates a section at `index` and hands back its id, so the caller can focus its name. */
-  createSection: (projectId: string, index: number) => Promise<string>;
+  /** A new section at `index`, under `name` or the untitled placeholder the list's field then selects. */
+  createSection: (projectId: string, index: number, name?: string) => Promise<string>;
   /** Moves a section, and the tasks in it, to a new position in its project. */
   moveSection: (id: string, index: number) => Promise<void>;
   /** Deletes a section. Todoist deletes the tasks inside it with it. */

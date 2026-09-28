@@ -108,6 +108,16 @@
   --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px;
   --fs-16:16px; --fs-20:20px; --fs-26:26px; --fs-32:32px;
 
+  /* Controls (#114): one height per density of control, whatever family it
+     belongs to. Content may still make an instance taller. */
+  --ctl-h-sm:28px; --ctl-h:34px; --ctl-h-touch:44px;
+  /* Icons: 14px beside a label or in a dense control, 16px on their own,
+     20px as a page-level glyph — the three sizes Icon already draws. */
+  --ic-sm:14px; --ic-md:16px; --ic-lg:20px;
+  /* Focus: a field or control that has the keyboard wears the accent as its
+     edge and this soft ring outside it. */
+  --focus-ring:0 0 0 3px var(--accent-soft);
+
   /* elevation */
   --sh-sm:0 1px 2px rgba(28,25,23,.07);
   --sh-md:0 6px 20px rgba(28,25,23,.10);
@@ -791,8 +801,8 @@ ul{margin:0;padding:0;list-style:none}
    chip, never shifts the row, and needs no white gradient to hide what is under it */
 .trow-actions{display:flex;align-self:center;justify-self:end;gap:2px;visibility:hidden}
 .task:hover .trow-actions,.task:focus-within .trow-actions{visibility:visible}
-.trow-actions button{width:30px;height:30px;display:grid;place-items:center;border-radius:var(--r-sm);color:var(--muted)}
-.trow-actions button:hover{color:var(--text);background:var(--hover)}
+.trow-actions > button{width:30px;height:30px;display:grid;place-items:center;border-radius:var(--r-sm);color:var(--muted)}
+.trow-actions > button:hover{color:var(--text);background:var(--hover)}
 
 .subtasks{margin-left:28px;padding-left:var(--s3);border-left:1px solid var(--border)}
 .subtasks .task{min-height:48px;padding-block:9px;margin-left:0;width:100%;padding-left:10px;grid-template-columns:18px minmax(0,1fr) auto}
