@@ -1230,3 +1230,22 @@
 :root[data-theme="dark"] .btn.coffee{background:rgba(254,215,0,.14);color:#f3e7a6}
 :root[data-theme="dark"] .btn.coffee:hover{background:rgba(254,215,0,.22)}
 :root[data-theme="dark"] .btn.coffee .ic{color:#f3e7a6}
+
+/* A board's "Add section" column (#108): a place, not a card — dashed and
+   quiet at rest, the same column shape as the others once it is a field. */
+.addsection-col{
+  width:100%;min-height:52px;padding:var(--s3) var(--s4);
+  display:flex;align-items:center;gap:6px;
+  border:1px dashed var(--border-strong);border-radius:var(--r-lg);
+  color:var(--muted);font-size:var(--fs-13);font-weight:600;text-align:left;
+  background:transparent;
+}
+.addsection-col:hover{color:var(--text);border-color:var(--muted);background:var(--hover)}
+.addsection-col:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.addsection-form{gap:var(--s3)}
+.addsection-field{
+  width:100%;padding:7px 10px;border:1px solid var(--border-strong);border-radius:var(--r-ctl);
+  background:var(--surface);color:var(--text);font:inherit;font-size:var(--fs-13);font-weight:700;
+}
+.addsection-field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.addsection-actions{display:flex;justify-content:flex-end;gap:var(--s2)}

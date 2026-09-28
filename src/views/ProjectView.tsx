@@ -296,6 +296,11 @@ function ProjectBody({
           onOpen={onOpen}
           showProject={false}
           boardColumns={current.group === 'none' ? boardColumns : undefined}
+          /* The board is the project's sections side by side, so it can add
+             one too, without a trip to the list (#108). */
+          onAddSection={current.group === 'none'
+            ? (name) => { void createSection(projectId, sections.length, name); }
+            : undefined}
           addToGroup={(key) => {
             if (current.group === 'day' && key !== 'none') {
               return () => onAddTaskTo({ projectId, date: key });
