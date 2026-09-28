@@ -175,7 +175,11 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
    * instead of removing it.
    *
    * Tasks that arrive in the bucket later are added, and one deleted outright
-   * drops out, because it no longer exists to show.
+   * drops out, because it no longer exists to show. One ticked off drops out
+   * too, wherever it was ticked: from its own row, or from the task panel
+   * opened from it (#116) — finishing a task is not an answer to the step's
+   * question, it is the task leaving. Unticked again while the step is still
+   * open, it comes back where it was.
    */
   const shown = useRef<{ stepId: string | null; ids: string[] }>({ stepId: null, ids: [] });
   const rowsFor = (s: ReviewStep): Item[] => {
@@ -192,7 +196,7 @@ export function ReviewView({ onOpen }: ReviewViewProps) {
        act in slower motion. Where it was is where it stays. */
     return shown.current.ids
       .map((id) => snapshot.items[id])
-      .filter((item): item is Item => !!item && !item.is_deleted);
+      .filter((item): item is Item => !!item && !item.is_deleted && !item.checked);
   };
 
   /**
@@ -877,15 +881,23 @@ function Estimates({
 }) {
   const { t, locale } = useT();
   const setEstimates = useStore((s) => s.setEstimates);
+  const live = useStore((s) => s.snapshot.items);
   const listRef = useRef<HTMLDivElement>(null);
   const [drafts, setDrafts] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
   /* The list is fixed when the step opens. Writing the estimates changes what
      the step would contain, and a list that empties itself under your hands is
      the thing this is fixing. */
-  const [frozen] = useState(() => items);
+  const [opened] = useState(() => items);
+  /* Fixed, but not blind: a task deleted or ticked off from its panel, opened
+     from this list, is gone from it at once (#116), and its title follows an
+     edit made there. */
+  const frozen = opened
+    .map((item) => live[item.id])
+    .filter((item): item is Item => !!item && !item.is_deleted && !item.checked);
+  const kept = new Set(frozen.map((item) => item.id));
 
-  const filled = Object.entries(drafts);
+  const filled = Object.entries(drafts).filter(([id]) => kept.has(id));
   const total = filled.reduce((sum, [, minutes]) => sum + minutes, 0);
 
   const record = (id: string, minutes: number | null) =>
