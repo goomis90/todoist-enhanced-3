@@ -225,6 +225,36 @@ function BoardSurface(props: ModeSurfaceProps) {
     };
   }, [columns.length]);
 
+  /* Only a column whose tasks don't fit gets its own scroll. A short column
+     stays unclipped, so a task's menu opens past its edge as it always did;
+     a column that does scroll is by then already full height, so the menu has
+     room inside it. Nothing changes size when a menu opens. Measured from the
+     last child's position, which a menu open inside a row doesn't move. */
+  const [scrolling, setScrolling] = useState<ReadonlySet<string>>(() => new Set());
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const check = () => {
+      const limit = parseFloat(board.style.getPropertyValue('--colh')) || Infinity;
+      const next = new Set<string>();
+      board.querySelectorAll<HTMLElement>('.col[data-col]').forEach((col) => {
+        const last = col.lastElementChild as HTMLElement | null;
+        if (!last) return;
+        const pad = parseFloat(getComputedStyle(col).paddingBottom) || 0;
+        if (last.offsetTop + last.offsetHeight + pad > limit + 1) next.add(col.dataset.col as string);
+      });
+      setScrolling((was) => (was.size === next.size && [...next].every((id) => was.has(id)) ? was : next));
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    board.querySelectorAll('.col[data-col]').forEach((col) => observer.observe(col));
+    window.addEventListener('resize', check);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', check);
+    };
+  }, [columns]);
+
   /** Turns a whole page: the next columns take exactly the place of these. */
   const step = (direction: -1 | 1) => {
     const board = boardRef.current;
@@ -324,7 +354,10 @@ function BoardSurface(props: ModeSurfaceProps) {
           if (column.items.length === 0) parts.length = 0;
           const accentClass = column.accent ? ` accent-${column.accent}` : '';
           const body = (isOver: boolean) => (
-            <section className={`col${isOver ? ' dropping' : ''}${accentClass}`}>
+            <section
+              data-col={column.id}
+              className={`col${isOver ? ' dropping' : ''}${accentClass}${scrolling.has(column.id) ? ' scrolls' : ''}`}
+            >
             <div className="chead">
               <div className="chead-title">
                 <strong>{column.title}</strong>

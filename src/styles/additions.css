@@ -1204,16 +1204,16 @@
 .dragoverlay.project .hash{width:18px;height:18px;font-size:var(--fs-12);flex:0 0 auto}
 .dragoverlay.tag .ic{color:var(--muted);flex:0 0 auto}
 
-/* Board columns scroll on their own (height measured in ModeSurface), so a
-   long column never carries the short ones — and their drop zones — off
-   screen. The heading stays put while its column scrolls. */
-.board .col{
+/* A board column is as tall as its tasks. Only one whose tasks don't fit on
+   screen scrolls on its own (.scrolls, set in ModeSurface), capped at the
+   screen height measured there; the heading stays put while it scrolls. */
+.board .col{position:relative}
+.board .col.scrolls{
   max-height:var(--colh,none);
   overflow-y:auto;
   overscroll-behavior-y:contain;
-  scrollbar-width:thin;
 }
-.board .col > .chead{
+.board .col.scrolls > .chead{
   position:sticky;
   top:calc(-1 * var(--s4));
   margin-top:calc(-1 * var(--s4));
@@ -1227,13 +1227,41 @@
   .page:has(.board){padding-bottom:var(--s4)}
 }
 
-/* A column is as tall as its tasks — a lone task doesn't get a screen-tall
-   panel. It stretches to full height while a task is being carried (an easy
-   drop target) and while one of its tasks has a menu open (so the menu has
-   room instead of being cut by the column's own scroll). */
-.board.dragging .col,
-.board .col:has(.popover){height:var(--colh,auto)}
+/* While a task is carried every column stretches to full height, so any of
+   them is an easy drop target. */
+.board.dragging .col{height:var(--colh,auto)}
 
 /* The board's page arrows sit at the end of the metrics line. */
 .metrics-slot{margin-left:auto;display:flex;align-items:center}
 .metrics-slot .boardnav{margin:0}
+
+/* ---------- Quieter scrollbars ----------
+   The page and the board get a slim bar; a column's own is a hairline, just
+   enough to say there is more below. Chromium and Safari draw these; a
+   scrollbar-width/color on the same element would switch them off, hence the
+   reset. Firefox, without these, gets its thinnest native bar. */
+@supports selector(::-webkit-scrollbar){
+  .workspace .screen,
+  .page .board,
+  .page .board .col{scrollbar-width:auto;scrollbar-color:auto}
+  .workspace .screen::-webkit-scrollbar,
+  .page .board::-webkit-scrollbar{width:6px;height:6px}
+  .page .board .col::-webkit-scrollbar{width:3px}
+  .workspace .screen::-webkit-scrollbar-track,
+  .page .board::-webkit-scrollbar-track,
+  .page .board .col::-webkit-scrollbar-track{background:transparent}
+  .workspace .screen::-webkit-scrollbar-thumb,
+  .page .board::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:3px}
+  .page .board .col::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .workspace .screen::-webkit-scrollbar-thumb:hover,
+  .page .board::-webkit-scrollbar-thumb:hover,
+  .page .board .col::-webkit-scrollbar-thumb:hover{background:var(--border-strong)}
+  .workspace .screen::-webkit-scrollbar-button,
+  .page .board::-webkit-scrollbar-button,
+  .page .board .col::-webkit-scrollbar-button{display:none}
+  .workspace .screen::-webkit-scrollbar-corner,
+  .page .board::-webkit-scrollbar-corner{background:transparent}
+}
+@supports not selector(::-webkit-scrollbar){
+  .page .board .col{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+}
