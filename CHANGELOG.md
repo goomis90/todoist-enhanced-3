@@ -9,6 +9,34 @@ written for the people using it: say where the thing is (the page, the
 button, the key), what it does for them, in plain words, and keep em dashes
 out. The French translation lives in CHANGELOG.fr.md.
 
+## 1.16.0
+
+After each update a short window tells you what changed, the new task window is easier to read, and picking a date looks the same everywhere.
+
+🆕 **See what's new after an update.** When a new version brings something new, a short window lists what changed, once. You can turn it off, and read every past release, in Settings, under About.
+
+🆕 **Add a section from a board.** In a project's Board view, the dashed "Add section" column at the end creates a new section, the same one the list would.
+
+🆕 **Choose how wide a board is.** A board now stays as wide as the page header, like a list. Turn on Full width in Display to use the whole screen.
+
+🎨 **A clearer new task window.** The title comes first, with the description right under it. Then the date, deadline, project, priority, estimate and tags sit on one line of small buttons, and the empty ones show as "+ Deadline". Subtasks have their own heading with a count, and the buttons stay at the bottom.
+
+🎨 **One date picker everywhere.** A task's date menu, the bar for several selected tasks, the new task window and the task panel all show the same picker: type a date, pick Today, Tomorrow, Next week, This week or Someday, or click a day in the month.
+
+🎨 **Recognised words in a title are easier to tell apart.** The highlights behind a date, a project or a tag you type keep the normal space between words, so several in a row no longer blur together.
+
+🎨 **Board cards keep their buttons inside the card.** Hovering a card shows its buttons in its top corner, on the card itself and lined up with the title.
+
+🎨 **Every menu you can type in has the same search field.** Moving a task, picking tags, a project or a date: the field at the top looks and behaves the same.
+
+🐛 **Opening a task no longer reads its title again.** A saved title like "Daily review" stays plain text. Only what you type from then on becomes a date, a tag or a priority.
+
+🐛 **Typing a tag created one tag per letter.** Typing "@week" in the new task window saved "w", "we", "wee" and "week". Now only the tag you end up with is saved.
+
+🐛 **The review keeps up with the task panel.** A task you complete or delete from the panel leaves the review step straight away. The "No estimate" step now says which tasks it lists, and picks up a task you create in the meantime.
+
+🐛 **Menus on a short board or list are no longer cut off.** A task's date, move and more menus always open in full, using the whole page.
+
 ## 1.15.0
 
 Dates and boards now work from the keyboard, links open, and you can go from one task to the next without closing it.
