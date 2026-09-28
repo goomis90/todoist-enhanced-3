@@ -14,7 +14,7 @@ import {
 } from '@/domain/estimates';
 import { deadlineDate, dueDate, formatRelativeDay, toApiDate } from '@/domain/dates';
 import { plainTitle, renderMarkdown, titleLinks } from '@/domain/markdown';
-import { parseShorthand, type TextRange } from '@/domain/shorthand';
+import { parseShorthand, savedRefusals, type TextRange } from '@/domain/shorthand';
 import { dueForDate, readRecurrence } from '@/domain/recurrence';
 import { EstimateField } from '../EstimateField';
 import { TaskNameField } from '../TaskNameField';
@@ -454,7 +454,9 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
     setEditingDescription(false);
     setAddingSubtask(false);
     setSubtaskDraft('');
-    setRefusals([]);
+    /* The saved title is a name, not something being typed: nothing in it is
+       read until it is edited (#117). */
+    setRefusals(savedRefusals(item.content, snapshot, naturalDates));
     setMenuOpen(false);
     setTagPickerOpen(false);
   }, [item?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -550,7 +552,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
   const cancelTitle = () => {
     setTitle(item.content);
-    setRefusals([]);
+    setRefusals(savedRefusals(item.content, snapshot, naturalDates));
     releaseTitle();
   };
 
@@ -560,6 +562,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
     if (!next) {
       // Nothing left to call it by: the edit is dropped rather than the name.
       setTitle(item.content);
+      setRefusals(savedRefusals(item.content, snapshot, naturalDates));
       return;
     }
 
@@ -609,7 +612,9 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
     ].filter(Boolean);
     if (applied.length > 0) toast(applied.join(' · '));
 
-    setRefusals([]);
+    /* Saved, the title is a name again: what is left of it is not read a
+       second time. */
+    setRefusals(savedRefusals(next, snapshot, naturalDates));
     setTitle(next);
     releaseTitle();
   };

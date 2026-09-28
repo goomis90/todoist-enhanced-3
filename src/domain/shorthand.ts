@@ -271,6 +271,34 @@ export function parseShorthand(
 }
 
 /**
+ * Every reading a name already saved would get, turned down in advance.
+ *
+ * The task panel reuses the composer's field, and the composer reads what is
+ * typed. A title that was saved long ago was not typed just now: "Daily
+ * review" opened again is a name, not a request to repeat the task every day
+ * (#117). So the panel starts from these refusals — the saved words stay plain
+ * text, and only what is typed from there on is read. Clicking a word still
+ * takes its reading back, and editing into one drops its refusal, as with any
+ * other.
+ *
+ * Refusing one reading can let the next candidate in the same sentence in, so
+ * this reads again until nothing is left. A link is shown, never read, and is
+ * left alone.
+ */
+export function savedRefusals(
+  raw: string, snapshot: Snapshot, naturalDates: boolean,
+): TextRange[] {
+  const refused: TextRange[] = [];
+  for (let guard = 0; guard < 16; guard += 1) {
+    const found = parseShorthand(raw, snapshot, naturalDates, refused).ranges
+      .filter((range) => !range.keep);
+    if (found.length === 0) break;
+    refused.push(...found.map(({ start, end }) => ({ start, end })));
+  }
+  return refused.sort((a, b) => a.start - b.start);
+}
+
+/**
  * Carries refusals across an edit of the text they point into.
  *
  * A refusal is held as a position, so every keystroke before it would leave it
