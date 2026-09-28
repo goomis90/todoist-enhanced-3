@@ -95,7 +95,26 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
       ? t('planning.tooManyToday', { p1: p1Count, p2: p2Count })
       : undefined;
 
+    // Inbox leads the page: it's where new tasks land before they're planned,
+    // so it's the first thing to clear. A source only — it takes no drop
+    // (nothing gets planned *into* the Inbox), so it's absent while dragging
+    // rather than appearing as a target.
+    const inboxId = snapshot.user?.inbox_project_id
+      ?? Object.values(snapshot.projects).find((p) => p.inbox_project && !p.is_deleted)?.id;
+    const inboxItems = inboxId ? scoped.filter((item) => item.project_id === inboxId) : [];
+
     const cols = [
+      {
+        id: 'inbox',
+        title: t('nav.inbox'),
+        items: sortedFor(inboxItems),
+        dropTarget: undefined,
+        onAddTask: inboxId ? () => onAddTaskTo({ projectId: inboxId }) : undefined,
+        showProject: false,
+        accent: undefined,
+        capacityMinutes: undefined,
+        warning: undefined,
+      },
       {
         id: 'today',
         title: t('nav.today'),
@@ -142,9 +161,11 @@ export function PlanningView({ onOpen, onInsights, onUnestimated, onAddTaskTo }:
     // drag gesture itself would lose its target mid-pointer-capture. Always
     // rendering them costs a look at a handful of quiet columns, not a
     // broken drag.
-    return cols.filter((col) => col.id === 'today' || col.id === 'tomorrow'
-      ? col.items.length > 0 || dragging
-      : true);
+    return cols.filter((col) => {
+      if (col.id === 'inbox') return col.items.length > 0;
+      if (col.id === 'today' || col.id === 'tomorrow') return col.items.length > 0 || dragging;
+      return true;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     scoped, projects, current.sort, current.filters.hideScheduledInProjects,
