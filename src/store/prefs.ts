@@ -34,6 +34,8 @@ export interface SyncedView {
   sort: ViewPrefs['sort'];
   showSubtasks: boolean;
   showCompleted: boolean;
+  /** A board as wide as the page (ViewPrefs.wide). */
+  wide?: boolean;
 }
 
 /**
@@ -61,6 +63,7 @@ export function syncedPreferences(prefs: Preferences): SyncedPreferences {
       sort: view.sort,
       showSubtasks: view.filters.showSubtasks,
       showCompleted: view.filters.showCompleted,
+      ...(view.wide ? { wide: true } : {}),
     }]);
   return { ...rest, views: Object.fromEntries(projectViews) };
 }
@@ -125,6 +128,7 @@ export function mergeSynced(
       mode: shared.mode ?? mine.mode,
       group: shared.group ?? mine.group,
       sort: shared.sort ?? mine.sort,
+      wide: shared.wide === true,
       filters: {
         ...mine.filters,
         showSubtasks: shared.showSubtasks ?? mine.filters.showSubtasks,

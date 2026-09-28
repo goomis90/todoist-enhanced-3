@@ -146,6 +146,7 @@ export const fr: Record<TranslationKey, string> = {
   'toolbar.insights': 'Analyses',
   'toolbar.list': 'Liste',
   'toolbar.board': 'Tableau',
+  'toolbar.fullWidth': 'Pleine largeur',
   'toolbar.focus': 'Focus',
 
   'group.none': 'Par défaut',

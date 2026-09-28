@@ -144,6 +144,7 @@ export const en = {
   'toolbar.insights': 'Insights',
   'toolbar.list': 'List',
   'toolbar.board': 'Board',
+  'toolbar.fullWidth': 'Full width',
   'toolbar.focus': 'Focus',
 
   'group.none': 'Default',

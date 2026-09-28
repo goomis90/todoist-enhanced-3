@@ -49,6 +49,8 @@ interface ModeSurfaceProps {
    * has sections to add to.
    */
   onAddSection?: (name: string) => Promise<void> | void;
+  /** A board as wide as the page rather than the header (ViewPrefs.wide). */
+  wide?: boolean;
 }
 
 /**
@@ -259,7 +261,7 @@ function BoardSurface(props: ModeSurfaceProps) {
         </div>
       )}
       <div
-        className={`board${props.group === 'day' ? ' days' : ''}`}
+        className={`board${props.group === 'day' ? ' days' : ''}${props.wide ? ' fullwidth' : ''}`}
         ref={boardRef}
         style={page ? ({ '--colw': `${page.width}px` } as React.CSSProperties) : undefined}
       >

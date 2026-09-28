@@ -291,6 +291,7 @@ function ProjectBody({
           items={scoped}
           childrenOf={childrenOf}
           mode="board"
+          wide={current.wide}
           group={current.group}
           sort={current.sort}
           onOpen={onOpen}
@@ -391,6 +392,7 @@ function ProjectBody({
           items={scoped}
           childrenOf={childrenOf}
           mode={current.mode}
+          wide={current.wide}
           group={current.group}
           sort={current.sort}
           onOpen={onOpen}

@@ -131,6 +131,21 @@ export function DisplayMenu({
             ))}
           </div>
 
+          {/* A board opens at the width of the header above it, the way a
+              list does; this widens it to the whole page (#108 follow-up). */}
+          {current.mode === 'board' && (
+            <div className="panelrow">
+              <span>{t('toolbar.fullWidth')}</span>
+              <button
+                className="switch"
+                role="switch"
+                aria-checked={current.wide === true}
+                aria-label={t('toolbar.fullWidth')}
+                onClick={() => setViewPrefs(viewKey, { wide: !current.wide })}
+              />
+            </div>
+          )}
+
           {/* Two questions, two selects, drawn the way every other select in
               the app is drawn. */}
           <div className="panelgrid">
