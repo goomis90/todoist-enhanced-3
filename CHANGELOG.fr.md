@@ -28,6 +28,8 @@ Après chaque mise à jour, une courte fenêtre vous dit ce qui a changé, la fe
 
 🎨 **Tous les menus où l'on tape ont le même champ de recherche.** Déplacer une tâche, choisir des tags, un projet ou une date : le champ en haut a le même aspect et marche pareil.
 
+🎨 **Le bouton Affichage ne compte que les vrais réglages.** Son chiffre augmente quand vous filtrez, groupez ou triez une page autrement que par défaut, plus quand vous passez de liste à tableau (ou de matrice à liste).
+
 🐛 **Ouvrir une tâche ne relit plus son titre.** Un titre enregistré comme « Daily review » reste du texte simple. Seul ce que vous tapez ensuite devient une date, un tag ou une priorité.
 
 🐛 **Taper un tag créait un tag par lettre.** Taper « @week » dans la fenêtre de nouvelle tâche enregistrait « w », « we », « wee » et « week ». Maintenant, seul le tag final est enregistré.

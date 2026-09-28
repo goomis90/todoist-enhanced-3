@@ -29,6 +29,8 @@ After each update a short window tells you what changed, the new task window is 
 
 🎨 **Every menu you can type in has the same search field.** Moving a task, picking tags, a project or a date: the field at the top looks and behaves the same.
 
+🎨 **The Display button counts only real settings.** Its number goes up when you filter, group or sort a page differently from its defaults, not when you switch between list and board (or matrix and list).
+
 🐛 **Opening a task no longer reads its title again.** A saved title like "Daily review" stays plain text. Only what you type from then on becomes a date, a tag or a priority.
 
 🐛 **Typing a tag created one tag per letter.** Typing "@week" in the new task window saved "w", "we", "wee" and "week". Now only the tag you end up with is saved.
