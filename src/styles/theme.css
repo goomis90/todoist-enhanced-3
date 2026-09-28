@@ -1503,27 +1503,27 @@
      guess about prose rather than something written on purpose. */
   --mark:var(--accent);
 
-  /* A mark is a highlighted word, not a chip.
-     The chip was the wrong shape for the space available: a mark cannot be
-     wider than the word under it without the mirror drifting off the input,
-     and a space between two words is four pixels — so pills either touched or
-     the sentence had to be stretched to make room for them, and a title typed
-     with gaps between every word is worse than a tight mark.
-     What is left is the tint alone, with as much air as the padding can take
-     back through the margin, and a hairline of the field's own colour drawn
-     outside the box — a shadow takes no width, so it is what keeps two marks
-     that nearly touch reading as two. */
-  background:color-mix(in srgb, var(--mark) 14%, var(--surface));
-  /* Air on all four sides, out of a budget of four pixels.
-     Inner air and the gap between two marks come out of the same space — the
-     one the sentence puts between two words — so padding the box would take
-     the gap with it: at 2px a side, two marked words had half a pixel of
-     daylight between them. The sides are painted rather than padded instead:
-     a shadow spreads the fill a pixel and a half past the box and takes no
-     width at all, which leaves the words where they were and still leaves the
-     better part of a space between one mark and the next. */
-  padding:5px 0;margin:0;border-radius:5px;
-  box-shadow:0 0 0 1.5px color-mix(in srgb, var(--mark) 14%, var(--surface));
+  /* A mark is a highlight behind the words, never a chip (#112).
+
+     The mirror sits under the input and has to keep its text metrics exactly,
+     so nothing here may take width: no padding, margin, border, letter or
+     word spacing on the sides. Three earlier tries each broke that or the
+     sentence — padded pills with negative margins (neighbouring marks
+     touched), wider word spacing (every ordinary title got wider gaps), and
+     an outward shadow that spread the tint into the space between words.
+
+     The tint now stays inside the word's own bounds and is inset slightly
+     at each end: an inset strip of the field's own surface, painted over the
+     tint's left and right edges, so two recognised runs side by side keep
+     the whole natural space between them plus a sliver of daylight. Vertical
+     padding on an inline box takes no layout room, so the only breathing
+     room is above and below. `clone` gives each line of a wrapped mark its
+     own rounded ends. */
+  --mark-tint:color-mix(in srgb, var(--mark) 13%, var(--surface));
+  background:var(--mark-tint);
+  padding:4px 0;margin:0;border-radius:5px;
+  box-shadow:inset 1.5px 0 0 var(--surface), inset -1.5px 0 0 var(--surface);
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
 }
 
 /* A guess has no colour of its own. A duration has none either: an estimate is
