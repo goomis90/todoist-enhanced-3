@@ -1229,29 +1229,30 @@
 
 /* While a task is carried every column stretches to full height, so any of
    them is an easy drop target. */
-.board.dragging .col{height:var(--colh,auto)}
+.board.dragging .col,
+.board.measuring .col{height:var(--colh,auto)}
 
 /* The board's page arrows sit at the end of the metrics line. */
 .metrics-slot{margin-left:auto;display:flex;align-items:center}
 .metrics-slot .boardnav{margin:0}
 
 /* ---------- Quieter scrollbars ----------
-   The page and the board get a slim bar; a column's own is a hairline, just
-   enough to say there is more below. Chromium and Safari draw these; a
+   Every one of them — the page's, the board's, a column's own — is a 3px
+   hairline, just enough to say there is more. Chromium and Safari draw these; a
    scrollbar-width/color on the same element would switch them off, hence the
    reset. Firefox, without these, gets its thinnest native bar. */
 @supports selector(::-webkit-scrollbar){
   .workspace .screen,
   .page .board,
   .page .board .col{scrollbar-width:auto;scrollbar-color:auto}
-  .workspace .screen::-webkit-scrollbar,
-  .page .board::-webkit-scrollbar{width:6px;height:6px}
+  .workspace .screen::-webkit-scrollbar{width:3px;height:3px}
+  .page .board::-webkit-scrollbar{height:3px}
   .page .board .col::-webkit-scrollbar{width:3px}
   .workspace .screen::-webkit-scrollbar-track,
   .page .board::-webkit-scrollbar-track,
   .page .board .col::-webkit-scrollbar-track{background:transparent}
   .workspace .screen::-webkit-scrollbar-thumb,
-  .page .board::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:3px}
+  .page .board::-webkit-scrollbar-thumb,
   .page .board .col::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
   .workspace .screen::-webkit-scrollbar-thumb:hover,
   .page .board::-webkit-scrollbar-thumb:hover,

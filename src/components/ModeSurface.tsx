@@ -211,6 +211,15 @@ function BoardSurface(props: ModeSurfaceProps) {
       const boardPad = parseFloat(getComputedStyle(board).paddingBottom) || 0;
       const height = Math.max(COLUMN_MIN_HEIGHT, scroller.clientHeight - top - pagePad - boardPad - 2);
       board.style.setProperty('--colh', `${Math.floor(height)}px`);
+      /* Whatever the sum above misses (the board's own scrollbar, a margin
+         below it) would leave the page a few pixels too tall and scrolling
+         for nothing. Try a column at full height and take off the excess. */
+      board.classList.add('measuring');
+      const over = scroller.scrollHeight - scroller.clientHeight;
+      board.classList.remove('measuring');
+      if (over > 0) {
+        board.style.setProperty('--colh', `${Math.floor(Math.max(COLUMN_MIN_HEIGHT, height - over))}px`);
+      }
     };
     size();
     window.addEventListener('resize', size);
