@@ -389,7 +389,6 @@
   border-radius:var(--r-md);margin-bottom:8px;padding:10px 12px;
   grid-template-columns:18px minmax(0,1fr);
 }
-.col .task .trow-actions{grid-column:2;justify-self:end;margin-top:6px}
 .col .drag{display:none}
 
 .btn.linklike{border:0;color:var(--accent);background:transparent;padding:0 4px}
@@ -941,24 +940,30 @@
   font-size:var(--fs-12);
 }
 .col .taskwrap .task ~ .task .ttitle{font-size:var(--fs-12);font-weight:400}
-/* The controls float in the card's bottom corner on hover, over the duration
-   and tags rather than over the title being read. Given a row of their own
-   they reserved height on every card, which is what left some of them looking
-   bottom-heavy for no reason. */
+/* The controls sit on the card's first line, in its top corner, the way a
+   list row keeps them beside its title (#109). They are painted in the
+   card's own surface, with a short fade on their left where they meet the
+   title — part of the card rather than a panel laid on top of it. The
+   floating panel before this had its own border and shadow and sat over the
+   description, and read as a second shape stacked on the card.
+
+   Absolute, so a card is exactly as tall at rest as when hovered: a row of
+   their own reserved height on every card, which is what once left some of
+   them looking bottom-heavy. */
 .col .taskwrap{position:relative}
+.col .task{--card-bg:var(--surface)}
+.col .task.picked{--card-bg:var(--row-marked)}
 .col .trow-end{
-  position:absolute;bottom:0;right:0;z-index:1;
+  position:absolute;top:-5px;right:-6px;z-index:1;
   margin-top:0;justify-self:auto;
-  border-radius:var(--r-sm);background:var(--surface);
-  /* An edge and a shadow, because this is a white panel floating over a white
-     card: without them the buttons appear to be lying on the card's text. The
-     white ring stays — it is what clears the words underneath. */
-  border:1px solid var(--border);
-  box-shadow:0 0 0 3px var(--surface),0 2px 6px var(--sh-float);
-  /* The box itself must go, not only its buttons: with the buttons merely
-     invisible its opaque background and halo stayed painted over the title. */
+  padding-left:22px;
+  background:linear-gradient(to right, transparent, var(--card-bg) 20px);
+  border:0;border-radius:0 var(--r-sm) 0 0;box-shadow:none;
+  /* The box itself must go, not only its buttons: its background would stay
+     painted over the end of the title. */
   visibility:hidden;
 }
+.col .trow-end .trow-actions button{width:28px;height:28px}
 .col .task:hover .trow-end,
 .col .task:focus-within .trow-end{visibility:visible}
 /* On a board the whole card is the handle, as in Todoist's own board. */
