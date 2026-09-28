@@ -791,8 +791,8 @@ ul{margin:0;padding:0;list-style:none}
    chip, never shifts the row, and needs no white gradient to hide what is under it */
 .trow-actions{display:flex;align-self:center;justify-self:end;gap:2px;visibility:hidden}
 .task:hover .trow-actions,.task:focus-within .trow-actions{visibility:visible}
-.trow-actions button{width:30px;height:30px;display:grid;place-items:center;border-radius:var(--r-sm);color:var(--muted)}
-.trow-actions button:hover{color:var(--text);background:var(--hover)}
+.trow-actions > button{width:30px;height:30px;display:grid;place-items:center;border-radius:var(--r-sm);color:var(--muted)}
+.trow-actions > button:hover{color:var(--text);background:var(--hover)}
 
 .subtasks{margin-left:28px;padding-left:var(--s3);border-left:1px solid var(--border)}
 .subtasks .task{min-height:48px;padding-block:9px;margin-left:0;width:100%;padding-left:10px;grid-template-columns:18px minmax(0,1fr) auto}

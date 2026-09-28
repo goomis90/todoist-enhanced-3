@@ -963,7 +963,7 @@
      painted over the end of the title. */
   visibility:hidden;
 }
-.col .trow-end .trow-actions button{width:28px;height:28px}
+.col .trow-end .trow-actions > button{width:28px;height:28px}
 .col .task:hover .trow-end,
 .col .task:focus-within .trow-end{visibility:visible}
 /* On a board the whole card is the handle, as in Todoist's own board. */
@@ -2217,8 +2217,7 @@
 
 /* ---------- The calendar ---------- */
 .datefield{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
-.datepanel{position:fixed;z-index:95;width:278px;padding:var(--s3)}
-.datepanel .pickersearch{position:static;margin:calc(var(--s3) * -1) calc(var(--s3) * -1) var(--s3);padding:var(--s2) var(--s3)}
+.datepanel{position:fixed;z-index:95;width:288px;padding:var(--s2)}
 .pickersuggestions{display:grid;margin:-4px 0 var(--s3);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
 .pickersuggestions button{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;text-align:left;font-size:var(--fs-12)}
 .pickersuggestions button:hover,.pickersuggestions button.active{background:var(--hover)}
@@ -2236,20 +2235,7 @@
   background:var(--surface);color:var(--text);font-size:var(--fs-13);
 }
 .schedulefield:focus{outline:2px solid var(--accent);outline-offset:-1px}
-.schedulesuggest{display:grid;margin:-4px 0 var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
-.scheduleoption{display:flex;justify-content:space-between;gap:10px;padding:7px 8px;text-align:left;font-size:var(--fs-12)}
-.scheduleoption:hover,.scheduleoption.on{background:var(--hover)}
-.scheduleoption small{color:var(--faint)}
-.schedulepreview{margin:-4px 0 var(--s2);padding:7px 8px;border-radius:var(--r-sm);background:var(--hover);font-size:var(--fs-12)}
-.schedulepreview.none{color:var(--faint)}
 
-.datepanel-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--s3)}
-.datepanel-quick button{
-  min-height:28px;padding:0 10px;border-radius:var(--r-full);
-  border:1px solid var(--border);background:var(--surface);
-  color:var(--muted);font-size:var(--fs-12);font-weight:600;
-}
-.datepanel-quick button:hover{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-tint)}
 
 .datepanel-head{
   display:flex;align-items:center;justify-content:space-between;gap:var(--s2);
@@ -2280,16 +2266,7 @@
    be picked is visible, but plainly not a choice. */
 .dateday:disabled{color:var(--faint);opacity:.4;cursor:default}
 .dateday:disabled:hover{background:transparent}
-.datepanel-quick button:disabled{opacity:.4;cursor:default}
-.datepanel-quick button:disabled:hover{border-color:var(--border);color:inherit;background:transparent}
 
-.datepanel-clear{
-  width:100%;margin-top:var(--s3);padding-top:var(--s2);
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  border-top:1px solid var(--border);
-  color:var(--muted);font-size:var(--fs-12);font-weight:600;min-height:30px;
-}
-.datepanel-clear:hover{color:var(--accent)}
 
 /* The property rows in a task's panel hold these too. */
 .prop .fselect,.prop .datefield{margin-top:4px}

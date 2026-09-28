@@ -660,8 +660,6 @@
 }
 .bulkpop-list::-webkit-scrollbar{width:0;height:0}
 .bulkpop-list > .pickersearch{margin-left:0;margin-right:0}
-.bulkpop-date{padding:2px}
-.bulkpop-date .datefield{width:100%}
 .bulkpop .opt > span{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .bulkpop .opt .hash{flex:0 0 auto}
 .bulkpop-list .opt{width:100%;min-width:0;overflow:hidden}
@@ -693,12 +691,8 @@
 
 /* The calendar inside the row's schedule menu, given the width of the menu
    rather than the width of its own label. */
-.rowmenu-date .datefield{width:100%}
 /* The menu's own rules turn every button into a grid, which stacked the
    calendar's icon, its date and its caret into three lines. */
-.rowmenu-date .fselect-face{
-  width:100%;display:flex;align-items:center;gap:8px;justify-content:flex-start;
-}
 
 /* ==========================================================================
    1.1.1 — the review
@@ -798,14 +792,8 @@
 }
 .schedulefield::placeholder{color:var(--faint);font-weight:400}
 .schedulefield:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
-.schedulepreview{
-  padding:4px 10px 2px;color:var(--accent-dark);
-  font-size:var(--fs-12);font-weight:600;
-}
-.schedulepreview.none{color:var(--faint);font-weight:400}
 .schedulemenu .opt{min-height:30px}
 .schedulemenu hr{margin:4px 0}
-.rowmenu-date{padding:2px 0 0}
 
 /* A number that counts something needs the something beside it. */
 .setunit{display:inline-flex;align-items:center;gap:8px}
@@ -814,20 +802,6 @@
 
 /* What the field could still become: a short list, not a row of pills. Three
    lines at most — a fourth is a menu, and this is a hint. */
-.schedulesuggest{display:grid;gap:2px;padding:6px 0 2px}
-.schedulesuggest .scheduleoption{
-  /* Stated, because every button inside a row's action cluster is otherwise a
-     thirty-pixel square icon button. */
-  width:100%;height:auto;
-  display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);
-  min-height:30px;padding:0 8px;border-radius:var(--r-sm);
-  font-size:var(--fs-13);color:var(--text);text-align:left;
-}
-.schedulesuggest .scheduleoption small{
-  color:var(--faint);font-size:var(--fs-12);white-space:nowrap;
-}
-.schedulesuggest .scheduleoption.on{background:var(--accent-soft);color:var(--accent-dark)}
-.schedulesuggest .scheduleoption.on small{color:var(--accent-dark)}
 
 /* The mail step stopped asking to be ticked: Next already means "done". */
 .reviewmail{padding-bottom:var(--s5)}
@@ -1091,11 +1065,11 @@
   /* Tapping the row opens the task, so the button that opens the task is the
      one the tray does without. */
   .trow-actions .rowact-wide{display:none}
-  .trow-actions button{
+  .trow-actions > button{
     width:44px;height:44px;border-radius:var(--r-full);
     background:var(--subtle);color:var(--muted);
   }
-  .trow-actions button:active{background:var(--hover);color:var(--text)}
+  .trow-actions > button:active{background:var(--hover);color:var(--text)}
   .trow-actions .ic{width:18px;height:18px}
 
   /* A row pulled aside is the one thing being acted on; the rest of the list
@@ -1249,3 +1223,48 @@
 }
 .addsection-field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .addsection-actions{display:flex;justify-content:flex-end;gap:var(--s2)}
+
+/* ---------- The one date picker (#110) ----------
+   The same body in the row's schedule menu, the bulk bar's Date panel and
+   every date field's panel: a bordered field to type in, the quick choices
+   one per line with the day each lands on, the month, then the context's
+   own actions. Only the container differs. */
+.datepicker{display:grid;min-width:0;text-align:left}
+.datepicker .pickersearch.datepicker-field{
+  position:static;margin:0 0 6px;padding:0 10px;min-height:34px;
+  border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);
+}
+.datepicker .pickersearch.datepicker-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.datepicker .pickersearch input{height:32px;font-weight:600}
+.datepicker .pickersearch input::placeholder{font-weight:400}
+.datepicker .pickersuggestions,
+.datepicker .pickerreading{margin:0 0 6px}
+.datepicker .pickerreading{display:flex;align-items:center;gap:6px}
+.datepicker .pickersuggestions button.active{background:var(--accent-soft);color:var(--accent-dark)}
+.datepicker .pickersuggestions button.active small{color:var(--accent-dark)}
+.datepicker-options{display:grid;gap:1px;padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+.datepicker button.opt{
+  width:100%;height:auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  min-height:30px;padding:0 8px;border-radius:var(--r-sm);
+  font-size:var(--fs-13);color:var(--text);text-align:left;background:transparent;
+}
+.datepicker button.opt > span{display:inline-flex;align-items:center;gap:8px;min-width:0}
+.datepicker button.opt > span .ic{color:var(--muted)}
+.datepicker button.opt small{color:var(--faint);font-size:var(--fs-12);white-space:nowrap}
+.datepicker button.opt:hover{background:var(--hover)}
+.datepicker button.opt:focus-visible{outline:none;background:var(--accent-soft);color:var(--accent-dark)}
+.datepicker button.opt:focus-visible small,
+.datepicker button.opt:focus-visible .ic{color:var(--accent-dark)}
+.datepicker button.opt:disabled{opacity:.4;cursor:default}
+.datepicker-month{padding:0 2px}
+.datepicker-foot{display:grid;gap:1px;margin-top:8px;padding-top:6px;border-top:1px solid var(--border)}
+.rowmenu.schedulemenu{width:288px;max-width:calc(100vw - 16px)}
+.bulkpop:has(.datepicker){width:288px}
+.datepicker .dateday{aspect-ratio:auto;height:32px}
+
+/* Row menus are drawn into the document and placed against the row's
+   buttons with fixed coordinates (#111), so no box the row sits in — a
+   short board column, a short list — can clip one. */
+.rowmenu.floating,
+.rowmenu.floating.up{position:fixed;right:auto;bottom:auto;z-index:95}
+.datepicker .pickersuggestions button{font-size:var(--fs-13)}
