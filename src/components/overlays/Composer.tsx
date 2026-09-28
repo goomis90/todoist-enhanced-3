@@ -54,6 +54,7 @@ export function Composer({
   const [date, setDate] = useState('');
   const [recurrence, setRecurrence] = useState<Shorthand['recurrence']>(null);
   const [deadline, setDeadline] = useState('');
+  /** The tags picked by hand (or given by the page the composer opened on). */
   const [labels, setLabels] = useState<string[]>([]);
   const [minutes, setMinutes] = useState<number | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -91,10 +92,38 @@ export function Composer({
     .sort(byLabelOrder);
   const filteredTags = tags.filter((label) => matchesSearch(label.name, tagQuery));
 
-  const toggleTag = (name: string) => setLabels((prev) =>
-    prev.includes(name) ? prev.filter((label) => label !== name) : [...prev, name]);
-
   const parsed = parseShorthand(name, snapshot, naturalDates, refusals);
+
+  /*
+   * The task's tags: the ones picked by hand, and the ones the name says right
+   * now.
+   *
+   * The name's used to be pushed into the picked list as they were read, and
+   * never taken back out: typing "@week" read "@w", then "@we", then "@wee",
+   * and each was kept, so the task went to Todoist with four tags and Todoist
+   * made all four. What the name says is read again on every keystroke
+   * instead, so only the word as it stands is a tag.
+   */
+  const sameTag = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+  const allTags = parsed.labels.reduce(
+    (tags, read) => (tags.some((tag) => sameTag(tag, read)) ? tags : [...tags, read]),
+    labels,
+  );
+
+  /** Takes a tag off: out of the picked list, and its reading out of the name. */
+  const dropTag = (tag: string) => {
+    setLabels((prev) => prev.filter((l) => !sameTag(l, tag)));
+    const marks = parsed.ranges.filter((range) => range.kind === 'label'
+      && sameTag(name.slice(range.start + 1, range.end), tag));
+    if (marks.length > 0) {
+      setRefusals((prev) => [...prev, ...marks.map(({ start, end }) => ({ start, end }))]);
+    }
+  };
+
+  const toggleTag = (tag: string) => {
+    if (allTags.some((l) => sameTag(l, tag))) dropTag(tag);
+    else setLabels((prev) => [...prev, tag]);
+  };
 
   /* The default the project field falls back to, which is where a refused
      `#project` leaves it: the composer was opened on somewhere, and "nowhere"
@@ -108,16 +137,14 @@ export function Composer({
    * or the repeat it had pushed down stays sitting in the form — the task
    * would still be created with the very thing that was just refused.
    */
-  const unfill = (reading: HighlightKind, range: TextRange) => {
+  const unfill = (reading: HighlightKind) => {
     if (reading === 'date') setDate(defaultDate ?? '');
     if (reading === 'recurrence') setRecurrence(null);
     if (reading === 'priority') setPriority(4);
     if (reading === 'duration') setMinutes(null);
     if (reading === 'project') { setProjectId(fallbackProject); setSectionId(''); }
-    if (reading === 'label') {
-      const tag = name.slice(range.start, range.end).replace(/^@/, '');
-      setLabels((prev) => prev.filter((l) => l.toLowerCase() !== tag.toLowerCase()));
-    }
+    /* A tag read from the name needs nothing here: it is read again from the
+       name every time, so refusing it is enough to take it off. */
   };
 
   /*
@@ -134,7 +161,6 @@ export function Composer({
    */
   const { date: readDate, projectId: readProject, sectionId: readSection,
     priority: readPriority, minutes: readMinutes, recurrence: readRepeat } = parsed;
-  const readLabels = parsed.labels.join('\u0000');
 
   /*
    * Each of these also watches `refusals`, whose identity changes only when a
@@ -164,16 +190,12 @@ export function Composer({
   useEffect(() => {
     if (readMinutes !== null) setMinutes(readMinutes);
   }, [readMinutes, refusals]);
-  useEffect(() => {
-    if (!readLabels) return;
-    setLabels((prev) => [...new Set([...prev, ...readLabels.split('\u0000')])]);
-  }, [readLabels, refusals]);
 
   async function submit() {
     const content = parsed.content;
     if (!content) return;
 
-    const allLabels = [...labels];
+    const allLabels = [...allTags];
     if (minutes !== null) allLabels.push(estimateLabel(minutes));
 
     /* `||`, not `??`: an unset picker is an empty string, not null, and an
@@ -236,7 +258,7 @@ export function Composer({
           refusals={refusals}
           onRefusals={(next, change) => {
             setRefusals(next);
-            if (change?.kind === 'refused') unfill(change.reading, change.range);
+            if (change?.kind === 'refused') unfill(change.reading);
           }}
         />
 
@@ -323,16 +345,16 @@ export function Composer({
           >
             <Icon name="tag" size="sm" />
             {t('composer.labels')}
-            {labels.length > 0 && <span className="displaycount">{labels.length}</span>}
+            {allTags.length > 0 && <span className="displaycount">{allTags.length}</span>}
           </button>
 
-          {labels.map((label) => {
+          {allTags.map((label) => {
             const known = tags.find((l) => l.name === label);
             return (
               <button
                 key={label}
                 className="pill"
-                onClick={() => setLabels((prev) => prev.filter((l) => l !== label))}
+                onClick={() => dropTag(label)}
               >
                 <Icon name="tag" size="sm" className="taglabel" style={markerStyle(known?.color, false)} />
                 {label}
@@ -372,7 +394,7 @@ export function Composer({
                 <label className="checkrow" key={label.id}>
                   <input
                     type="checkbox"
-                    checked={labels.includes(label.name)}
+                    checked={allTags.some((l) => sameTag(l, label.name))}
                     onChange={() => toggleTag(label.name)}
                   />
                   <Icon name="tag" size="sm" className="taglabel" style={markerStyle(label.color, false)} />
