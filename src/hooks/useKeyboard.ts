@@ -66,7 +66,7 @@ import { dueDate, formatDayOrName } from '@/domain/dates';
 const TICK_SETTLES_MS = 480;
 
 /** The keys that act on the row under the cursor, and are never typed into search. */
-const ROW_KEYS = new Set(['e', 't', 'v', 'x', '1', '2', '3', '4', '.']);
+const ROW_KEYS = new Set(['e', 't', 'v', 'x', '1', '2', '3', '4', '.', '[', ']']);
 
 /**
  * Where `g` then a letter goes.
@@ -540,6 +540,30 @@ export function useKeyboard(bridge: KeyboardBridge) {
         }
         if (e.key === '.') { e.preventDefault(); ask(current, 'more'); return; }
         if (e.key === 'x') { e.preventDefault(); store.toggleSelection(id); return; }
+        /* Planning's own fast path: send the row straight to Today or
+           Tomorrow, no picker — `t` already opens one, which is one keystroke
+           too many when the point is to clear a dozen rows in a row. A
+           selection travels together, the same as `e` above. */
+        if ((e.key === '[' || e.key === ']') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          const picked = store.selection;
+          const many = picked.length > 1 && picked.includes(id);
+          const target = e.key === '['
+            ? ({ kind: 'today' } as const)
+            : (() => {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              return { kind: 'day' as const, date: tomorrow };
+            })();
+          const label = e.key === '[' ? t('common.today') : t('common.tomorrow');
+          if (many) {
+            store.clearSelection();
+            void store.sendManyTo(picked, target, label);
+          } else {
+            void store.sendTo(id, target, label);
+          }
+          return;
+        }
         if (e.key >= '1' && e.key <= '4') {
           e.preventDefault();
           // Todoist counts priority the other way up: its 4 is p1.

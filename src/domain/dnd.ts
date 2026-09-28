@@ -1,5 +1,6 @@
+import { bucketOf } from './views';
 import { SYSTEM_LABELS, weekLabel, type Item } from './types';
-import { toApiDate } from './dates';
+import { toApiDate, isTomorrow } from './dates';
 import { dueForDate } from './recurrence';
 import { byChildOrder } from './orderKey';
 
@@ -19,6 +20,17 @@ export type DropTarget =
   | { kind: 'someday' }
   | { kind: 'day'; date: Date }
   | { kind: 'project'; projectId: string }
+  /**
+   * The Planning page's own project columns — everywhere else, dropping on a
+   * project only ever moves it there. Here, a task dragged out of the Today
+   * column is leaving Today on purpose: it keeps its new project AND loses
+   * today's date in the same drop, rather than sitting in two boards with a
+   * date that no longer means what it did when the task was there for it.
+   * A task dragged from one project column to another (never through Today)
+   * is a plain move, same as {kind:'project'} — nothing about its date was
+   * ever in question, so nothing about it changes.
+   */
+  | { kind: 'planning-project'; projectId: string }
   | { kind: 'section'; sectionId: string | null; projectId: string }
   | { kind: 'label'; label: string }
   /**
@@ -144,6 +156,23 @@ export function dropMutation(item: Item, target: DropTarget): DropMutation | nul
     case 'project':
       if (item.project_id === target.projectId && !item.parent_id) return null;
       return { move: { project_id: target.projectId } };
+
+    case 'planning-project': {
+      // Today and Tomorrow on the Planning page are date views, not real
+      // storage — a task already sitting in the target project (because
+      // that's genuinely where it lives) still needs its date cleared on the
+      // way out of one of those, so this is checked before, not instead of,
+      // the "already there" question below.
+      const bucket = bucketOf(item, new Date());
+      const leavingDateColumn = bucket === 'overdue' || bucket === 'today' || isTomorrow(item);
+      const alreadyInProject = item.project_id === target.projectId && !item.parent_id;
+      if (alreadyInProject) {
+        return leavingDateColumn ? { update: { due: null } } : null;
+      }
+      return leavingDateColumn
+        ? { move: { project_id: target.projectId }, update: { due: null } }
+        : { move: { project_id: target.projectId } };
+    }
 
     case 'section':
       if (item.section_id === target.sectionId && !item.parent_id) return null;
@@ -284,6 +313,7 @@ function encodeKind(target: DropTarget): string {
   switch (target.kind) {
     case 'day': return `day:${toApiDate(target.date)}`;
     case 'project': return `project:${target.projectId}`;
+    case 'planning-project': return `planning-project:${target.projectId}`;
     case 'section': return `section:${target.projectId}:${target.sectionId ?? ''}`;
     case 'label': return `label:${target.label}`;
     default: return target.kind;
@@ -301,6 +331,7 @@ export function decodeTarget(encoded: string): DropTarget | null {
     return Number.isNaN(date.getTime()) ? null : { kind: 'day', date };
   }
   if (kind === 'project') return { kind: 'project', projectId: rest[0] };
+  if (kind === 'planning-project') return { kind: 'planning-project', projectId: rest[0] };
   if (kind === 'section') {
     return { kind: 'section', projectId: rest[0], sectionId: rest[1] || null };
   }

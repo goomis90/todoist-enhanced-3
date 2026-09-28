@@ -85,6 +85,9 @@ export function PageHeader({
             )}
           </>
         )}
+        {/* Where a board below puts its page arrows, so they share this line
+            rather than pushing the board down when they appear. */}
+        <span className="metrics-slot" />
       </div>
     </>
   );

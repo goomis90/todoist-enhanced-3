@@ -32,6 +32,11 @@ export const isToday = (item: Item, now = new Date()): boolean => {
   return !!d && isSameDay(d, now);
 };
 
+export const isTomorrow = (item: Item, now = new Date()): boolean => {
+  const d = dueDate(item);
+  return !!d && isSameDay(d, addDays(now, 1));
+};
+
 export const isFuture = (item: Item, now = new Date()): boolean => {
   const d = dueDate(item);
   return !!d && startOfDay(d) > startOfDay(now);

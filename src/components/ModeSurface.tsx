@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDndMonitor } from '@dnd-kit/core';
 import { TaskGroup } from './TaskGroup';
 import { Icon } from './Icon';
@@ -42,6 +43,13 @@ interface ModeSurfaceProps {
     onAddTask?: () => void;
     /** A day column knows its capacity, and shows its load against it. */
     capacityMinutes?: number | null;
+    /** Same meaning as TaskGroup's accent: a callout wash for the whole column. */
+    accent?: 'late' | 'quick' | 'deadline' | 'today' | 'tomorrow';
+    /** Overrides the surface-wide showProject for just this column — Planning's
+        Today/Tomorrow name a task's project; its own project column doesn't. */
+    showProject?: boolean;
+    /** Same meaning as TaskGroup's own: a short flagged line under the heading, alongside the load percentage. */
+    warning?: string;
   }>;
   /**
    * Makes a section at the end of the board, from a column of its own after
@@ -126,6 +134,8 @@ function ListSurface(props: ModeSurfaceProps) {
 
 /** A column is never narrower than this: below it a title stops being readable. */
 const COLUMN_MIN = 272;
+/** Below this a column scrolls too soon to be useful; the page scrolls instead. */
+const COLUMN_MIN_HEIGHT = 320;
 /** Nor wider than this, past which a column stops reading as a column. */
 const COLUMN_MAX = 420;
 /** How close to the board's edge a held card has to be to turn the page. */
@@ -148,17 +158,33 @@ function BoardSurface(props: ModeSurfaceProps) {
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [reach, setReach] = useState({ left: false, right: false });
+  /* The page header's metrics line keeps a slot for the arrows, so they sit
+     beside the task count instead of pushing the board down the moment the
+     columns stop fitting — which also stopped the board sitting lower on some
+     pages than on others. A page without that header keeps them above. */
+  const [navSlot, setNavSlot] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    setNavSlot((board?.closest('.page')?.querySelector('.metrics-slot') as HTMLElement | null) ?? null);
+  }, []);
+  /* While a task is carried every column stretches to full height, so any of
+     them is an easy target; otherwise a column is only as tall as its tasks. */
+  const dragging = useStore((st) => st.draggingTaskId !== null);
   /* How many columns make a page, and how wide each one is so that exactly
      that many fill the board: no column is ever half on screen (#99). */
   const [page, setPage] = useState<{ count: number; width: number } | null>(null);
 
-  /* The arrows are shown only when the board actually overflows, and each
+  /* Layout effects, here and below: measured before the first paint, so the
+     board appears at its final size and place instead of settling a frame
+     later.
+
+     The arrows are shown only when the board actually overflows, and each
      one goes dark at its end. Measured from the scroll position rather than
      counted, because how many columns fit depends on the window. */
   /* The column that adds a section is a column like the others as far as the
      page is concerned: it takes a whole place, never half of one (#99). */
   const slots = columns.length + (props.onAddSection ? 1 : 0);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const board = boardRef.current;
     if (!board) return;
     const measure = () => {
@@ -180,6 +206,78 @@ function BoardSurface(props: ModeSurfaceProps) {
       observer.disconnect();
     };
   }, [slots]);
+
+  /* Each column scrolls on its own, sized to what's left of the screen below
+     the board's top. Scrolling the page instead moved every column at once,
+     so reaching the bottom of one long column carried the short ones — and
+     their drop zones — off screen. A fixed height, not a maximum: a short
+     column still gets the full height, so a task's menu always has room to
+     open inside it rather than being cut off by the column's own scroll. */
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const size = () => {
+      const scroller = (board.closest('.screen') as HTMLElement | null)
+        ?? (document.scrollingElement as HTMLElement);
+      const page = board.closest('.page') as HTMLElement | null;
+      const top = board.getBoundingClientRect().top
+        - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      const pagePad = page ? parseFloat(getComputedStyle(page).paddingBottom) || 0 : 0;
+      const boardPad = parseFloat(getComputedStyle(board).paddingBottom) || 0;
+      const height = Math.max(COLUMN_MIN_HEIGHT, scroller.clientHeight - top - pagePad - boardPad - 2);
+      board.style.setProperty('--colh', `${Math.floor(height)}px`);
+      /* Whatever the sum above misses (the board's own scrollbar, a margin
+         below it) would leave the page a few pixels too tall and scrolling
+         for nothing. Try a column at full height and take off the excess. */
+      board.classList.add('measuring');
+      const over = scroller.scrollHeight - scroller.clientHeight;
+      board.classList.remove('measuring');
+      if (over > 0) {
+        board.style.setProperty('--colh', `${Math.floor(Math.max(COLUMN_MIN_HEIGHT, height - over))}px`);
+      }
+    };
+    size();
+    window.addEventListener('resize', size);
+    const observer = new ResizeObserver(size);
+    const page = board.closest('.page');
+    if (page?.firstElementChild) observer.observe(page.firstElementChild);
+    const metrics = page?.querySelector('.metrics');
+    if (metrics) observer.observe(metrics);
+    return () => {
+      window.removeEventListener('resize', size);
+      observer.disconnect();
+    };
+  }, [columns.length]);
+
+  /* Only a column whose tasks don't fit gets its own scroll. A short column
+     stays unclipped, so a task's menu opens past its edge as it always did;
+     a column that does scroll is by then already full height, so the menu has
+     room inside it. Nothing changes size when a menu opens. Measured from the
+     last child's position, which a menu open inside a row doesn't move. */
+  const [scrolling, setScrolling] = useState<ReadonlySet<string>>(() => new Set());
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const check = () => {
+      const limit = parseFloat(board.style.getPropertyValue('--colh')) || Infinity;
+      const next = new Set<string>();
+      board.querySelectorAll<HTMLElement>('.col[data-col]').forEach((col) => {
+        const last = col.lastElementChild as HTMLElement | null;
+        if (!last) return;
+        const pad = parseFloat(getComputedStyle(col).paddingBottom) || 0;
+        if (last.offsetTop + last.offsetHeight + pad > limit + 1) next.add(col.dataset.col as string);
+      });
+      setScrolling((was) => (was.size === next.size && [...next].every((id) => was.has(id)) ? was : next));
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    board.querySelectorAll('.col[data-col]').forEach((col) => observer.observe(col));
+    window.addEventListener('resize', check);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', check);
+    };
+  }, [columns]);
 
   /** Turns a whole page: the next columns take exactly the place of these. */
   const step = (direction: -1 | 1) => {
@@ -232,11 +330,7 @@ function BoardSurface(props: ModeSurfaceProps) {
 
   if (slots === 0) return <p className="empty">{t('task.noTasks')}</p>;
 
-  return (
-    /* A board runs past the reading measure, to the right; what is read
-       above it does not. */
-    <div className="mode">
-      {(reach.left || reach.right) && (
+  const pager = (
         <div className="boardnav">
           <span className="pager">
             <button
@@ -259,9 +353,15 @@ function BoardSurface(props: ModeSurfaceProps) {
             </button>
           </span>
         </div>
-      )}
+  );
+
+  return (
+    /* A board runs past the reading measure, to the right; what is read
+       above it does not. */
+    <div className="mode">
+      {(reach.left || reach.right) && (navSlot ? createPortal(pager, navSlot) : pager)}
       <div
-        className={`board${props.group === 'day' ? ' days' : ''}${props.wide ? ' fullwidth' : ''}`}
+        className={`board${props.group === 'day' ? ' days' : ''}${props.wide ? ' fullwidth' : ''}${dragging ? ' dragging' : ''}`}
         ref={boardRef}
         style={page ? ({ '--colw': `${page.width}px` } as React.CSSProperties) : undefined}
       >
@@ -276,16 +376,23 @@ function BoardSurface(props: ModeSurfaceProps) {
           ].filter((part): part is string => part !== null);
           // An empty column has nothing to measure; "0 %" under it is noise.
           if (column.items.length === 0) parts.length = 0;
+          const accentClass = column.accent ? ` accent-${column.accent}` : '';
           const body = (isOver: boolean) => (
-            <section className={`col${isOver ? ' dropping' : ''}`}>
+            <section
+              data-col={column.id}
+              className={`col${isOver ? ' dropping' : ''}${accentClass}${scrolling.has(column.id) ? ' scrolls' : ''}`}
+            >
             <div className="chead">
               <div className="chead-title">
                 <strong>{column.title}</strong>
                 <small>{t('metrics.tasks', { count: column.items.length })}</small>
               </div>
             </div>
-            {parts.length > 0 && (
-              <p className={`cload${load.level === 'over' ? ' over' : ''}`}>{parts.join(' · ')}</p>
+            {(parts.length > 0 || column.warning) && (
+              <p className={`cload${load.level === 'over' ? ' over' : ''}`}>
+                {parts.join(' · ')}
+                {column.warning && <span className="cload-warning">{column.warning}</span>}
+              </p>
             )}
             {column.items.map((item) => (
               <DraggableTask
@@ -293,7 +400,7 @@ function BoardSurface(props: ModeSurfaceProps) {
                 item={item}
                 childrenOf={props.childrenOf}
                 onOpen={props.onOpen}
-                showProject={props.showProject}
+                showProject={column.showProject ?? props.showProject}
                 surface="card"
               />
             ))}
