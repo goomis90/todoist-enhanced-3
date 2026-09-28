@@ -764,7 +764,7 @@
   margin-bottom:var(--s4);padding:var(--s4);
   border:1px solid var(--border);border-radius:var(--r-lg);background:var(--subtle);
 }
-.reviewload .loadpill{font-size:var(--fs-15);padding:4px 12px}
+.reviewload .loadpill{font-size:var(--fs-16);padding:4px 12px}
 .reviewload-figures{display:grid;gap:2px}
 .reviewload-figures b{font-size:var(--fs-20);font-weight:700;letter-spacing:-.015em}
 .reviewload-figures small,
@@ -777,7 +777,7 @@
   padding:var(--s6) var(--s4);text-align:center;
   border:1px dashed var(--border);border-radius:var(--r-lg);background:var(--subtle);
 }
-.reviewmail strong{color:var(--text);font-size:var(--fs-15);font-weight:700}
+.reviewmail strong{color:var(--text);font-size:var(--fs-16);font-weight:700}
 .reviewmail > span{max-width:52ch;color:var(--muted);font-size:var(--fs-13);line-height:1.5}
 .reviewmail .reviewclear-mark{background:var(--accent)}
 .reviewmail.cleared .reviewclear-mark{background:var(--ok)}
@@ -1203,3 +1203,30 @@
 }
 .dragoverlay.project .hash{width:18px;height:18px;font-size:var(--fs-12);flex:0 0 auto}
 .dragoverlay.tag .ic{color:var(--muted);flex:0 0 auto}
+
+/* What's new (#115). The title and the buttons hold still; the list scrolls
+   between them. The sheet itself stops scrolling so there is one scroller. */
+.sheet:has(> .whatsnew){overflow:hidden;display:flex}
+.whatsnew{display:flex;flex-direction:column;width:100%;max-height:calc(100vh - 56px);min-height:0}
+.whatsnew-head{flex:0 0 auto}
+.whatsnew-head p{margin-top:4px;color:var(--muted);font-size:var(--fs-13)}
+.whatsnew-body{flex:1 1 auto;min-height:0;overflow:auto;padding:var(--s4);display:grid;gap:var(--s5);align-content:start}
+.whatsnew-loading{color:var(--muted);font-size:var(--fs-13)}
+.whatsnew-release h3{display:flex;align-items:baseline;gap:8px;font-size:var(--fs-16);font-weight:700;margin-bottom:6px}
+.whatsnew-lang{font-size:var(--fs-12);font-weight:500;color:var(--faint)}
+.whatsnew-intro{color:var(--muted);font-size:var(--fs-13);line-height:1.5;margin-bottom:var(--s3)}
+.whatsnew-release ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.whatsnew-change{display:grid;grid-template-columns:22px 1fr;gap:6px;font-size:var(--fs-13);line-height:1.5}
+.whatsnew-mark{line-height:1.5}
+.whatsnew-change code{font-size:.92em;padding:0 4px;border-radius:4px;background:var(--hover)}
+.whatsnew-change a{color:inherit;text-decoration:underline}
+.whatsnew-more a{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-13);color:var(--muted)}
+.whatsnew-foot{flex:0 0 auto;position:static}
+/* The coffee is an offer, never the way out: a quiet yellow, next to the
+   button that closes the dialog. */
+.btn.coffee{border-color:transparent;background:#fff8d6;color:#342e10;text-decoration:none}
+.btn.coffee:hover{background:#fff1b3}
+.btn.coffee .ic{color:#342e10}
+:root[data-theme="dark"] .btn.coffee{background:rgba(254,215,0,.14);color:#f3e7a6}
+:root[data-theme="dark"] .btn.coffee:hover{background:rgba(254,215,0,.22)}
+:root[data-theme="dark"] .btn.coffee .ic{color:#f3e7a6}
