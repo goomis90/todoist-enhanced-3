@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDndMonitor } from '@dnd-kit/core';
 import { TaskGroup } from './TaskGroup';
@@ -155,7 +155,7 @@ function BoardSurface(props: ModeSurfaceProps) {
      columns stop fitting — which also stopped the board sitting lower on some
      pages than on others. A page without that header keeps them above. */
   const [navSlot, setNavSlot] = useState<HTMLElement | null>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const board = boardRef.current;
     setNavSlot((board?.closest('.page')?.querySelector('.metrics-slot') as HTMLElement | null) ?? null);
   }, []);
@@ -166,10 +166,14 @@ function BoardSurface(props: ModeSurfaceProps) {
      that many fill the board: no column is ever half on screen (#99). */
   const [page, setPage] = useState<{ count: number; width: number } | null>(null);
 
-  /* The arrows are shown only when the board actually overflows, and each
+  /* Layout effects, here and below: measured before the first paint, so the
+     board appears at its final size and place instead of settling a frame
+     later.
+
+     The arrows are shown only when the board actually overflows, and each
      one goes dark at its end. Measured from the scroll position rather than
      counted, because how many columns fit depends on the window. */
-  useEffect(() => {
+  useLayoutEffect(() => {
     const board = boardRef.current;
     if (!board) return;
     const measure = () => {
@@ -198,7 +202,7 @@ function BoardSurface(props: ModeSurfaceProps) {
      their drop zones — off screen. A fixed height, not a maximum: a short
      column still gets the full height, so a task's menu always has room to
      open inside it rather than being cut off by the column's own scroll. */
-  useEffect(() => {
+  useLayoutEffect(() => {
     const board = boardRef.current;
     if (!board) return;
     const size = () => {
@@ -240,7 +244,7 @@ function BoardSurface(props: ModeSurfaceProps) {
      room inside it. Nothing changes size when a menu opens. Measured from the
      last child's position, which a menu open inside a row doesn't move. */
   const [scrolling, setScrolling] = useState<ReadonlySet<string>>(() => new Set());
-  useEffect(() => {
+  useLayoutEffect(() => {
     const board = boardRef.current;
     if (!board) return;
     const check = () => {

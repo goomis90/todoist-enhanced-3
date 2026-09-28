@@ -1233,7 +1233,10 @@
 .board.measuring .col{height:var(--colh,auto)}
 
 /* The board's page arrows sit at the end of the metrics line. */
-.metrics-slot{margin-left:auto;display:flex;align-items:center}
+/* A zero-height slot: the 32px arrows overhang it evenly above and below, so
+   the metrics line is the same height with or without them and the board
+   below never shifts when they appear. */
+.metrics-slot{margin-left:auto;display:flex;align-items:center;height:0;align-self:center}
 .metrics-slot .boardnav{margin:0}
 
 /* ---------- Quieter scrollbars ----------
