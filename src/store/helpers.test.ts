@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { branchOf, deletionRoots, restoreOrder } from './helpers';
-import type { Item } from '@/domain/types';
-import { item } from '@/test/items';
+import { advanceDemoRecurrence, branchOf, deletionRoots, restoreOrder } from './helpers';
+import { emptySnapshot, type Item } from '@/domain/types';
+import { due, item } from '@/test/items';
 
 const tree = (...items: Item[]): Record<string, Item> =>
   Object.fromEntries(items.map((entry) => [entry.id, entry]));
@@ -69,5 +69,69 @@ describe('restoreOrder (#126)', () => {
     const doubled = [...branch, items.child, items.parent];
     expect(restoreOrder(doubled).map((entry) => entry.id))
       .toEqual(['grand', 'parent', 'child', 'other-child']);
+  });
+});
+
+describe('advanceDemoRecurrence (#130)', () => {
+  const at = (date: string, string: string, lang = 'en') => {
+    const snapshot = emptySnapshot();
+    snapshot.items.task = item({
+      id: 'task',
+      due: due(date, { string, lang, is_recurring: true }),
+      checked: true,
+    });
+    return advanceDemoRecurrence(snapshot, 'task').items.task;
+  };
+
+  it('moves « tous les jours » one day, not a week', () => {
+    expect(at('2026-09-28', 'tous les jours', 'fr').due?.date).toBe('2026-09-29');
+    expect(at('2026-09-28', 'chaque jour', 'fr').due?.date).toBe('2026-09-29');
+    expect(at('2026-09-28', 'quotidien', 'fr').due?.date).toBe('2026-09-29');
+  });
+
+  it('keeps the time of day of a timed task, and unticks it', () => {
+    const next = at('2026-09-28T14:00:00', 'tous les jours', 'fr');
+    expect(next.due?.date).toBe('2026-09-29T14:00:00');
+    expect(next.checked).toBe(false);
+  });
+
+  it('moves a daily task one day whatever the time zone is', () => {
+    const was = process.env.TZ;
+    try {
+      for (const zone of ['Pacific/Kiritimati', 'Pacific/Pago_Pago', 'UTC']) {
+        process.env.TZ = zone;
+        expect(at('2026-09-28', 'every day').due?.date).toBe('2026-09-29');
+        expect(at('2026-09-28T23:30:00', 'daily').due?.date).toBe('2026-09-29T23:30:00');
+      }
+    } finally {
+      if (was === undefined) delete process.env.TZ;
+      else process.env.TZ = was;
+    }
+  });
+
+  it('moves « tous les lundis » and "every Monday" to the next Monday', () => {
+    // 2026-09-28 is a Monday; a Thursday goes to the Monday after.
+    expect(at('2026-09-28', 'every Monday').due?.date).toBe('2026-10-05');
+    expect(at('2026-09-24', 'every Monday').due?.date).toBe('2026-09-28');
+    expect(at('2026-09-24', 'tous les lundis', 'fr').due?.date).toBe('2026-09-28');
+    expect(at('2026-09-28', 'chaque vendredi', 'fr').due?.date).toBe('2026-10-02');
+    expect(at('2026-09-28', 'every friday').due?.date).toBe('2026-10-02');
+  });
+
+  it('moves the other weekly rules a week', () => {
+    expect(at('2026-09-28', 'every week').due?.date).toBe('2026-10-05');
+    expect(at('2026-09-28', 'chaque semaine', 'fr').due?.date).toBe('2026-10-05');
+    expect(at('2026-09-28', 'hebdomadaire', 'fr').due?.date).toBe('2026-10-05');
+  });
+
+  it('does not read « tous les mois » or "every month" as a weekday', () => {
+    expect(at('2026-09-28', 'tous les mois', 'fr').due?.date).toBe('2026-09-29');
+    expect(at('2026-09-28', 'every month').due?.date).toBe('2026-09-29');
+  });
+
+  it('leaves a task that does not repeat alone', () => {
+    const snapshot = emptySnapshot();
+    snapshot.items.task = item({ id: 'task', due: due('2026-09-28') });
+    expect(advanceDemoRecurrence(snapshot, 'task')).toBe(snapshot);
   });
 });

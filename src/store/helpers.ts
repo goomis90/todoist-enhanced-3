@@ -1,23 +1,51 @@
 /** What more than one slice of the store needs: pure helpers, and the module state they share. */
+import { addDays, addWeeks, nextDay, type Day } from 'date-fns';
 import type { Command } from '@/api/commands';
 import * as idb from '@/db/idb';
+import { dueDate, hasTime, toApiDate, toApiDateTime } from '@/domain/dates';
+import { WEEKDAY_WORDS } from '@/domain/dateVocabulary';
 import type { Item, Snapshot } from '@/domain/types';
 import type { Locale } from '@/i18n';
 import type { AppState } from './types';
 
-/** Demo data cannot ask Todoist to resolve recurrence, so cover the ordinary
- * daily and weekly rules used by the demo without inventing a general parser. */
+/**
+ * Where a repeating task goes next, in the demo.
+ *
+ * The demo cannot ask Todoist to resolve a rule, so it covers the ordinary
+ * daily and weekly ones it seeds without pretending to be a parser. The rule is
+ * read folded (lower case, no accents), and the new date is worked out and
+ * written in local time, never through `toISOString`: that shifted the day for
+ * anyone east of UTC+12, and dropped the time of a timed task (#130).
+ */
 export function advanceDemoRecurrence(snapshot: Snapshot, id: string): Snapshot {
   const item = snapshot.items[id];
   if (!item?.due?.is_recurring) return snapshot;
-  const current = new Date(`${item.due.date.slice(0, 10)}T12:00:00`);
-  const rule = item.due.string.toLowerCase();
-  const days = /(?:every day|daily|chaque jour|quotidien)/.test(rule) ? 1
-    : /(?:every week|weekly|every (?:mon|tue|wed|thu|fri|sat|sun)|chaque semaine|tous les|hebdomadaire)/.test(rule) ? 7
-      : 1;
-  current.setDate(current.getDate() + days);
+  const current = dueDate(item);
+  if (!current) return snapshot;
+
+  const rule = item.due.string.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const opener = '(?:every|each|tous les|toutes les|tous le|chaque)\\s+';
+  const weekdays = [...WEEKDAY_WORDS.en, ...WEEKDAY_WORDS.fr];
+  // Both lists start on Sunday, as `Date.getDay()` does, so the index is the day.
+  const named = weekdays.findIndex((words) => new RegExp(`${opener}(?:${words})\\b`).test(rule));
+
+  let next: Date;
+  if (/\b(?:every day|daily|tous les jours|chaque jour|quotidien(?:ne)?)\b/.test(rule)) {
+    next = addDays(current, 1);
+  } else if (named >= 0) {
+    // "every Monday": the next Monday after the date it stands on.
+    next = nextDay(current, (named % 7) as Day);
+  } else if (/\b(?:every week|weekly|chaque semaine|hebdomadaire)\b/.test(rule)) {
+    next = addWeeks(current, 1);
+  } else {
+    next = addDays(current, 1);
+  }
+
   return patchItem(snapshot, id, {
-    due: { ...item.due, date: current.toISOString().slice(0, 10) },
+    due: {
+      ...item.due,
+      date: hasTime(item.due) ? toApiDateTime(next) : toApiDate(next),
+    },
     checked: false,
   });
 }

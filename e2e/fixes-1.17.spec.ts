@@ -241,3 +241,22 @@ test('#126 deleting a parent picked with its subtasks deletes the branch once, a
   await expect(branch).toHaveCount(3);
   await expect(page.locator('.screen.active [data-task-id]').filter({ hasText: 'Book the train' })).toHaveCount(1);
 });
+
+test('#130 in the demo, ticking a daily 14:00 task brings it back tomorrow at 14:00', async ({ demo: page }) => {
+  const daily = page.locator('.screen.active [data-task-id]')
+    .filter({ has: page.locator('.repeatdot') })
+    .filter({ hasText: '14:00' })
+    .first();
+  await expect(daily).toBeVisible();
+  const title = await daily.locator('.ttitle').innerText();
+  await daily.locator('[role="checkbox"]').click();
+  // A ticked row is held for a moment, then leaves the day it was on.
+  await expect(page.locator('.screen.active [data-task-id]').filter({ hasText: title }).filter({ hasText: '14:00' })).toHaveCount(0);
+
+  await go(page, '#/upcoming');
+  const next = page.locator('.screen.active [data-task-id]')
+    .filter({ has: page.locator('.ttitle', { hasText: title }) })
+    .first();
+  // It is back, with its time, and Upcoming only lists days after today.
+  await expect(next).toContainText('14:00');
+});
