@@ -77,4 +77,10 @@ describe('the changelog (#115)', () => {
       expect(release.changes.map((c) => c.kind)).toEqual(original?.changes.map((c) => c.kind));
     }
   });
+
+  it('the running version has something new, so the window opens after an update', () => {
+    const running = unseenReleases(parseChangelog(english), VERSION, '1.16.0');
+    expect(running.map((r) => r.version)).toEqual([VERSION]);
+    expect(hasNews(running)).toBe(true);
+  });
 });

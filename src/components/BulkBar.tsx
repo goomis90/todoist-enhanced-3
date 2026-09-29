@@ -9,6 +9,7 @@ import { BULK_MENU_EVENT, type BulkMenuName } from '@/hooks/useKeyboard';
 import { toDisplayPriority, toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import type { DropTarget } from '@/domain/dnd';
 import { matchesSearch } from '@/domain/search';
+import { formatDayOrName, formatTime } from '@/domain/dates';
 import { byChildOrder, byLabelOrder, bySectionOrder } from '@/domain/orderKey';
 
 /**
@@ -215,6 +216,8 @@ function BulkMenu({
 export function BulkBar() {
   const { t, locale } = useT();
   const confirm = useConfirm();
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
+  const hour12 = useStore((s) => s.prefs.hour12);
   const selection = useStore((s) => s.selection);
   const clearSelection = useStore((s) => s.clearSelection);
   const sendManyTo = useStore((s) => s.sendManyTo);
@@ -379,10 +382,19 @@ export function BulkBar() {
           <DatePicker
             value=""
             label={t('task.schedule')}
+            withTime
             onEscape={close}
             onPick={(iso) => {
               close();
-              void send({ kind: 'day', date: new Date(`${iso}T00:00:00`) }, iso);
+              /* A time typed with the day goes to every task: cutting the value
+                 down to its day here was the second place it got lost (#143). */
+              const [day, time] = iso.split('T');
+              const date = new Date(`${day}T00:00:00`);
+              const where = formatDayOrName(date, locale, dateFormat);
+              void send(
+                { kind: 'day', date, time },
+                time ? `${where} ${formatTime(new Date(iso), locale, hour12)}` : where,
+              );
             }}
             shortcuts={taskShortcuts(t, locale, {
               today: () => { close(); void send({ kind: 'today' }, t('common.today')); },
