@@ -119,7 +119,29 @@ interface RequestOptions {
   timeoutMs?: number;
 }
 
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+/**
+ * The longest Todoist's "retry after" is obeyed for.
+ *
+ * While a sync waits, its state stays "syncing" and no other sync starts, so a
+ * `Retry-After` of minutes (times three attempts) froze syncing for that long
+ * with nothing on screen to say why. Asked for more than this, the call gives
+ * up at once instead: a 429 is not a refusal, so the writes stay queued and
+ * the next poll, or the next reconnect, tries again (#133).
+ */
+export const MAX_RETRY_WAIT_MS = 30_000;
+
+const aborted = () => new DOMException('Aborted', 'AbortError');
+
+/** Waits, and stops waiting the moment the caller gives up on the request. */
+const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, reject) => {
+  if (signal?.aborted) { reject(aborted()); return; }
+  const onAbort = () => { clearTimeout(timer); reject(aborted()); };
+  const timer = setTimeout(() => {
+    signal?.removeEventListener('abort', onAbort);
+    resolve();
+  }, ms);
+  signal?.addEventListener('abort', onAbort, { once: true });
+});
 
 /**
  * One call to Todoist.
@@ -157,6 +179,8 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let attempt = 0;
   for (;;) {
+    // A caller that has left has nothing to wait for and nothing to send.
+    if (signal?.aborted) throw aborted();
     /* The deadline covers the whole answer, body included: a response that
        starts and then stalls is as stuck as one that never starts. */
     const deadline = withDeadline(signal, timeoutMs);
@@ -200,28 +224,35 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       }
     }
 
-    const retriable = response.status === 429 || response.status >= 500;
-    if (!retriable || attempt >= retries) {
+    const refusal = (): ApiError => {
       let parsed: unknown;
       try {
         parsed = text ? JSON.parse(text) : undefined;
       } catch {
         parsed = text;
       }
-      throw new ApiError(
+      return new ApiError(
         `Todoist responded ${response.status}`,
         response.status,
         parsed,
       );
-    }
+    };
 
-    // The API tells us how long to wait; fall back to exponential backoff.
+    const retriable = response.status === 429 || response.status >= 500;
+    if (!retriable || attempt >= retries) throw refusal();
+
+    /* The API tells us how long to wait, and is obeyed exactly, up to a
+       limit: past it there is no waiting at all (see MAX_RETRY_WAIT_MS). */
     const retryAfter = Number(response.headers.get('retry-after'));
-    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
-      ? retryAfter * 1000
-      : Math.min(30_000, 2 ** attempt * 1000);
+    const asked = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : null;
+    if (asked !== null && asked > MAX_RETRY_WAIT_MS) throw refusal();
 
-    await sleep(waitMs);
+    /* Without an instruction, exponential backoff, spread a little: several
+       windows sent together (Insights sends four) would otherwise all back off
+       by the same amount and come back at the same instant. */
+    const waitMs = asked ?? Math.min(MAX_RETRY_WAIT_MS, 2 ** attempt * 1000) * (0.8 + Math.random() * 0.4);
+
+    await sleep(waitMs, signal);
     attempt += 1;
   }
 }
