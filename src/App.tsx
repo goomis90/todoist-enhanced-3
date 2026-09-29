@@ -120,10 +120,18 @@ export function App() {
     if (ready && !window.location.hash.replace(/^#\/?/, '')) navigate(homepage);
   }, [ready, homepage]);
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
-  useEffect(() => applyTheme(theme), [theme]);
-  /* Also on `theme`: a custom accent is two families, and which one is
+  /* The scheme that ended up on the page, light or dark, kept in state. With
+     Theme on System the preference stays "system" while the device flips
+     between the two at sunset, so it cannot be what tells the accent to run
+     again: a custom accent kept the family made for light surfaces after the
+     page had gone dark (#124). */
+  const [scheme, setScheme] = useState<'light' | 'dark'>(
+    () => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+  );
+  useEffect(() => applyTheme(theme, setScheme), [theme]);
+  /* Also on `scheme`: a custom accent is two families, and which one is
      written depends on the scheme that ended up resolved. */
-  useEffect(() => applyAccent(accent, accentCustom), [accent, accentCustom, theme]);
+  useEffect(() => applyAccent(accent, accentCustom), [accent, accentCustom, scheme]);
   useEffect(() => (connected ? startPolling() : undefined), [connected, startPolling]);
   useEffect(() => {
     const replay = () => {
@@ -311,16 +319,22 @@ export interface ComposerPlacement {
  * following the device when it changes its mind mid-session — happens here.
  * One place decides, so there is one dark palette rather than two that drift.
  *
+ * Every time the scheme is resolved it is also reported, so what is derived
+ * from it (a custom accent) is redone when the device changes its mind.
+ *
  * The resolved choice is mirrored into local storage because index.html reads
  * it before the first paint. Without that the page opens white and turns dark
  * a moment later, once preferences have loaded out of IndexedDB.
  */
-function applyTheme(theme: Theme): (() => void) | undefined {
+function applyTheme(
+  theme: Theme, onResolved: (scheme: 'light' | 'dark') => void,
+): (() => void) | undefined {
   const root = document.documentElement;
   const media = window.matchMedia('(prefers-color-scheme: dark)');
   const apply = () => {
     const resolved = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme;
     root.dataset.theme = resolved;
+    onResolved(resolved);
     try { localStorage.setItem('theme', theme); } catch { /* storage may be blocked */ }
     paintBrowserChrome();
   };

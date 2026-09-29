@@ -129,3 +129,38 @@ test('#146 Upcoming moves its range on at midnight, without leaving the page', a
   await expect.poll(async () => (await heads.allInnerTexts()).at(-1)).not.toBe(before.at(-1));
   expect(await heads.count()).toBe(before.length);
 });
+
+test('#124 a custom accent follows the device when it switches to dark', async ({ demo: page }) => {
+  await go(page, '#/settings');
+  await page.getByRole('radio', { name: /Automatic/ }).click();
+  const hex = page.getByLabel('Colour, as a hex code');
+  await hex.fill('#2e7d32');
+  await hex.press('Enter');
+
+  const accent = () => page.evaluate(() => {
+    const root = document.documentElement;
+    /* `--accent` itself is the picked colour in both schemes; the tints and the
+       ink around it are what the scheme changes. */
+    const style = getComputedStyle(root);
+    return {
+      scheme: root.dataset.theme,
+      accent: ['--accent-soft', '--accent-wash', '--sidebar'].map((token) => style.getPropertyValue(token).trim()).join(' '),
+    };
+  });
+
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect.poll(async () => (await accent()).scheme).toBe('light');
+  const light = await accent();
+  expect(light.accent).not.toBe('');
+
+  // The device goes dark with the app open: the accent is redone for dark surfaces.
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect.poll(async () => (await accent()).scheme).toBe('dark');
+  await expect.poll(async () => (await accent()).accent).not.toBe(light.accent);
+  const dark = await accent();
+
+  // And back again.
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect.poll(async () => (await accent()).accent).toBe(light.accent);
+  expect(dark.accent).not.toBe(light.accent);
+});
