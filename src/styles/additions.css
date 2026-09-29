@@ -135,7 +135,11 @@
 /* While the bulk-edit bar is up, the toasts stand just above it rather than
    over its buttons. `--bulkbar-room` is set by the bar itself. */
 .toasts{position:fixed;left:50%;bottom:max(24px, calc(var(--bulkbar-room, 0px) + 10px));transform:translateX(-50%);
-  z-index:200;display:grid;gap:8px;width:max-content;max-width:min(520px,92vw)}
+  z-index:200;display:grid;width:max-content;max-width:min(520px,92vw)}
+/* Two live regions, one stack (#136): each lane spaces its own toasts, and a
+   second lane in use sits a gap below the first. An empty lane takes no room. */
+.toastlane{display:grid;gap:8px}
+.toastlane:not(:empty) ~ .toastlane:not(:empty){margin-top:8px}
 /* The stack owns the placement now, so every property the older single-toast
    rule still sets has to be handed back — including the opacity:0 and the
    pointer-events:none it used to lift with a `show` class that nothing adds.

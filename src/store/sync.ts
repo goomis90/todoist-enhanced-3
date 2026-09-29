@@ -77,7 +77,11 @@ export async function flushQueue(
     if (result.undelivered.length > 0) await idb.updateQueued(result.undelivered);
     set({ pendingCount: result.undelivered.length });
     if (result.failures.length > 0) {
-      get().toast(explainFailures(result.failures, result.delivered.length, get().prefs.locale));
+      get().toast(
+        explainFailures(result.failures, result.delivered.length, get().prefs.locale),
+        undefined,
+        { tone: 'error' },
+      );
     }
     // A full read would wipe the placeholders of what is still waiting to go.
     return stale && result.undelivered.length === 0;
@@ -110,7 +114,11 @@ export async function dropForeignQueue(
   if (foreign.length === 0) return queue.length;
   await idb.dequeue(foreign.map((cmd) => cmd.uuid));
   set({ pendingCount: queue.length - foreign.length });
-  get().toast(translate(get().prefs.locale, 'sync.foreignQueue', { count: foreign.length }));
+  get().toast(
+    translate(get().prefs.locale, 'sync.foreignQueue', { count: foreign.length }),
+    undefined,
+    { tone: 'error' },
+  );
   return queue.length - foreign.length;
 }
 
@@ -362,7 +370,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       if (result.failures.length > 0) {
         get().toast(explainFailures(
           result.failures, result.delivered.length, get().prefs.locale,
-        ));
+        ), undefined, { tone: 'error' });
       }
       return result.mapping;
     } catch {

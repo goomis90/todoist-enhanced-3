@@ -258,20 +258,37 @@ export function App() {
         }}
       />
 
-      {toasts.length > 0 && (
-        <div className="toasts">
-          {toasts.map((toast) => (
-            <div className="toast" key={toast.id}>
-              <span>{toast.message}</span>
-              {toast.undo && (
-                <button onClick={() => { toast.undo?.(); dismissToast(toast.id); }}>
-                  {t('common.undo')}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Both lanes are always in the page, empty when there is nothing to
+          say: a live region has to exist before its text is put in, or most
+          screen readers never read it (#136). A confirmation waits its turn
+          (`status`); a refusal from Todoist is read out at once (`alert`).
+          Only what was added is read, not the whole lane again. The stack
+          looks the same as it always did. */}
+      <div className="toasts">
+        {(['status', 'alert'] as const).map((lane) => (
+          <div
+            className="toastlane"
+            key={lane}
+            role={lane}
+            aria-live={lane === 'alert' ? 'assertive' : 'polite'}
+            aria-atomic="false"
+          >
+            {toasts.filter((toast) => (toast.tone === 'error') === (lane === 'alert')).map((toast) => (
+              <div className="toast" key={toast.id}>
+                <span>{toast.message}</span>
+                {toast.undo && (
+                  <button
+                    aria-label={`${t('common.undo')} — ${toast.message}`}
+                    onClick={() => { toast.undo?.(); dismissToast(toast.id); }}
+                  >
+                    {t('common.undo')}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

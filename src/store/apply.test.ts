@@ -67,6 +67,8 @@ describe('a change Todoist refuses (#134)', () => {
     expect(items.b.content).toBe('Before too');
     expect(idb.dequeue).toHaveBeenCalledWith(commands.map((cmd) => cmd.uuid));
     expect(useStore.getState().toasts).toHaveLength(1);
+    // A refusal is an error: a screen reader reads it out at once (#136).
+    expect(useStore.getState().toasts[0].tone).toBe('error');
     expect(useStore.getState().pendingCount).toBe(0);
   });
 
@@ -98,5 +100,15 @@ describe('a change Todoist refuses (#134)', () => {
     expect(idb.dequeue).not.toHaveBeenCalled();
     expect(useStore.getState().syncState).toBe('offline');
     expect(useStore.getState().toasts).toHaveLength(0);
+  });
+});
+
+describe('toasts (#136)', () => {
+  it('are polite unless they say they are an error', () => {
+    useStore.getState().toast('Moved to Tomorrow');
+    useStore.getState().toast('Todoist refused this', undefined, { tone: 'error' });
+    const [plain, refused] = useStore.getState().toasts;
+    expect(plain.tone).toBeUndefined();
+    expect(refused.tone).toBe('error');
   });
 });

@@ -17,7 +17,7 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
   draggingTag: null,
   selection: [],
   selectionAnchor: null,
-  toast(message, undo) {
+  toast(message, undo, options) {
     const id = newUuid();
     /* The toast's own button and Cmd+Z are two ways to the same single step,
        so they share one entry: using either takes it off the stack and the
@@ -31,6 +31,7 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
       id,
       message,
       undo: undo ? () => { void get().consumeUndo(id); } : undefined,
+      tone: options?.tone,
     };
     set({ toasts: [...get().toasts, entry] });
     setTimeout(() => get().dismissToast(entry.id), undo ? UNDO_TOAST_MS : 4000);

@@ -14,6 +14,12 @@ export interface Toast {
   message: string;
   /** When set, the toast offers an undo that runs this. */
   undo?: () => void;
+  /**
+   * An error is read out at once by a screen reader, over whatever it was
+   * saying, because it is about something that did not happen (#136). Every
+   * other toast waits for its turn.
+   */
+  tone?: 'error';
 }
 
 /**
@@ -239,7 +245,7 @@ export interface AppState {
   removeSection: (id: string) => Promise<void>;
 
   /* Toasts */
-  toast: (message: string, undo?: () => void) => void;
+  toast: (message: string, undo?: () => void, options?: { tone?: 'error' }) => void;
   dismissToast: (id: string) => void;
 
   /* Undo */

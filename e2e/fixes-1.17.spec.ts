@@ -306,3 +306,19 @@ bare('#128 a crash while drawing shows a message and a Reload button, not a whit
   await expect(alert.getByRole('button', { name: 'Reload' })).toBeVisible();
   await expect(alert.getByRole('link', { name: 'Tell us what happened' })).toBeVisible();
 });
+
+test('#136 a toast is announced: it lands in a live region already in the page', async ({ demo: page }) => {
+  // The regions exist before any toast does.
+  await expect(page.locator('.toasts [role="status"][aria-live="polite"]')).toHaveCount(1);
+  await expect(page.locator('.toasts [role="alert"][aria-live="assertive"]')).toHaveCount(1);
+
+  // Delete a task: the message is read out, and Undo says what it undoes.
+  const first = await page.locator('.screen.active [data-task-id] .ttitle').first().innerText();
+  await row(page, first).focus();
+  await page.keyboard.press('ControlOrMeta+Backspace');
+  await page.locator('.confirmbox').getByRole('button', { name: 'Delete' }).click();
+
+  const status = page.locator('.toasts [role="status"]');
+  await expect(status).toContainText(first);
+  await expect(status.getByRole('button', { name: new RegExp(`^Undo — .*${first}`) })).toBeVisible();
+});
