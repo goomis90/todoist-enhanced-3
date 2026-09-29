@@ -104,3 +104,28 @@ test('#145 the title Save and Cancel buttons answer Enter and Space', async ({ d
   await page.locator('.titleactions').getByRole('button', { name: 'Save' }).click();
   await expect(field).toHaveValue(`${first} edited again`);
 });
+
+test('#146 Upcoming moves its range on at midnight, without leaving the page', async ({ demo: page }) => {
+  // Ten seconds before midnight, in the page's own clock.
+  const evening = new Date();
+  evening.setHours(23, 59, 50, 0);
+  await page.clock.install({ time: evening });
+
+  await go(page, '#/upcoming');
+  await page.getByRole('button', { name: 'Display' }).click();
+  await page.getByRole('button', { name: 'Board' }).first().click();
+  await page.keyboard.press('Escape');
+
+  const heads = page.locator('.screen.active .board .col .chead strong');
+  await expect(heads.first()).toHaveText('Tomorrow');
+  const before = await heads.allInnerTexts();
+  expect(before.length).toBeGreaterThanOrEqual(15);
+
+  // Midnight passes with the view open.
+  await page.clock.runFor(20_000);
+
+  // The first column is tomorrow again, and the range has gained a day at its far end.
+  await expect(heads.first()).toHaveText('Tomorrow');
+  await expect.poll(async () => (await heads.allInnerTexts()).at(-1)).not.toBe(before.at(-1));
+  expect(await heads.count()).toBe(before.length);
+});
