@@ -210,3 +210,34 @@ test('#125 a dialog opened over the task panel takes the keyboard alone', async 
   await page.keyboard.press('Escape');
   await expect(page.locator('.detail-top')).toHaveCount(0);
 });
+
+test('#126 deleting a parent picked with its subtasks deletes the branch once, and Undo brings it back once', async ({ demo: page }) => {
+  // A parent with two subtasks, made in the composer.
+  await page.keyboard.press('q');
+  await page.locator('.composer-name').fill('Plan the trip');
+  const sub = page.getByLabel('Add subtask', { exact: true });
+  await sub.fill('Book the train');
+  await sub.press('Enter');
+  await sub.fill('Book the hotel');
+  await sub.press('Enter');
+  await page.getByRole('button', { name: 'Add task', exact: true }).last().click();
+  await expect(page.locator('.composerbox')).toHaveCount(0);
+
+  await go(page, '#/inbox');
+  const branch = page.locator('.screen.active [data-task-id]').filter({ hasText: /Plan the trip|Book the (train|hotel)/ });
+  await expect(branch).toHaveCount(3);
+
+  // ⌘A picks every row on the page, subtasks included; the bar asks, then deletes.
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.getByRole('toolbar').getByRole('button', { name: 'Delete' }).click();
+  await page.locator('.confirmbox').getByRole('button', { name: 'Delete' }).click();
+  await expect(branch).toHaveCount(0);
+  // One message, and not a refusal.
+  await expect(page.locator('.toasts .toast')).toHaveCount(1);
+  await expect(page.locator('.toasts .toast')).not.toContainText(/refused|not saved/i);
+
+  // Undo within the window puts each task back once.
+  await page.locator('.toasts .toast').getByRole('button', { name: 'Undo' }).click();
+  await expect(branch).toHaveCount(3);
+  await expect(page.locator('.screen.active [data-task-id]').filter({ hasText: 'Book the train' })).toHaveCount(1);
+});

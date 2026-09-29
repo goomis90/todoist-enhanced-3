@@ -42,6 +42,85 @@ export async function settleFromServer(
   if (item && unsettled(item)) await state.refresh();
 }
 
+/**
+ * Which of these tasks are to be deleted for real: those with no ancestor that
+ * is also in the list.
+ *
+ * Todoist deletes a task's subtasks with it, so a parent and one of its
+ * subtasks both selected (⌘A picks every visible row) were sent as two
+ * deletions, and the second one hit a task that was already gone (#126). The
+ * order of the list is kept, an id given twice counts once, and an id the
+ * snapshot does not know is dropped.
+ */
+export function deletionRoots(ids: string[], items: Record<string, Item>): string[] {
+  const wanted = new Set(ids.filter((id) => items[id]));
+  const seen = new Set<string>();
+  const roots: string[] = [];
+  for (const id of ids) {
+    if (!wanted.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    // Walk up; a cycle the server should never send must not hang this.
+    const visited = new Set<string>([id]);
+    let parent = items[id].parent_id;
+    let covered = false;
+    while (parent && !visited.has(parent)) {
+      if (wanted.has(parent)) { covered = true; break; }
+      visited.add(parent);
+      parent = items[parent]?.parent_id ?? null;
+    }
+    if (!covered) roots.push(id);
+  }
+  return roots;
+}
+
+/**
+ * The tasks a deletion takes with it: the roots and every descendant, parents
+ * before their children, each one once. Deleted tasks are skipped.
+ *
+ * The parent-first order matters to whoever rebuilds the branch later, and
+ * the index is built once so a long list does not scan every task for each of
+ * them.
+ */
+export function branchOf(rootIds: string[], items: Record<string, Item>): Item[] {
+  const children = new Map<string, Item[]>();
+  for (const item of Object.values(items)) {
+    if (!item.parent_id || item.is_deleted) continue;
+    const siblings = children.get(item.parent_id);
+    if (siblings) siblings.push(item);
+    else children.set(item.parent_id, [item]);
+  }
+
+  const seen = new Set<string>();
+  const branch: Item[] = [];
+  const visit = (item: Item) => {
+    if (seen.has(item.id) || item.is_deleted) return;
+    seen.add(item.id);
+    branch.push(item);
+    for (const child of children.get(item.id) ?? []) visit(child);
+  };
+  for (const id of rootIds) {
+    const item = items[id];
+    if (item) visit(item);
+  }
+  return branch;
+}
+
+/**
+ * The tasks to rebuild, each once and in the order they were given.
+ *
+ * The order is not computed here: `branchOf` hands a branch over parent-first
+ * already. A comparator that only knows a parent from its own child is not a
+ * consistent ordering, and a sort may put a grandchild before its grandparent.
+ */
+export function restoreOrder(items: Item[]): Item[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
 /** How long a toast with an undo stays up, and so how long a deletion waits. */
 export const UNDO_TOAST_MS = 8000;
 
