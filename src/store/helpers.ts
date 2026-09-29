@@ -2,6 +2,7 @@
 import { addDays, addWeeks, nextDay, type Day } from 'date-fns';
 import type { Command } from '@/api/commands';
 import * as idb from '@/db/idb';
+import type { QueuedCommand } from '@/db/idb';
 import { dueDate, hasTime, toApiDate, toApiDateTime } from '@/domain/dates';
 import { WEEKDAY_WORDS } from '@/domain/dateVocabulary';
 import type { Item, Snapshot } from '@/domain/types';
@@ -147,6 +148,33 @@ export function restoreOrder(items: Item[]): Item[] {
     seen.add(item.id);
     return true;
   });
+}
+
+/**
+ * Whose changes are waiting in the outbox.
+ *
+ * The outbox outlives a sign-out on purpose: the same person signing in again
+ * loses nothing. Someone else signing in on the same device must not send it,
+ * or the old account's commands go out with the new account's token — refused
+ * in a burst when they name old ids, and created in the wrong account when
+ * they name none (#129).
+ *
+ * A command carries the account it was made in. One queued before that was
+ * recorded carries none, and is only taken as the signed-in person's when the
+ * copy cached on the device was theirs too (`legacyOwner`).
+ */
+export function partitionQueue(
+  queue: QueuedCommand[],
+  userId: string,
+  legacyOwner: string | null | undefined,
+): { mine: QueuedCommand[]; foreign: QueuedCommand[] } {
+  const mine: QueuedCommand[] = [];
+  const foreign: QueuedCommand[] = [];
+  for (const cmd of queue) {
+    const owner = cmd.userId ?? legacyOwner ?? null;
+    (owner === userId ? mine : foreign).push(cmd);
+  }
+  return { mine, foreign };
 }
 
 /** How long a toast with an undo stays up, and so how long a deletion waits. */

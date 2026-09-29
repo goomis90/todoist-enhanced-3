@@ -6,11 +6,13 @@ import { applySync, applyWrite, sync } from '@/api/sync';
 import { sendCommands, type Command } from '@/api/commands';
 import * as idb from '@/db/idb';
 import { emptySnapshot, setWeekLabel } from '@/domain/types';
-import { detectLocale } from '@/i18n';
+import { detectLocale, translate } from '@/i18n';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import { sessionGet, sessionRemove, sessionSet } from '@/lib/sessionStore';
 import { defaultPreferences, hydratePreferences, type Preferences } from './prefs';
-import { explainFailures, hidePending, pendingDeletes, revertRefused, schedulePersist } from './helpers';
+import {
+  explainFailures, hidePending, partitionQueue, pendingDeletes, revertRefused, schedulePersist,
+} from './helpers';
 import {
   PREFS_KEY, preferencesWriteTimer, remotePreferences, tourSnapshotBackup, withOnboarding,
 } from './preferences';
@@ -35,9 +37,16 @@ export async function flushQueue(
   for (const pending of pendingDeletes.values()) {
     for (const cmd of pending.commands) held.add(cmd.uuid);
   }
+  /* A change made in another account is not this account's to send. After a
+     sign-in `dropForeignQueue` has already decided; this is the second lock on
+     the same door, for any other way of getting here (#129). It is left queued,
+     not dropped: which account it belongs to is that function's call. */
+  const account = get().snapshot.user?.id;
   const commands: Command[] = queue
     .filter((cmd) => !held.has(cmd.uuid))
-    .map(({ queuedAt: _q, attempts: _a, ...cmd }) => cmd);
+    .filter((cmd) => !cmd.userId || !account || cmd.userId === account)
+    // The bookkeeping stays here: Todoist is sent the command and nothing else.
+    .map(({ queuedAt: _q, attempts: _a, userId: _u, ...cmd }) => cmd);
   if (commands.length === 0) return false;
   try {
     const result = await sendCommands(get().snapshot.syncToken, commands);
@@ -77,6 +86,32 @@ export async function flushQueue(
        always "still unreachable": the queue is left alone and retried later. */
     return false;
   }
+}
+
+/**
+ * After a sign-in: what was queued for another account is not sent.
+ *
+ * The outbox is kept when the credentials are refused, so the same person
+ * signing in again loses nothing. A different account would send it with its
+ * own token, and what it names would be refused in a burst, or created in the
+ * wrong account. The person is told once how many changes were left out.
+ * Called with the account that has just signed in, once it is known. Says how
+ * many changes are still waiting to go.
+ */
+export async function dropForeignQueue(
+  get: () => AppState,
+  set: (patch: Partial<AppState>) => void,
+  userId: string | undefined,
+  legacyOwner: string | null | undefined,
+): Promise<number> {
+  const queue = await idb.readQueue();
+  if (!userId || queue.length === 0) return queue.length;
+  const { foreign } = partitionQueue(queue, userId, legacyOwner);
+  if (foreign.length === 0) return queue.length;
+  await idb.dequeue(foreign.map((cmd) => cmd.uuid));
+  set({ pendingCount: queue.length - foreign.length });
+  get().toast(translate(get().prefs.locale, 'sync.foreignQueue', { count: foreign.length }));
+  return queue.length - foreign.length;
 }
 
 export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
@@ -126,8 +161,11 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       });
 
       if (connected) {
-        // A fresh sign-in reads the whole account, whatever the device held.
-        void get().refresh(signIn === 'signed-in' || snapshot.syncToken === '*');
+        /* A fresh sign-in reads the whole account, whatever the device held,
+           and reads it before sending anything: only then is it known whose
+           account this is, and so which of the queued changes are theirs. */
+        if (signIn === 'signed-in') void get().refresh(true, { legacyOwner: snapshot.user?.id ?? null });
+        else void get().refresh(snapshot.syncToken === '*');
       }
     } catch (error) {
       set({ syncError: String(error) });
@@ -138,6 +176,8 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
   async connect(token: string) {
     set({ syncState: 'loading', syncError: null });
     await auth.set(token);
+    // Whose copy the device holds now, before the one just read replaces it.
+    const legacyOwner = get().snapshot.user?.id ?? null;
     try {
       const response = await sync('*');
       const snapshot = applySync(emptySnapshot(), response);
@@ -148,6 +188,9 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       set({ connected: true, snapshot, prefs, syncState: 'idle' });
       void idb.saveSnapshot(snapshot);
       if (canonical || prefs !== adopted) void idb.savePrefs(PREFS_KEY, prefs);
+      /* What the same person left waiting goes out now; what another account
+         left is set aside first (#129). */
+      if (await dropForeignQueue(get, set, snapshot.user?.id, legacyOwner) > 0) void get().refresh();
       window.setTimeout(() => void get().ensurePreferencesTask(), 0);
       return true;
     } catch (error) {
@@ -186,7 +229,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       resolvedIds: {},
     });
   },
-  async refresh(full = false) {
+  async refresh(full = false, signedIn) {
     if (get().demo) return;
     if (tourSnapshotBackup) return;
     if (!auth.isConnected()) return;
@@ -195,11 +238,24 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     set({ syncState: 'syncing', syncError: null });
 
     try {
-      // Anything queued offline goes out first, so the server state the app
-      // reads back already includes it and cannot overwrite it.
-      const stale = await flushQueue(get, set);
+      let stale: boolean;
+      if (signedIn) {
+        /* Someone has just signed in, and whose account it is decides what in
+           the outbox may go: read first, set the other account's changes aside,
+           then send the rest (#129). The read is already the whole account, so
+           what follows is one incremental read, not a second full one. */
+        const response = await sync('*');
+        const fresh = applySync(emptySnapshot(), response);
+        set({ snapshot: hidePending(fresh) });
+        await dropForeignQueue(get, set, fresh.user?.id, signedIn.legacyOwner);
+        stale = await flushQueue(get, set);
+      } else {
+        // Anything queued offline goes out first, so the server state the app
+        // reads back already includes it and cannot overwrite it.
+        stale = await flushQueue(get, set);
+      }
 
-      const fromScratch = full || stale;
+      const fromScratch = signedIn ? stale : (full || stale);
       const token = fromScratch ? '*' : get().snapshot.syncToken;
       const response = await sync(token);
       const snapshot = applySync(fromScratch ? emptySnapshot() : get().snapshot, response);
@@ -271,7 +327,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     set({ snapshot: after });
     schedulePersist(after);
 
-    await idb.enqueue(commands);
+    await idb.enqueue(commands, get().snapshot.user?.id);
     set({ pendingCount: get().pendingCount + commands.length });
 
     if (!navigator.onLine) {

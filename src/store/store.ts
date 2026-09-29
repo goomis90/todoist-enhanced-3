@@ -45,7 +45,7 @@ if (typeof document !== 'undefined') {
     for (const pending of pendingDeletes.values()) {
       if (pending.queued) continue;
       pending.queued = true;
-      void idb.enqueue(pending.commands);
+      void idb.enqueue(pending.commands, useStore.getState().snapshot.user?.id);
     }
   };
   document.addEventListener('visibilitychange', () => {

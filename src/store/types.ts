@@ -63,7 +63,12 @@ export interface AppState {
   connect: (token: string) => Promise<boolean>;
   startDemo: () => void;
   disconnect: () => Promise<void>;
-  refresh: (full?: boolean) => Promise<void>;
+  /**
+   * Reads what changed, after sending what is waiting. Right after a sign-in,
+   * `signedIn` says whose copy the device held before it (`legacyOwner`), so
+   * the outbox can be told apart by account before anything is sent (#129).
+   */
+  refresh: (full?: boolean, signedIn?: { legacyOwner: string | null }) => Promise<void>;
   startPolling: () => () => void;
 
   /* Preferences */

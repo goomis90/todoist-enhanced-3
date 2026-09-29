@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { advanceDemoRecurrence, branchOf, deletionRoots, restoreOrder } from './helpers';
+import { advanceDemoRecurrence, branchOf, deletionRoots, partitionQueue, restoreOrder } from './helpers';
+import type { QueuedCommand } from '@/db/idb';
 import { emptySnapshot, type Item } from '@/domain/types';
 import { due, item } from '@/test/items';
 
@@ -133,5 +134,30 @@ describe('advanceDemoRecurrence (#130)', () => {
     const snapshot = emptySnapshot();
     snapshot.items.task = item({ id: 'task', due: due('2026-09-28') });
     expect(advanceDemoRecurrence(snapshot, 'task')).toBe(snapshot);
+  });
+});
+
+describe('partitionQueue (#129)', () => {
+  const queued = (uuid: string, userId?: string): QueuedCommand => ({
+    type: 'item_update', uuid, args: { id: uuid }, queuedAt: 1, attempts: 0, ...(userId ? { userId } : {}),
+  });
+
+  it('keeps the changes of the account that signed in, and sets the others aside', () => {
+    const queue = [queued('a', 'u1'), queued('b', 'u2'), queued('c', 'u1')];
+    const { mine, foreign } = partitionQueue(queue, 'u1', 'u1');
+    expect(mine.map((cmd) => cmd.uuid)).toEqual(['a', 'c']);
+    expect(foreign.map((cmd) => cmd.uuid)).toEqual(['b']);
+  });
+
+  it('takes a change with no recorded account as the signed-in one only when the cached copy was theirs', () => {
+    const queue = [queued('old')];
+    expect(partitionQueue(queue, 'u1', 'u1').mine).toHaveLength(1);
+    expect(partitionQueue(queue, 'u2', 'u1').foreign).toHaveLength(1);
+    expect(partitionQueue(queue, 'u1', null).foreign).toHaveLength(1);
+  });
+
+  it('keeps the order it was given', () => {
+    const queue = [queued('1', 'u1'), queued('2', 'u1'), queued('3', 'u1')];
+    expect(partitionQueue(queue, 'u1', null).mine.map((cmd) => cmd.uuid)).toEqual(['1', '2', '3']);
   });
 });
