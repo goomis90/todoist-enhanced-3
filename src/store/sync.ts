@@ -8,6 +8,7 @@ import * as idb from '@/db/idb';
 import { emptySnapshot, setWeekLabel } from '@/domain/types';
 import { detectLocale } from '@/i18n';
 import { buildDemoSnapshot } from '@/demo/demoData';
+import { sessionGet, sessionRemove, sessionSet } from '@/lib/sessionStore';
 import { defaultPreferences, hydratePreferences, type Preferences } from './prefs';
 import { explainFailures, hidePending, pendingDeletes, revertRefused, schedulePersist } from './helpers';
 import {
@@ -89,39 +90,49 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
   resolvedIds: {},
   signInError: null,
   async init() {
-    /* A page load that is Todoist sending the person back from its consent
-       page finishes the sign-in first, so what follows finds a connection. */
-    const signIn = await completeSignIn();
-    if (signIn === 'signed-in') sessionStorage.removeItem('demo');
-    if (signIn === 'denied' || signIn === 'failed') set({ signInError: signIn });
+    /* Always finishes. A launch that throws anywhere below used to leave the
+       app on "Loading…" for ever, because nothing was listening for the
+       rejection and `ready` never became true. Whatever went wrong is kept as
+       the sync error, and the connect screen appears either way (#128). */
+    try {
+      /* A page load that is Todoist sending the person back from its consent
+         page finishes the sign-in first, so what follows finds a connection. */
+      const signIn = await completeSignIn();
+      if (signIn === 'signed-in') sessionRemove('demo');
+      if (signIn === 'denied' || signIn === 'failed') set({ signInError: signIn });
 
-    const [storedPrefs, snapshot, queue] = await Promise.all([
-      idb.loadPrefs<Preferences>(PREFS_KEY),
-      idb.loadSnapshot(),
-      idb.readQueue(),
-    ]);
+      const [storedPrefs, snapshot, queue] = await Promise.all([
+        idb.loadPrefs<Preferences>(PREFS_KEY),
+        idb.loadSnapshot(),
+        idb.readQueue(),
+      ]);
 
-    const prefs = hydratePreferences(storedPrefs, detectLocale());
-    /* The rules that read the week tag are pure functions called from
-       everywhere; they are told the name once, here, rather than being handed
-       preferences they have no other use for. */
-    setWeekLabel(prefs.weekLabel);
-    const connected = auth.isConnected();
-    const resumeDemo = !connected && sessionStorage.getItem('demo') === '1';
+      const prefs = hydratePreferences(storedPrefs, detectLocale());
+      /* The rules that read the week tag are pure functions called from
+         everywhere; they are told the name once, here, rather than being handed
+         preferences they have no other use for. */
+      setWeekLabel(prefs.weekLabel);
+      const connected = auth.isConnected();
+      const resumeDemo = !connected && sessionGet('demo') === '1';
 
-    // Show the cached copy immediately, then reconcile with Todoist.
-    set({
-      prefs,
-      snapshot: resumeDemo ? buildDemoSnapshot(prefs.locale) : snapshot,
-      connected: connected || resumeDemo,
-      demo: resumeDemo,
-      ready: true,
-      pendingCount: queue.length,
-    });
+      // Show the cached copy immediately, then reconcile with Todoist.
+      set({
+        prefs,
+        snapshot: resumeDemo ? buildDemoSnapshot(prefs.locale) : snapshot,
+        connected: connected || resumeDemo,
+        demo: resumeDemo,
+        ready: true,
+        pendingCount: queue.length,
+      });
 
-    if (connected) {
-      // A fresh sign-in reads the whole account, whatever the device held.
-      void get().refresh(signIn === 'signed-in' || snapshot.syncToken === '*');
+      if (connected) {
+        // A fresh sign-in reads the whole account, whatever the device held.
+        void get().refresh(signIn === 'signed-in' || snapshot.syncToken === '*');
+      }
+    } catch (error) {
+      set({ syncError: String(error) });
+    } finally {
+      if (!get().ready) set({ ready: true });
     }
   },
   async connect(token: string) {
@@ -150,7 +161,8 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     }
   },
   startDemo() {
-    sessionStorage.setItem('demo', '1');
+    // Remembered for a reload when the browser allows it, and still opened when not.
+    sessionSet('demo', '1');
     set({
       demo: true,
       connected: true,
@@ -161,7 +173,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     });
   },
   async disconnect() {
-    sessionStorage.removeItem('demo');
+    sessionRemove('demo');
     await auth.disconnect();
     await idb.clearAll();
     set({

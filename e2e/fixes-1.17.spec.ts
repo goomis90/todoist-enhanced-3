@@ -1,3 +1,4 @@
+import { test as bare } from '@playwright/test';
 import { expect, go, row, test } from './demo';
 
 test('#143 a date typed with a time keeps the time', async ({ demo: page }) => {
@@ -259,4 +260,49 @@ test('#130 in the demo, ticking a daily 14:00 task brings it back tomorrow at 14
     .first();
   // It is back, with its time, and Upcoming only lists days after today.
   await expect(next).toContainText('14:00');
+});
+
+/* The two below start on the connect screen, so they use a bare page: the
+   `demo` fixture opens the demo itself and fails on anything logged. */
+bare('#128 with site storage blocked, the connect screen appears and the demo still opens', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('onboarded', JSON.stringify(['demo-user']));
+    Object.defineProperty(window, 'sessionStorage', {
+      get() { throw new DOMException('The operation is insecure.', 'SecurityError'); },
+    });
+  });
+  await page.goto('/');
+  // Not stuck on "Loading…": the connect screen is there.
+  const signIn = page.getByRole('button', { name: 'Continue with Todoist' });
+  await expect(signIn).toBeVisible();
+
+  // Signing in cannot come back without storage: it says so, and stays.
+  await signIn.click();
+  await expect(page.getByRole('alert')).toContainText("blocking this site's storage");
+  await expect(page).toHaveURL(/localhost/);
+  await expect(signIn).toBeEnabled();
+
+  // The demo still opens (it is only not remembered on reload).
+  await page.getByRole('button', { name: 'Explore with demo data instead' }).click();
+  await expect(page.locator('.screen.active [data-task-id]').first()).toBeVisible();
+});
+
+bare('#128 a crash while drawing shows a message and a Reload button, not a white page', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('onboarded', JSON.stringify(['demo-user']));
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Explore with demo data instead' }).click();
+  await expect(page.locator('.screen.active [data-task-id]').first()).toBeVisible();
+
+  // Something in the page breaks while it is being drawn.
+  await page.evaluate(() => {
+    Intl.DateTimeFormat = function broken() { throw new Error('boom'); } as unknown as typeof Intl.DateTimeFormat;
+    window.location.hash = '#/upcoming';
+  });
+
+  const alert = page.getByRole('alert');
+  await expect(alert).toContainText('Something went wrong');
+  await expect(alert.getByRole('button', { name: 'Reload' })).toBeVisible();
+  await expect(alert.getByRole('link', { name: 'Tell us what happened' })).toBeVisible();
 });
