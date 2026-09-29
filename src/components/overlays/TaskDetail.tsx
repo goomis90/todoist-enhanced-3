@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { copyText, isTemporaryId, todoistTaskUrl } from '@/api/links';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Overlay } from './Overlay';
+import { isTopOverlay } from './overlayStack';
 import { Icon } from '../Icon';
 import { useT } from '@/hooks/useT';
 import { useMenuKeys } from '@/hooks/useMenuKeys';
@@ -295,6 +296,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const toast = useStore((s) => s.toast);
   const demo = useStore((s) => s.demo);
   const confirm = useConfirm();
+  /* Named, so the panel's own keys can tell whether it is the dialog in front. */
+  const overlayId = useId();
 
   const item = taskId ? snapshot.items[taskId] : null;
   const loadTask = useStore((s) => s.loadTask);
@@ -392,6 +395,10 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   useEffect(() => {
     if (!item) return;
     const onKey = (event: KeyboardEvent) => {
+      /* A confirmation or a search opened over the panel is in front of it,
+         and the keys are its own: ↓ and J used to walk to the next task behind
+         the question, and "." opened the panel's menu (#125). */
+      if (!isTopOverlay(overlayId)) return;
       const target = event.target as HTMLElement | null;
       if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
         || target?.isContentEditable) return;
@@ -437,7 +444,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [askThenDelete, item]);
+  }, [askThenDelete, item, overlayId]);
 
   const fitDescription = useCallback(() => {
     const el = descriptionRef.current;
@@ -485,7 +492,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   if (!item) {
     if (!taskId || !missing) return null;
     return (
-      <Overlay open onClose={onClose} label={t('detail.title')}>
+      <Overlay open onClose={onClose} label={t('detail.title')} overlayId={overlayId}>
         <p className={`detail-missing${missing === 'loading' ? ' loading' : ''}`} role="status">
           {t(missing === 'loading' ? 'detail.loading' : missing === 'gone' ? 'detail.gone' : 'detail.offline')}
         </p>
@@ -641,6 +648,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
       open
       onClose={onClose}
       label={t('detail.title')}
+      overlayId={overlayId}
       returnFocusTo={() => (walked.current && taskId
         ? document.querySelector<HTMLElement>(`.screen.active [data-task-id="${taskId}"]`)
         : null)}

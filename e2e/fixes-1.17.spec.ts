@@ -164,3 +164,49 @@ test('#124 a custom accent follows the device when it switches to dark', async (
   await expect.poll(async () => (await accent()).accent).toBe(light.accent);
   expect(dark.accent).not.toBe(light.accent);
 });
+
+test('#125 a dialog opened over the task panel takes the keyboard alone', async ({ demo: page }) => {
+  const first = await page.locator('.screen.active [data-task-id] .ttitle').first().innerText();
+  await row(page, first).click();
+  const field = page.locator('.detail-content .titlefield');
+  await expect(field).toHaveValue(first);
+
+  // ⌘⌫ asks "Delete this task?" over the panel.
+  await page.keyboard.press('ControlOrMeta+Backspace');
+  const confirm = page.locator('.confirmbox');
+  await expect(confirm).toBeVisible();
+  const del = confirm.getByRole('button', { name: 'Delete' });
+  const cancel = confirm.getByRole('button', { name: 'Cancel' });
+
+  // The panel's own keys stay quiet behind it: no walking to the next task.
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('j');
+  await expect(field).toHaveValue(first);
+
+  // Tab goes round the two buttons, Delete included.
+  await expect(del).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(cancel).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(del).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(cancel).toBeFocused();
+
+  // Escape puts the question away and leaves the panel where it was.
+  await page.keyboard.press('Escape');
+  await expect(confirm).toHaveCount(0);
+  await expect(field).toHaveValue(first);
+  await expect(page.locator('.detail-top')).toBeVisible();
+
+  // The same from a search opened over the panel.
+  await page.keyboard.press('ControlOrMeta+k');
+  const search = page.locator('.sheet-search');
+  await expect(search).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(search).toHaveCount(0);
+  await expect(page.locator('.detail-top')).toBeVisible();
+
+  // One Escape left: the panel closes as it always did.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.detail-top')).toHaveCount(0);
+});
