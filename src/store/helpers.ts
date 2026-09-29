@@ -217,9 +217,30 @@ export function withPending(snapshot: Snapshot): Snapshot {
 /** Writes the snapshot to the device without blocking the interface. */
 export let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** The copy waiting for its write, so a page that is being left can write it now. */
+let waiting: Snapshot | null = null;
+
 export function schedulePersist(snapshot: Snapshot) {
+  waiting = snapshot;
   if (persistTimer) clearTimeout(persistTimer);
-  persistTimer = setTimeout(() => void idb.saveSnapshot(withPending(snapshot)), 400);
+  persistTimer = setTimeout(flushPersist, 400);
+}
+
+/**
+ * Writes the waiting copy now instead of when the timer would.
+ *
+ * The write waits 400 ms after the last change, which a page that is hidden
+ * inside that time never got to: a change made just before switching app or
+ * closing the tab was in the outbox but not in the copy kept on the device, and
+ * the next launch without a connection showed the workspace as it was before it
+ * (#132). Nothing waiting, nothing written.
+ */
+export function flushPersist() {
+  if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
+  if (!waiting) return;
+  const snapshot = withPending(waiting);
+  waiting = null;
+  void idb.saveSnapshot(snapshot);
 }
 
 /**

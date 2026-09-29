@@ -99,7 +99,8 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
           items: { ...current.snapshot.items, [item.id]: item },
           notes: { ...current.snapshot.notes, ...Object.fromEntries(notes.map((note) => [note.id, note])) },
         };
-        schedulePersist(snapshot);
+        // The demo is never written to the slot a real account's copy lives in.
+        if (!current.demo) schedulePersist(snapshot);
         return { snapshot };
       });
     };
@@ -293,7 +294,7 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
       queued: false,
     });
     set({ snapshot: hidePending(get().snapshot) });
-    schedulePersist(get().snapshot);
+    if (!get().demo) schedulePersist(get().snapshot);
 
     /* The message counts the tasks that were selected, so it still says what
        the person did. */
@@ -311,7 +312,7 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
         const items = { ...get().snapshot.items };
         for (const item of pending.items) items[item.id] = item;
         set({ snapshot: { ...get().snapshot, items } });
-        schedulePersist(get().snapshot);
+        if (!get().demo) schedulePersist(get().snapshot);
         return;
       }
       // Already sent: Todoist has no undelete, so a copy is the best there is.
