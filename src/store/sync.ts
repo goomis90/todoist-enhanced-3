@@ -9,7 +9,7 @@ import { emptySnapshot, setWeekLabel } from '@/domain/types';
 import { detectLocale } from '@/i18n';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import { defaultPreferences, hydratePreferences, type Preferences } from './prefs';
-import { explainFailure, explainFailures, hidePending, pendingDeletes, revertRefused, schedulePersist } from './helpers';
+import { explainFailures, hidePending, pendingDeletes, revertRefused, schedulePersist } from './helpers';
 import {
   PREFS_KEY, preferencesWriteTimer, remotePreferences, tourSnapshotBackup, withOnboarding,
 } from './preferences';
@@ -47,6 +47,12 @@ export async function flushQueue(
        sometimes several reloads ago, so only a full read of Todoist can say
        what was kept. */
     let stale = false;
+    /* Every refusal Todoist makes arrives here, in `failures`: `sendCommands`
+       turns a refusal of a whole request into a failure of each command in it,
+       and the batch still counts as delivered. So a refused change leaves the
+       queue with the delivered ones instead of going out on every sync for
+       ever, holding a pending count that never falls, and it is reported once
+       below. */
     if (result.failures.length > 0) {
       const refused = new Set(result.failures.map((failure) => failure.uuid));
       const placeholders = commands.filter((cmd) => refused.has(cmd.uuid) && cmd.temp_id);
@@ -65,17 +71,9 @@ export async function flushQueue(
     }
     // A full read would wipe the placeholders of what is still waiting to go.
     return stale && result.undelivered.length === 0;
-  } catch (error) {
-    /* A refusal will be refused again. Left in the queue it goes out on every
-       sync for ever, holding a pending count that never falls and a change
-       that never lands, so it is dropped here and reported once. */
-    if (error instanceof ApiError && error.isRefusal) {
-      await idb.dequeue(commands.map((c) => c.uuid));
-      set({ pendingCount: 0 });
-      get().toast(explainFailure(error.detail, get().prefs.locale));
-      return true;
-    }
-    // Still unreachable; the queue is left alone and retried later.
+  } catch {
+    /* Only the network can throw from here (see `failures` above), so this is
+       always "still unreachable": the queue is left alone and retried later. */
     return false;
   }
 }
@@ -272,6 +270,10 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     try {
       const result = await sendCommands(after.syncToken, commands);
       let merged = applyWrite(get().snapshot, result.responses, result.mapping);
+      /* Todoist refused some of it, and the screen must not keep what it
+         refused: each refused command gives back only the objects it touched,
+         and the person who asked is told below. A change that vanishes without
+         a word is indistinguishable from a click that never registered. */
       if (result.failures.length > 0) {
         merged = revertRefused(merged, before, commands, result.failures);
       }
@@ -295,22 +297,11 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
         ));
       }
       return result.mapping;
-    } catch (error) {
-      if (error instanceof ApiError && error.isRefusal) {
-        /* Todoist refused the change outright. The screen must not keep it,
-           the queue must not keep retrying it, and — the part that was missing
-           — the person who asked for it has to be told. A change that vanishes
-           without a word is indistinguishable from one that never registered
-           the click. */
-        set({ snapshot: before, syncState: 'idle' });
-        schedulePersist(before);
-        await idb.dequeue(commands.map((c) => c.uuid));
-        set({ pendingCount: Math.max(0, get().pendingCount - commands.length) });
-        get().toast(explainFailure(error.detail, get().prefs.locale));
-      } else {
-        // Network trouble: the change stays queued and goes out on the next sync.
-        set({ syncState: 'offline' });
-      }
+    } catch {
+      /* Only the network can throw from here: a refusal comes back in
+         `failures` above. The change stays queued and goes out on the next
+         sync. */
+      set({ syncState: 'offline' });
       return {};
     }
   },
