@@ -8,6 +8,14 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 1.17.1
+
+Insights compte de nouveau les bons jours, et la fenêtre Nouveautés s'ouvre maintenant après chaque mise à jour, avec les changements les plus visibles en premier.
+
+🎨 **Les Nouveautés s'ouvrent après chaque mise à jour.** Elles ne s'ouvraient que lorsqu'une version apportait du nouveau. Maintenant chaque version les ouvre une fois, et ses lignes sont classées du plus visible au moins visible : les nouveautés, puis les changements d'apparence, puis les corrections.
+
+🐛 **Insights affiche les bons jours.** La vue Jour n'affichait rien, le dernier jour de chaque période était oublié, et un jour manquait entre les parties d'un trimestre ou d'une année. Une tâche terminée dans les premières heures d'une période, en France avant 2 h du matin, était aussi manquée. Chaque jour de la période choisie est maintenant compté.
+
 ## 1.17.0
 
 Une série de corrections : l'heure tapée avec une date est conservée, plus rien n'est créé en double, les liens restent des liens, et l'app supporte mieux les mauvaises connexions et les navigateurs qui bloquent le stockage.

@@ -7,7 +7,19 @@ The changelog marks every line with :
 The app shows each release's lines in its "What's new" window, so they are
 written for the people using it: say where the thing is (the page, the
 button, the key), what it does for them, in plain words, and keep em dashes
-out. The French translation lives in CHANGELOG.fr.md.
+out. The window opens once after an update for every release, whatever kinds
+of lines it holds. Inside a release the app lists the lines by impact, new
+things first, then redesigns, then fixes, so write them in the order you
+want within each kind: the most visible, most frequent case first. The
+French translation lives in CHANGELOG.fr.md.
+
+## 1.17.1
+
+Insights counts the right days again, and the What's new window now opens after every update, with the most visible changes first.
+
+🎨 **What's new opens after every update.** It used to open only when a release had something new. Now every release opens it once, and its lines are listed from the most visible to the least: new things, then redesigns, then fixes.
+
+🐛 **Insights shows the right days.** The day view showed nothing, the last day of every period was left out, and a day went missing between the parts of a quarter or a year. A task completed in the first hours of a period, in France before 2 in the morning, was also missed. Every day of the period you pick is now counted.
 
 ## 1.17.0
 

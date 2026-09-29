@@ -26,7 +26,7 @@ import { ConnectView } from './views/ConnectView';
 import { Walkthrough } from './components/overlays/Walkthrough';
 import { Tour } from './components/overlays/Tour';
 import { WhatsNew, type WhatsNewScope } from './components/overlays/WhatsNew';
-import { hasNews, parseChangelog, unseenReleases } from './domain/changelog';
+import { hasChanges, parseChangelog, unseenReleases } from './domain/changelog';
 import { VERSION } from './app-info';
 import { hasOnboarded } from './domain/onboarding';
 import { useStore } from './store/store';
@@ -169,7 +169,7 @@ export function App() {
     else if (syncing.current && syncState === 'idle') setSettled(true);
   }, [syncState]);
 
-  /* What's new, once per release that brings something new (#115). Never on
+  /* What's new, once per release (#115, #148). Never on
      top of the first run, and never in the demo, which has no account to
      remember having shown it. */
   useEffect(() => {
@@ -180,7 +180,7 @@ export function App() {
     void import('../CHANGELOG.md?raw').then(({ default: source }) => {
       if (cancelled) return;
       const unseen = unseenReleases(parseChangelog(source), VERSION, seenVersion);
-      if (whatsNewOn && hasNews(unseen)) {
+      if (whatsNewOn && hasChanges(unseen)) {
         setWhatsNew({ versions: unseen.map((release) => release.version) });
       } else {
         // Nothing new to say, or not wanted: this release counts as read.

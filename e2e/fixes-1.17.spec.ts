@@ -369,11 +369,18 @@ test('#135 follow-up: @@link0@@ typed in the composer stays text, with no tag', 
   await expect(row(page, 'Fill @@link0@@ in')).toBeVisible();
 });
 
-test('the changelog opens on 1.17.0, in English and in French', async ({ demo: page }) => {
+test('the changelog opens on 1.17.1, its lines ordered from the most visible to the least (#148)', async ({ demo: page }) => {
   await page.route('https://github.com/**', (route) => route.fulfill({ status: 204 }));
   await go(page, '#/settings');
   await page.getByRole('button', { name: 'See the changes' }).click();
   const dialog = page.getByRole('dialog', { name: 'Changelog' });
-  await expect(dialog.locator('.whatsnew-release').first()).toContainText('1.17.0');
-  await expect(dialog.locator('.whatsnew-change.new').first()).toContainText('close button');
+  const first = dialog.locator('.whatsnew-release').first();
+  await expect(first).toContainText('1.17.1');
+  // A redesign comes before a fix, even though the file could list them either way.
+  const kinds = await first.locator('.whatsnew-change').evaluateAll((els) => els.map((el) => el.classList[1]));
+  expect(kinds).toEqual(['design', 'fix']);
+  // 1.17.0 opens with what is new.
+  const older = dialog.locator('.whatsnew-release').nth(1);
+  await expect(older.locator('.whatsnew-change').first()).toHaveClass(/new/);
+  await expect(older.locator('.whatsnew-change').last()).toHaveClass(/fix/);
 });
