@@ -9,6 +9,46 @@ written for the people using it: say where the thing is (the page, the
 button, the key), what it does for them, in plain words, and keep em dashes
 out. The French translation lives in CHANGELOG.fr.md.
 
+## 1.17.0
+
+A round of fixes: the time you type with a date is kept, nothing is created twice, links stay links, and the app copes better with bad connections and blocked browsers.
+
+🐛 **A time typed with a date is kept.** Typing "tomorrow at 14:30" in a task's date now saves 14:30, in the new task window, the task panel, a row's date menu and the bar for several tasks. A deadline stays a day, and says so when you type a time in it.
+
+🐛 **Adding a task twice by double-clicking.** The new task window now accepts one save at a time, from the button or from the keyboard. Two tasks with the same name typed on purpose are still two tasks.
+
+🐛 **A link no longer changes your task.** `https://example.com/p1` used to make the task P1, and a link ending in `/daily` made it repeat. Links are now read as links, and what you type beside them still works.
+
+🐛 **Months are read properly.** "14 juillet" is July (it was June), "1er juillet" and "July 1st" are understood, and words like "2 maisons" or "2 decks" are no longer taken for dates. A date such as 12/03 follows Settings, Date format.
+
+🐛 **Save and Cancel under a task's title work from the keyboard.** Enter and Space now do what a click does.
+
+🐛 **Upcoming moves on at midnight.** Left open overnight, it now gains the new last day by itself, so a task that just came into range no longer stays hidden until you leave the page.
+
+🐛 **A dialog over another dialog.** Escape now closes only the one in front, Tab goes round both buttons of a confirmation, and the task panel behind it no longer answers the keys.
+
+🐛 **Deleting a task with its subtasks.** Selecting a parent and its subtasks deletes the branch once, without a false "Todoist refused this", and a late undo brings each task back once.
+
+🐛 **A custom accent follows dark mode.** When your device switches to dark with the app open, the accent's colours follow instead of waiting for a reload.
+
+🐛 **The text "@@link0@@" is shown as written.** It no longer turns into "undefined" in a title or a description, and an @ glued to a word, like the one in an email address, is no longer taken for a tag.
+
+🐛 **The app opens even when the browser blocks site storage.** It used to stay on "Loading…". If something crashes, a short message and a Reload button replace the white page.
+
+🐛 **Offline changes go to the right account.** Changes made offline with one Todoist account are no longer sent to another account that signs in afterwards. You are told how many were left out.
+
+🐛 **A change made just before closing is kept offline.** Switching app or closing the tab right after a change no longer loses it from the copy kept on your device.
+
+🐛 **A slow or stalled connection ends cleanly.** A download that stops halfway now counts as a timeout, and a long "retry after" from Todoist no longer freezes syncing.
+
+🐛 **The demo repeats tasks correctly.** Ticking a daily task moves it one day and keeps its time, and "every Monday" moves to the next Monday. A task typed with "every day at 3pm" shows Today 15:00.
+
+🆕 **Toasts have a close button and go away sooner.** Confirmations stay 3 seconds, errors 6, and the Undo window stays 8. Closing a toast keeps its Undo available with the undo shortcut.
+
+🆕 **Screen readers announce toasts.** Confirmations are read politely, refusals from Todoist at once, and the Undo button says what it undoes.
+
+🎨 **Task lists are easier to read.** Tag chips, group counts, board column counts and the small labels in the task panel go from 11 to 12 pixels.
+
 ## 1.16.0
 
 After each update a short window tells you what changed, the new task window is easier to read, and picking a date looks the same everywhere.

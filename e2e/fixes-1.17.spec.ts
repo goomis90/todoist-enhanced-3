@@ -368,3 +368,12 @@ test('#135 follow-up: @@link0@@ typed in the composer stays text, with no tag', 
   await go(page, '#/inbox');
   await expect(row(page, 'Fill @@link0@@ in')).toBeVisible();
 });
+
+test('the changelog opens on 1.17.0, in English and in French', async ({ demo: page }) => {
+  await page.route('https://github.com/**', (route) => route.fulfill({ status: 204 }));
+  await go(page, '#/settings');
+  await page.getByRole('button', { name: 'See the changes' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Changelog' });
+  await expect(dialog.locator('.whatsnew-release').first()).toContainText('1.17.0');
+  await expect(dialog.locator('.whatsnew-change.new').first()).toContainText('close button');
+});
