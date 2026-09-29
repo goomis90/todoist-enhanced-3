@@ -167,7 +167,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
         method, headers: { ...headers, Authorization: `Bearer ${token}` }, body,
         signal: deadline.signal,
       });
-      text = await response.text().catch(() => '');
+      /* Read inside the same guard, with no catch of its own: an abort during
+         the body is the deadline firing, and swallowing it here made a stalled
+         download look like an empty success (#127). */
+      text = await response.text();
     } catch (error) {
       if (deadline.timedOut()) throw new TimeoutError();
       throw error;
@@ -187,8 +190,14 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     }
 
     if (response.ok) {
-      if (response.status === 204) return undefined as T;
-      return (text ? JSON.parse(text) : undefined) as T;
+      if (response.status === 204 || !text) return undefined as T;
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        /* Not an ApiError, so callers treat it like a network problem and try
+           again later instead of reading it as a refusal. */
+        throw new Error('Todoist sent an answer that could not be read.');
+      }
     }
 
     const retriable = response.status === 429 || response.status >= 500;
