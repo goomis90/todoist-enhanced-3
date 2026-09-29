@@ -12,7 +12,9 @@ import { useConfirm } from './Confirm';
 import {
   effectiveEstimate, formatDuration, withEstimate,
 } from '@/domain/estimates';
-import { deadlineDate, dueDate, formatRelativeDay, toApiDate } from '@/domain/dates';
+import {
+  deadlineDate, dueDate, formatRelativeDay, hasTime, toApiDate, toApiDateTime,
+} from '@/domain/dates';
 import { plainTitle, renderMarkdown, titleLinks } from '@/domain/markdown';
 import { parseShorthand, savedRefusals, type TextRange } from '@/domain/shorthand';
 import { dueForDate, readRecurrence } from '@/domain/recurrence';
@@ -991,7 +993,8 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
           <div className="prop" data-prop="start">
             <PropLabel name={t('detail.startDate')} prop="start" />
             <DateField
-              value={due ? toApiDate(due) : ''}
+              withTime
+              value={due ? (hasTime(item.due) ? toApiDateTime(due) : toApiDate(due)) : ''}
               label={t('detail.startDate')}
               placeholder={t('date.pick')}
               onChange={(value) => {

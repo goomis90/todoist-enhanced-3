@@ -304,7 +304,7 @@ export function Composer({
               <Icon name="close" size="sm" />
             </button>
           ) : (
-            <DateField variant="chip" value={date} onChange={setDate} label={t('composer.date')} />
+            <DateField variant="chip" withTime value={date} onChange={setDate} label={t('composer.date')} />
           )}
 
           <DateField

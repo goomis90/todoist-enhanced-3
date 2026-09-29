@@ -858,6 +858,7 @@ export const fr: Record<TranslationKey, string> = {
   'task.typeDate': 'Demain, dimanche prochain, 12 avril…',
   'task.typeDestination': 'Filtrer projets et sections…',
   'task.dateNotRead': 'Pas une date reconnue.',
+  'task.dateNoTime': "Ce champ prend un jour seulement. L'heure est ignorée.",
   'settings.dateFormat': 'Format de date',
   'settings.dateFormatHint': 'L\'ordre des éléments d\'une date écrite. Aujourd\'hui et demain sont toujours nommés, jamais datés.',
   'settings.days': 'jours',

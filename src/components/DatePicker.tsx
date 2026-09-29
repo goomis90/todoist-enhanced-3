@@ -6,7 +6,9 @@ import {
 import { Icon, type IconName } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
-import { formatDay, formatDayOrName, toApiDate, weekdayName } from '@/domain/dates';
+import {
+  formatDay, formatDayOrName, formatTime, toApiDate, weekdayName, type DateFormat,
+} from '@/domain/dates';
 import { dateSuggestions, type DateSuggestion } from '@/domain/dateWords';
 import { readNaturalDate } from '@/domain/nlp';
 import { readRecurrence } from '@/domain/recurrence';
@@ -50,6 +52,13 @@ interface DatePickerProps {
   onEscape?: () => void;
   /** Whether the typed field takes the caret when the picker appears. */
   autoFocus?: boolean;
+  /**
+   * Whether a time typed with the day is kept (#143). "tomorrow at 14:30" then
+   * hands on `2026-09-30T14:30:00` rather than the day alone. A task's own
+   * date takes a time; a deadline and the bounds of a period are days, and
+   * there the field says the time is left out instead of dropping it silently.
+   */
+  withTime?: boolean;
 }
 
 /**
@@ -72,10 +81,11 @@ interface DatePickerProps {
  */
 export function DatePicker({
   value, onPick, label, shortcuts, onRecurrence, min, max, footer, onEscape,
-  autoFocus = true,
+  autoFocus = true, withTime = false,
 }: DatePickerProps) {
   const { t, locale } = useT();
   const dateFormat = useStore((s) => s.prefs.dateFormat);
+  const hour12 = useStore((s) => s.prefs.hour12);
   const selected = parse(value);
   const [month, setMonth] = useState(() => startOfMonth(selected ?? new Date()));
   const [cursor, setCursor] = useState(() => startOfDay(selected ?? new Date()));
@@ -118,19 +128,32 @@ export function DatePicker({
 
   const typed = query.trim();
   const suggestions = useMemo(() => dateSuggestions(query, locale), [query, locale]);
-  const reading = useMemo(() => (typed ? readNaturalDate(query) : null), [query, typed]);
+  const reading = useMemo(
+    () => (typed ? readNaturalDate(query, new Date(), { dateFormat }) : null),
+    [query, typed, dateFormat],
+  );
   const repeat = useMemo(
     () => (typed && onRecurrence ? readRecurrence(query) : null),
     [query, typed, onRecurrence],
   );
 
-  /** Enter in the field: a rule wins over a date, then what is highlighted, then the reading. */
+  /**
+   * Enter in the field: a rule wins over a date, then what is highlighted, then
+   * the reading. Only the reading can carry a time, and it is kept whole when
+   * the picker takes one: cutting it down to its day first was how "tomorrow at
+   * 14:30" became "tomorrow" (#143).
+   */
   function commitTyped() {
     if (repeat && onRecurrence) { onRecurrence(repeat); return; }
-    const iso = (active >= 0 ? suggestions[active]?.date : suggestions[0]?.date)
-      ?? reading?.date;
-    const day = iso ? parse(iso) : null;
-    if (day) pickDay(day);
+    const suggested = active >= 0 ? suggestions[active]?.date : suggestions[0]?.date;
+    if (suggested) {
+      const day = parse(suggested);
+      if (day) pickDay(day);
+      return;
+    }
+    const day = reading ? parse(reading.date) : null;
+    if (!reading || !day || outOfRange(day)) return;
+    onPick(withTime && reading.hasTime ? reading.date : toApiDate(day));
   }
 
   /* Six weeks from the Monday on or before the first: always the same number
@@ -288,7 +311,9 @@ export function DatePicker({
           </div>
         ) : (
           <p className={`pickerreading${reading ? '' : ' none'}`}>
-            {reading ? formatDayOrName(parse(reading.date)!, locale, dateFormat) : t('task.dateNotRead')}
+            {reading
+              ? readingText(reading, withTime, locale, dateFormat, hour12, t('task.dateNoTime'))
+              : t('task.dateNotRead')}
           </p>
         )
       )}
@@ -375,6 +400,41 @@ export function parse(value: string): Date | null {
   if (!value) return null;
   const date = new Date(`${value.slice(0, 10)}T00:00:00`);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** The moment an API date string names when it carries a time, else null. */
+export function parseTime(value: string): Date | null {
+  if (!value.includes('T')) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * A day, and its time when there is one: "Tomorrow 14:30". The one way a date
+ * field says what it holds, so the time a task will get is never hidden.
+ */
+export function dayAndTime(
+  value: string, locale: 'en' | 'fr', format: DateFormat, hour12: boolean,
+): string {
+  const day = parse(value);
+  if (!day) return '';
+  const time = parseTime(value);
+  const name = formatDayOrName(day, locale, format);
+  return time ? `${name} ${formatTime(time, locale, hour12)}` : name;
+}
+
+/** What the reading line under the field says a typed date was understood as. */
+function readingText(
+  reading: NonNullable<ReturnType<typeof readNaturalDate>>,
+  withTime: boolean,
+  locale: 'en' | 'fr',
+  format: DateFormat,
+  hour12: boolean,
+  dayOnly: string,
+): string {
+  if (!reading.hasTime) return dayAndTime(reading.date, locale, format, hour12);
+  if (withTime) return dayAndTime(reading.date, locale, format, hour12);
+  return `${dayAndTime(reading.date.slice(0, 10), locale, format, hour12)} · ${dayOnly}`;
 }
 
 /**

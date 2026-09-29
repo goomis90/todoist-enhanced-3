@@ -856,6 +856,7 @@ export const en = {
   'task.typeDate': 'Tomorrow, next Sunday, 12 April…',
   'task.typeDestination': 'Filter projects and sections…',
   'task.dateNotRead': 'Not a date this understands.',
+  'task.dateNoTime': 'This field takes a day only. The time is left out.',
   'settings.dateFormat': 'Date format',
   'settings.dateFormatHint': 'The order a written-out date puts its parts in. Today and tomorrow are always named, never dated.',
   'settings.days': 'days',

@@ -4,8 +4,7 @@ import { endOfMonth } from 'date-fns';
 import { Icon, type IconName } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
-import { formatDayOrName } from '@/domain/dates';
-import { DatePicker, parse, type DateShortcut } from './DatePicker';
+import { DatePicker, dayAndTime, parse, type DateShortcut } from './DatePicker';
 
 interface DateFieldProps {
   /** An API date string, or empty for no date. */
@@ -34,6 +33,11 @@ interface DateFieldProps {
   variant?: 'field' | 'chip';
   /** The glyph beside the value: a calendar, or the deadline's flag. */
   icon?: IconName;
+  /**
+   * Whether the field takes a time of day as well as a day (#143). A task's
+   * date does; a deadline and the ends of a period do not.
+   */
+  withTime?: boolean;
 }
 
 /**
@@ -47,11 +51,12 @@ interface DateFieldProps {
  */
 export function DateField({
   value, onChange, label, placeholder, min, max, clearable = true, shortcuts,
-  variant = 'field', icon = 'calendar',
+  variant = 'field', icon = 'calendar', withTime = false,
 }: DateFieldProps) {
   const chip = variant === 'chip';
   const { t, locale } = useT();
   const dateFormat = useStore((s) => s.prefs.dateFormat);
+  const hour12 = useStore((s) => s.prefs.hour12);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -135,6 +140,7 @@ export function DateField({
         min={min}
         max={max}
         shortcuts={shortcuts}
+        withTime={withTime}
         onPick={(iso) => { onChange(iso); close(); }}
         /* Leaving from inside the panel hands the focus back to the field it
            opened from, rather than to the page once the panel is gone. */
@@ -169,7 +175,9 @@ export function DateField({
               wants: "17 sept. 2026" is a date you have to work out is
               tomorrow. Everything further off is written out in the order the
               settings ask for. */}
-          {selected ? formatDayOrName(selected, locale, dateFormat) : (placeholder ?? label)}
+          {selected
+            ? dayAndTime(withTime ? value : value.slice(0, 10), locale, dateFormat, hour12)
+            : (placeholder ?? label)}
         </span>
         {!chip && <Icon name="caret" size="sm" />}
       </button>

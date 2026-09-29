@@ -15,7 +15,7 @@ import { useConfirm } from './overlays/Confirm';
 import { withEstimate, effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { EstimateField } from './EstimateField';
 import { DatePicker, taskShortcuts, type RecurrenceReading } from './DatePicker';
-import { formatDayOrName, toApiDate } from '@/domain/dates';
+import { formatDayOrName, formatTime, toApiDate } from '@/domain/dates';
 import { dueForDate } from '@/domain/recurrence';
 import { weekLabel } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
@@ -168,6 +168,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   const toast = useStore((s) => s.toast);
   const demo = useStore((s) => s.demo);
   const dateFormat = useStore((s) => s.prefs.dateFormat);
+  const hour12 = useStore((s) => s.prefs.hour12);
   const [menu, setMenu] = useState<'none' | 'schedule' | 'more' | 'estimate' | 'move'>('none');
   /** What has been typed to narrow the destinations, and where the keyboard is. */
   const [dest, setDest] = useState('');
@@ -394,7 +395,8 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
     void apply([updateItem(item.id, update)], patch(update)).then(() => {
       toast(
         t('task.movedTo', {
-          destination: formatDayOrName(new Date(`${iso.slice(0, 10)}T00:00:00`), locale, dateFormat),
+          destination: formatDayOrName(new Date(`${iso.slice(0, 10)}T00:00:00`), locale, dateFormat)
+            + (iso.includes('T') ? ` ${formatTime(new Date(iso), locale, hour12)}` : ''),
         }),
         () => { void apply([updateItem(item.id, before)], patch(before)); },
       );
@@ -493,6 +495,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
             <DatePicker
               value={item.due?.date.slice(0, 10) ?? ''}
               label={t('task.schedule')}
+              withTime
               onPick={commitDate}
               onRecurrence={commitRecurrence}
               onEscape={() => setMenu('none')}
