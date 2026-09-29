@@ -839,17 +839,23 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
               {titleDirty && (
                 <div className="titleactions">
-                  {/* Pressed before the field can lose the caret, or the blur
-                      would land on the field and the click on nothing. */}
+                  {/* The action runs on `click`, which is what a mouse press and
+                      Enter or Space on a focused button both send (#145). It
+                      used to run on `mousedown`, which the keyboard never
+                      sends, so the buttons did nothing for anyone tabbing to
+                      them. The mouse-down is only kept to stop the field
+                      losing its caret before the click lands. */}
                   <button
                     className="btn sm"
-                    onMouseDown={(e) => { e.preventDefault(); cancelTitle(); }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={cancelTitle}
                   >
                     {t('common.cancel')}
                   </button>
                   <button
                     className="btn sm primary"
-                    onMouseDown={(e) => { e.preventDefault(); commitTitle(); }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={commitTitle}
                   >
                     {t('common.save')}
                   </button>

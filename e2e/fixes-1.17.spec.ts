@@ -70,3 +70,37 @@ test('#142 Cmd+Enter pressed twice in the same moment creates one task', async (
   await go(page, '#/inbox');
   await expect(page.locator('.screen.active [data-task-id]').filter({ hasText: 'Renew the passport' })).toHaveCount(1);
 });
+
+test('#145 the title Save and Cancel buttons answer Enter and Space', async ({ demo: page }) => {
+  const first = await page.locator('.screen.active [data-task-id] .ttitle').first().innerText();
+  await row(page, first).click();
+  const field = page.locator('.detail-content .titlefield');
+  await expect(field).toBeVisible();
+
+  // Cancel, with Space: the title comes back as it was.
+  await field.click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' edited');
+  const cancel = page.locator('.titleactions').getByRole('button', { name: 'Cancel' });
+  await cancel.focus();
+  await page.keyboard.press('Space');
+  await expect(field).toHaveValue(first);
+  await expect(page.locator('.titleactions')).toHaveCount(0);
+
+  // Save, with Enter: the new title is kept, once.
+  await field.click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' edited');
+  const save = page.locator('.titleactions').getByRole('button', { name: 'Save' });
+  await save.focus();
+  await page.keyboard.press('Enter');
+  await expect(field).toHaveValue(`${first} edited`);
+  await expect(page.locator('.titleactions')).toHaveCount(0);
+
+  // And the mouse still works.
+  await field.click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' again');
+  await page.locator('.titleactions').getByRole('button', { name: 'Save' }).click();
+  await expect(field).toHaveValue(`${first} edited again`);
+});
