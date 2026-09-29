@@ -1,4 +1,5 @@
 import { readNaturalDate } from './nlp';
+import type { DateFormat } from './dates';
 import { findLinks } from './markdown';
 import { readRecurrence, type RecurrenceLang } from './recurrence';
 import { parseDurationInput } from './estimates';
@@ -103,6 +104,7 @@ function readName<T>(text: string, find: (name: string) => T | undefined): { fou
 
 export function parseShorthand(
   raw: string, snapshot: Snapshot, naturalDates: boolean, refused: TextRange[] = [],
+  dateFormat: DateFormat = 'dmy',
 ): Shorthand {
   const ranges: Highlight[] = [];
   const claim = (start: number, length: number, kind: HighlightKind, tone?: string, keep?: boolean) =>
@@ -256,7 +258,7 @@ export function parseShorthand(
     let text = mask(raw, [...ranges, ...refused, ...linkRanges]);
     let last: { at: number; length: number; date: string } | null = null;
     for (let guard = 0; guard < 8; guard += 1) {
-      const reading = readNaturalDate(text);
+      const reading = readNaturalDate(text, new Date(), { dateFormat });
       if (!reading) break;
       last = { at: reading.index, length: reading.matched.length, date: reading.date };
       text = blank(text, reading.index, reading.matched.length);
@@ -297,11 +299,11 @@ export function parseShorthand(
  * left alone.
  */
 export function savedRefusals(
-  raw: string, snapshot: Snapshot, naturalDates: boolean,
+  raw: string, snapshot: Snapshot, naturalDates: boolean, dateFormat: DateFormat = 'dmy',
 ): TextRange[] {
   const refused: TextRange[] = [];
   for (let guard = 0; guard < 16; guard += 1) {
-    const found = parseShorthand(raw, snapshot, naturalDates, refused).ranges
+    const found = parseShorthand(raw, snapshot, naturalDates, refused, dateFormat).ranges
       .filter((range) => !range.keep);
     if (found.length === 0) break;
     refused.push(...found.map(({ start, end }) => ({ start, end })));

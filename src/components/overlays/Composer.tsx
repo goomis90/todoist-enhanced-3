@@ -45,6 +45,7 @@ export function Composer({
   const snapshot = useStore((s) => s.snapshot);
   const createTask = useStore((s) => s.createTask);
   const naturalDates = useStore((s) => s.prefs.naturalDates);
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -100,7 +101,7 @@ export function Composer({
     .sort(byLabelOrder);
   const filteredTags = tags.filter((label) => matchesSearch(label.name, tagQuery));
 
-  const parsed = parseShorthand(name, snapshot, naturalDates, refusals);
+  const parsed = parseShorthand(name, snapshot, naturalDates, refusals, dateFormat);
 
   /*
    * The task's tags: the ones picked by hand, and the ones the name says right

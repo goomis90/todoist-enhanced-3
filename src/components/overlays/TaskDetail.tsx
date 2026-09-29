@@ -289,6 +289,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const setRecurrence = useStore((s) => s.setRecurrence);
   const skipOccurrence = useStore((s) => s.skipOccurrence);
   const naturalDates = useStore((s) => s.prefs.naturalDates);
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
   const toast = useStore((s) => s.toast);
   const demo = useStore((s) => s.demo);
   const confirm = useConfirm();
@@ -456,7 +457,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
     setSubtaskDraft('');
     /* The saved title is a name, not something being typed: nothing in it is
        read until it is edited (#117). */
-    setRefusals(savedRefusals(item.content, snapshot, naturalDates));
+    setRefusals(savedRefusals(item.content, snapshot, naturalDates, dateFormat));
     setMenuOpen(false);
     setTagPickerOpen(false);
   }, [item?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -552,17 +553,17 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
   const cancelTitle = () => {
     setTitle(item.content);
-    setRefusals(savedRefusals(item.content, snapshot, naturalDates));
+    setRefusals(savedRefusals(item.content, snapshot, naturalDates, dateFormat));
     releaseTitle();
   };
 
   const commitTitle = () => {
-    const read = parseShorthand(title, snapshot, naturalDates, refusals);
+    const read = parseShorthand(title, snapshot, naturalDates, refusals, dateFormat);
     const next = read.content.trim();
     if (!next) {
       // Nothing left to call it by: the edit is dropped rather than the name.
       setTitle(item.content);
-      setRefusals(savedRefusals(item.content, snapshot, naturalDates));
+      setRefusals(savedRefusals(item.content, snapshot, naturalDates, dateFormat));
       return;
     }
 
@@ -614,7 +615,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
     /* Saved, the title is a name again: what is left of it is not read a
        second time. */
-    setRefusals(savedRefusals(next, snapshot, naturalDates));
+    setRefusals(savedRefusals(next, snapshot, naturalDates, dateFormat));
     setTitle(next);
     releaseTitle();
   };
