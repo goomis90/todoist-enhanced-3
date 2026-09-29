@@ -851,8 +851,8 @@
 .repeatinput:has(input[aria-invalid="true"]){border-color:var(--p1)}
 /* The refusal says what to type instead, because "not understood" on its own
    leaves the reader guessing at a grammar. */
-.repeatrefused{color:var(--p1);font-size:var(--fs-11);line-height:1.35}
-.repeathint{color:var(--muted);font-size:var(--fs-11);line-height:1.35}
+.repeatrefused{color:var(--p1);font-size:var(--fs-12);line-height:1.35}
+.repeathint{color:var(--muted);font-size:var(--fs-12);line-height:1.35}
 
 /* The repeat standing in the composer's date slot. Shaped like the picker it
    replaces, so the row does not change height when a rule is read. */
@@ -891,7 +891,7 @@
 .boardnav{display:flex;justify-content:flex-end;margin-top:var(--s5)}
 .boardnav + .board{margin-top:var(--s2)}
 /* A column's load sits under its heading in the same quiet type as the count. */
-.cload{margin:-4px 0 10px;color:var(--faint);font-size:var(--fs-11);font-variant-numeric:tabular-nums}
+.cload{margin:-4px 0 10px;color:var(--faint);font-size:var(--fs-12);font-variant-numeric:tabular-nums}
 .cload.over{color:var(--accent-dark);font-weight:600}
 
 /* A parent and its subtasks are one card, not several. */
@@ -1185,7 +1185,7 @@
 /* One column that can shrink below its content: a long "project / section"
    is cut with an ellipsis rather than widening the form around it (#102). */
 .fselect{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
-.fselect-label{font-size:var(--fs-11);font-weight:600;color:var(--faint)}
+.fselect-label{font-size:var(--fs-12);font-weight:600;color:var(--faint)}
 .fselect-face{
   width:100%;min-width:0;min-height:34px;padding:0 10px;display:flex;align-items:center;gap:8px;
   border:1px solid var(--border);border-radius:var(--r-sm);
