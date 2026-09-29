@@ -27,7 +27,7 @@ beforeEach(() => {
   const snapshot = emptySnapshot();
   snapshot.items.a = item({ id: 'a', content: 'Before' });
   snapshot.items.b = item({ id: 'b', content: 'Before too' });
-  useStore.setState({ demo: false, snapshot, toasts: [], pendingCount: 0, syncState: 'idle' });
+  useStore.setState({ demo: false, snapshot, toasts: [], undoStack: [], pendingCount: 0, syncState: 'idle' });
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -110,5 +110,36 @@ describe('toasts (#136)', () => {
     const [plain, refused] = useStore.getState().toasts;
     expect(plain.tone).toBeUndefined();
     expect(refused.tone).toBe('error');
+  });
+
+  it('stay 3 s when plain, 8 s with an Undo, 6 s as an error (#140)', () => {
+    const { toast } = useStore.getState();
+    toast('Moved to Tomorrow');
+    toast('Task deleted', () => {});
+    toast('Todoist refused this', undefined, { tone: 'error' });
+    const messages = () => useStore.getState().toasts.map((entry) => entry.message);
+
+    vi.advanceTimersByTime(2_999);
+    expect(messages()).toHaveLength(3);
+    vi.advanceTimersByTime(1);
+    expect(messages()).toEqual(['Task deleted', 'Todoist refused this']);
+    vi.advanceTimersByTime(3_000);
+    expect(messages()).toEqual(['Task deleted']);
+    vi.advanceTimersByTime(2_000);
+    expect(messages()).toEqual([]);
+  });
+
+  it('putting one away by hand leaves its undo reachable, and dismissing twice is harmless (#140)', () => {
+    const undone = vi.fn();
+    useStore.getState().toast('Task deleted', undone);
+    const [shown] = useStore.getState().toasts;
+
+    useStore.getState().dismissToast(shown.id);
+    useStore.getState().dismissToast(shown.id);
+    expect(useStore.getState().toasts).toEqual([]);
+    expect(useStore.getState().undoStack.map((entry) => entry.label)).toEqual(['Task deleted']);
+
+    vi.advanceTimersByTime(10_000);
+    expect(useStore.getState().toasts).toEqual([]);
   });
 });

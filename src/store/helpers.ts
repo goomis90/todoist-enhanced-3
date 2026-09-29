@@ -181,6 +181,17 @@ export function partitionQueue(
 export const UNDO_TOAST_MS = 8000;
 
 /**
+ * How long a plain confirmation stays up. Three seconds is long enough to read
+ * a short sentence, and every toast can now be put away sooner (#140).
+ * `UNDO_TOAST_MS` above is not shortened with it: it is also how long a
+ * deletion waits before it is sent.
+ */
+export const TOAST_MS = 3000;
+
+/** An error is a long sentence about something that did not happen: it stays longer. */
+export const ERROR_TOAST_MS = 6000;
+
+/**
  * Deletions that have not been sent yet.
  *
  * Todoist has no undelete, so a deletion is held back for as long as its

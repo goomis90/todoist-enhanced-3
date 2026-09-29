@@ -284,6 +284,16 @@ export function App() {
                     {t('common.undo')}
                   </button>
                 )}
+                {/* Only puts the toast away. What Undo would do stays reachable
+                    with ⌘Z, and a deletion still goes out when its own wait is
+                    over: closing it neither sends it early nor cancels it. */}
+                <button
+                  className="toastclose"
+                  aria-label={t('common.close')}
+                  onClick={() => dismissToast(toast.id)}
+                >
+                  <Icon name="close" size="sm" />
+                </button>
               </div>
             ))}
           </div>

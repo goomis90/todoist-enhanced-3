@@ -1,6 +1,6 @@
 /** What only the screen holds: toasts, the undo stack, drag state and the selection. */
 import { newUuid } from '@/api/commands';
-import { UNDO_TOAST_MS } from './helpers';
+import { ERROR_TOAST_MS, TOAST_MS, UNDO_TOAST_MS } from './helpers';
 import type { Toast } from './types';
 import type { Slice, UiSlice } from './types';
 
@@ -34,7 +34,8 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
       tone: options?.tone,
     };
     set({ toasts: [...get().toasts, entry] });
-    setTimeout(() => get().dismissToast(entry.id), undo ? UNDO_TOAST_MS : 4000);
+    const stays = options?.tone === 'error' ? ERROR_TOAST_MS : undo ? UNDO_TOAST_MS : TOAST_MS;
+    setTimeout(() => get().dismissToast(entry.id), stays);
   },
   dismissToast(id) {
     set({ toasts: get().toasts.filter((t) => t.id !== id) });

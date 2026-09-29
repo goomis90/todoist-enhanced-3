@@ -158,6 +158,12 @@
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 .toast button{color:var(--surface);font-weight:600;font-size:var(--fs-12);text-decoration:underline}
+/* The way out of any toast (#140): in the toast's own colours, at its right end
+   on a phone, where the toast is as wide as the screen. */
+.toast .toastclose{flex:0 0 auto;width:24px;height:24px;padding:0;margin-left:auto;margin-right:-4px;
+  display:grid;place-items:center;border-radius:var(--r-sm);color:var(--surface);opacity:.7;text-decoration:none}
+.toast .toastclose:hover,.toast .toastclose:focus-visible{opacity:1;
+  background:color-mix(in srgb,var(--surface) 14%,transparent)}
 /* A phone puts the navigation bar where the toast was going to sit. */
 @media (max-width:720px){
   .toasts{bottom:max(calc(76px + env(safe-area-inset-bottom)), calc(var(--bulkbar-room, 0px) + 10px));

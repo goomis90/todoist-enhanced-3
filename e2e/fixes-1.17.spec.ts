@@ -322,3 +322,29 @@ test('#136 a toast is announced: it lands in a live region already in the page',
   await expect(status).toContainText(first);
   await expect(status.getByRole('button', { name: new RegExp(`^Undo — .*${first}`) })).toBeVisible();
 });
+
+test('#140 every toast has a close button; closing one keeps its undo, and plain ones go by themselves sooner', async ({ demo: page }) => {
+  const first = await page.locator('.screen.active [data-task-id] .ttitle').first().innerText();
+  await row(page, first).focus();
+  await page.keyboard.press('ControlOrMeta+Backspace');
+  await page.locator('.confirmbox').getByRole('button', { name: 'Delete' }).click();
+
+  // Undo, then the close button: both reachable from the keyboard.
+  const toast = page.locator('.toasts .toast');
+  await expect(toast).toHaveCount(1);
+  const undo = toast.getByRole('button', { name: /^Undo/ });
+  const close = toast.getByRole('button', { name: 'Close' });
+  await undo.focus();
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+
+  // Closing only puts the toast away: the task stays gone...
+  await page.keyboard.press('Enter');
+  await expect(toast).toHaveCount(0);
+  await expect(page.locator('.screen.active [data-task-id]').filter({ hasText: first })).toHaveCount(0);
+
+  // ...and ⌘Z inside the window brings the same task back.
+  await page.locator('body').click({ position: { x: 5, y: 5 } });
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.locator('.screen.active [data-task-id]').filter({ hasText: first })).toHaveCount(1);
+});
