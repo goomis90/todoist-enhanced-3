@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import english from '../../CHANGELOG.md?raw';
 import french from '../../CHANGELOG.fr.md?raw';
 import {
-  compareVersions, hasNews, localisedReleases, parseChangelog, unseenReleases,
+  compareVersions, hasChanges, localisedReleases, parseChangelog, unseenReleases,
 } from './changelog';
 import { VERSION } from '@/app-info';
 
@@ -56,9 +56,23 @@ describe('the changelog (#115)', () => {
     expect(unseenReleases(releases, '1.2.0', null).map((r) => r.version)).toEqual(['1.2.0']);
   });
 
-  it('is only worth a dialog when something is new', () => {
-    expect(hasNews(unseenReleases(releases, '1.1.0', '1.0.0'))).toBe(false);
-    expect(hasNews(unseenReleases(releases, '1.2.0', '1.1.0'))).toBe(true);
+  it('is worth a dialog for every release that says something, fixes only included (#148)', () => {
+    // 1.1.0 is a release made only of a fix: it used to be marked read in silence.
+    expect(hasChanges(unseenReleases(releases, '1.1.0', '1.0.0'))).toBe(true);
+    expect(hasChanges(unseenReleases(releases, '1.2.0', '1.1.0'))).toBe(true);
+    expect(hasChanges([])).toBe(false);
+    expect(hasChanges([{ version: '1.3.0', intro: 'Nothing else.', changes: [] }])).toBe(false);
+  });
+
+  it('lists each release from the most visible change to the least (#148)', () => {
+    const shuffled = parseChangelog(
+      '## 1.0.0\n\n🐛 **Fix A.** One.\n\n🎨 **Look.** Two.\n\n🆕 **Feature.** Three.\n\n🐛 **Fix B.** Four.\n\n🆕 **Second feature.** Five.\n',
+    );
+    expect(shuffled[0].changes.map((c) => c.kind)).toEqual(['new', 'new', 'design', 'fix', 'fix']);
+    // Within a kind, the author's order stands.
+    expect(shuffled[0].changes.map((c) => c.text.split('.')[0])).toEqual([
+      '**Feature', '**Second feature', '**Look', '**Fix A', '**Fix B',
+    ]);
   });
 
   it('falls back to English for a release that is not translated', () => {
@@ -78,9 +92,9 @@ describe('the changelog (#115)', () => {
     }
   });
 
-  it('the running version has something new, so the window opens after an update', () => {
-    const running = unseenReleases(parseChangelog(english), VERSION, '1.16.0');
+  it('the running version opens the window after an update (#148)', () => {
+    const running = unseenReleases(parseChangelog(english), VERSION, '1.17.0');
     expect(running.map((r) => r.version)).toEqual([VERSION]);
-    expect(hasNews(running)).toBe(true);
+    expect(hasChanges(running)).toBe(true);
   });
 });
