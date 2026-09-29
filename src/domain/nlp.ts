@@ -68,7 +68,7 @@ const addDays = (from: Date, days: number): Date => {
   return out;
 };
 
-interface TimeReading {
+export interface TimeReading {
   hours: number;
   minutes: number;
   /** Where the time sits in the text it was read from. */
@@ -77,7 +77,7 @@ interface TimeReading {
 }
 
 /** A time of day appearing anywhere in the phrase: "at 14:00", "2pm", "à 9h30". */
-function readTime(text: string): TimeReading | null {
+export function readTime(text: string): TimeReading | null {
   const span = (match: RegExpMatchArray) => {
     /* The pattern may have eaten the space in front of the time, and that
        space belongs to the sentence rather than to the reading. */

@@ -348,3 +348,23 @@ test('#140 every toast has a close button; closing one keeps its undo, and plain
   await page.keyboard.press('ControlOrMeta+z');
   await expect(page.locator('.screen.active [data-task-id]').filter({ hasText: first })).toHaveCount(1);
 });
+
+test('#130 follow-up: a task typed with "every day at 3pm" shows Today 15:00', async ({ demo: page }) => {
+  await page.keyboard.press('q');
+  await page.locator('.composer-name').fill('Water the plants every day at 3pm');
+  await page.keyboard.press('ControlOrMeta+Enter');
+  await expect(page.locator('.composerbox')).toHaveCount(0);
+  await go(page, '#/week');
+  await expect(row(page, 'Water the plants')).toContainText('15:00');
+});
+
+test('#135 follow-up: @@link0@@ typed in the composer stays text, with no tag', async ({ demo: page }) => {
+  await page.keyboard.press('q');
+  await page.locator('.composer-name').fill('Fill @@link0@@ in');
+  await expect(page.locator('.composer-chips .tagchip')).toHaveCount(0);
+  await expect(page.locator('.namefield .nmark.label')).toHaveCount(0);
+  await page.keyboard.press('ControlOrMeta+Enter');
+  await expect(page.locator('.composerbox')).toHaveCount(0);
+  await go(page, '#/inbox');
+  await expect(row(page, 'Fill @@link0@@ in')).toBeVisible();
+});

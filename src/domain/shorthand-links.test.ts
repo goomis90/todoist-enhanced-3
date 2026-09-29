@@ -68,3 +68,18 @@ describe('a link is content, never an instruction (#144)', () => {
     expect(parsed.priority).toBeNull();
   });
 });
+
+describe('a tag starts a word (#135 follow-up)', () => {
+  it('does not read a tag inside @@link0@@ or an email address', () => {
+    for (const text of ['@@link0@@', 'Write to me@example.com', 'a@b']) {
+      const parsed = parseShorthand(text, snapshot, true);
+      expect(parsed.labels).toEqual([]);
+      expect(parsed.content).toBe(text);
+    }
+  });
+
+  it('still reads a tag after a space or at the start', () => {
+    expect(parseShorthand('@home water', snapshot, true).labels).toEqual(['home']);
+    expect(parseShorthand('water @home @later', snapshot, true).labels).toEqual(['home', 'later']);
+  });
+});

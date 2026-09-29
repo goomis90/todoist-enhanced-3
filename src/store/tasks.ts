@@ -5,6 +5,7 @@ import { fetchComments, fetchTask, itemFromCompleted } from '@/api/tasks';
 import { isUncompletable, toTodoistPriority, type Item, type Note, type Snapshot } from '@/domain/types';
 import { withEstimate } from '@/domain/estimates';
 import { toApiDate } from '@/domain/dates';
+import { readTime } from '@/domain/nlp';
 import { translate } from '@/i18n';
 import { byChildOrder, keyBetween, keysInOrder } from '@/domain/orderKey';
 import {
@@ -24,7 +25,16 @@ import type { Slice, TasksSlice } from './types';
 export const provisionalDue = (due: Item['due'] | undefined): Item['due'] => {
   if (!due) return null;
   if (due.date) return due;
-  return { ...due, date: toApiDate(new Date()), timezone: due.timezone ?? null };
+  /* The rule can carry a time ("every day at 15h"), and the row should show it
+     as it will be once Todoist answers: "Today 15:00", not a date with none. */
+  const time = due.is_recurring ? readTime(due.string ?? '') : null;
+  const today = toApiDate(new Date());
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return {
+    ...due,
+    date: time ? `${today}T${pad(time.hours)}:${pad(time.minutes)}:00` : today,
+    timezone: due.timezone ?? null,
+  };
 };
 
 /**

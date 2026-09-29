@@ -295,15 +295,30 @@ export function flushPersist() {
  */
 export function explainFailure(error: string, locale: Locale): string {
   const limit = /limit|maximum|quota|exceed|reached|too many/i.test(error);
-  const said = error.trim() || (locale === 'fr' ? 'Todoist a refusé' : 'Todoist refused it');
-  if (!limit) {
-    return locale === 'fr'
-      ? `Todoist a refusé : ${said}. La modification n’a pas été enregistrée.`
-      : `Todoist refused this: ${said}. The change was not saved.`;
+  const said = error.trim();
+  if (locale === 'fr') {
+    /* Todoist's sentence is English, and a French message with an English
+       sentence in the middle reads as a bug. A limit is named in French from
+       what it counts; anything else keeps Todoist's words, quoted, so it is
+       clear whose they are. */
+    if (limit) {
+      const what = /project/i.test(said) ? ' de projets'
+        : /section/i.test(said) ? ' de sections'
+          : /label|tag/i.test(said) ? " d’étiquettes"
+            : /comment|note/i.test(said) ? ' de commentaires'
+              : /collaborator|member/i.test(said) ? ' de collaborateurs'
+                : /task|item/i.test(said) ? ' de tâches'
+                  : '';
+      return `Limite${what} atteinte : c’est une limite de votre compte ou de votre espace de travail Todoist, pas de cette application. La modification n’a pas été enregistrée.`;
+    }
+    return said
+      ? `Todoist a refusé cette modification (« ${said} »). Elle n’a pas été enregistrée.`
+      : 'Todoist a refusé cette modification. Elle n’a pas été enregistrée.';
   }
-  return locale === 'fr'
-    ? `${said} — c’est une limite de votre compte ou de votre espace de travail Todoist, pas de cette application. La modification n’a pas été enregistrée.`
-    : `${said} — this is a limit on your Todoist account or workspace, not on this app. The change was not saved.`;
+  const english = said || 'Todoist refused it';
+  return limit
+    ? `${english} — this is a limit on your Todoist account or workspace, not on this app. The change was not saved.`
+    : `Todoist refused this: ${english}. The change was not saved.`;
 }
 
 /**

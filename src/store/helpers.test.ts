@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advanceDemoRecurrence, branchOf, deletionRoots, partitionQueue, restoreOrder } from './helpers';
+import { advanceDemoRecurrence, branchOf, deletionRoots, explainFailure, partitionQueue, restoreOrder } from './helpers';
 import type { QueuedCommand } from '@/db/idb';
 import { emptySnapshot, type Item } from '@/domain/types';
 import { due, item } from '@/test/items';
@@ -159,5 +159,24 @@ describe('partitionQueue (#129)', () => {
   it('keeps the order it was given', () => {
     const queue = [queued('1', 'u1'), queued('2', 'u1'), queued('3', 'u1')];
     expect(partitionQueue(queue, 'u1', null).mine.map((cmd) => cmd.uuid)).toEqual(['1', '2', '3']);
+  });
+});
+
+describe('explainFailure (#134)', () => {
+  it('names a limit in French without an English sentence in the middle', () => {
+    const message = explainFailure('Maximum number of projects reached', 'fr');
+    expect(message).toMatch(/Limite de projets atteinte/);
+    expect(message).not.toMatch(/Maximum|reached/);
+  });
+
+  it('quotes Todoist\'s words when they are not a limit, in French', () => {
+    expect(explainFailure('Invalid argument value', 'fr')).toContain('« Invalid argument value »');
+  });
+
+  it('keeps English as it was', () => {
+    expect(explainFailure('Maximum number of projects reached', 'en'))
+      .toBe('Maximum number of projects reached — this is a limit on your Todoist account or workspace, not on this app. The change was not saved.');
+    expect(explainFailure('Invalid argument value', 'en'))
+      .toBe('Todoist refused this: Invalid argument value. The change was not saved.');
   });
 });

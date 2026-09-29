@@ -194,7 +194,10 @@ export function parseShorthand(
     claim(flagClaim.start, flagClaim.length, 'priority', `var(--p${priority})`);
   }
 
-  for (const label of raw.matchAll(/@([\p{L}\p{N}_-]+)/gu)) {
+  /* A tag starts a word: `@work` after a space or at the start. Glued to
+     something, it is not one: `@@link0@@` is text, and so is the `@example` of
+     an address like `me@example.com`, which used to make a tag out of it. */
+  for (const label of raw.matchAll(/(?<=^|\s)@([\p{L}\p{N}_-]+)/gu)) {
     if (isOff(label.index!, label[0].length)) continue;
     labels.push(label[1]);
     const tag = Object.values(snapshot.labels).find(
