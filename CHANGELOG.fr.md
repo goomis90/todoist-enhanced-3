@@ -8,6 +8,54 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 1.17.1
+
+Insights compte de nouveau les bons jours, et la fenêtre Nouveautés s'ouvre maintenant après chaque mise à jour, avec les changements les plus visibles en premier.
+
+🎨 **Les Nouveautés s'ouvrent après chaque mise à jour.** Elles ne s'ouvraient que lorsqu'une version apportait du nouveau. Maintenant chaque version les ouvre une fois, et ses lignes sont classées du plus visible au moins visible : les nouveautés, puis les changements d'apparence, puis les corrections.
+
+🐛 **Insights affiche les bons jours.** La vue Jour n'affichait rien, le dernier jour de chaque période était oublié, et un jour manquait entre les parties d'un trimestre ou d'une année. Une tâche terminée dans les premières heures d'une période, en France avant 2 h du matin, était aussi manquée. Chaque jour de la période choisie est maintenant compté.
+
+## 1.17.0
+
+Une série de corrections : l'heure tapée avec une date est conservée, plus rien n'est créé en double, les liens restent des liens, et l'app supporte mieux les mauvaises connexions et les navigateurs qui bloquent le stockage.
+
+🐛 **Une heure tapée avec une date est conservée.** Taper « demain à 14h30 » dans la date d'une tâche enregistre maintenant 14:30, dans la fenêtre de nouvelle tâche, le panneau de tâche, le menu date d'une ligne et la barre pour plusieurs tâches. Une échéance reste un jour, et le dit quand vous y tapez une heure.
+
+🐛 **Ajouter une tâche deux fois en double-cliquant.** La fenêtre de nouvelle tâche n'accepte plus qu'un enregistrement à la fois, au bouton comme au clavier. Deux tâches au même nom créées volontairement restent deux tâches.
+
+🐛 **Un lien ne change plus votre tâche.** `https://example.com/p1` rendait la tâche P1, et un lien finissant par `/daily` la rendait récurrente. Les liens sont lus comme des liens, et ce que vous tapez à côté fonctionne toujours.
+
+🐛 **Les mois sont bien lus.** « 14 juillet » est en juillet (c'était juin), « 1er juillet » et « July 1st » sont compris, et des mots comme « 2 maisons » ou « 2 decks » ne sont plus pris pour des dates. Une date comme 12/03 suit Réglages, Format de date.
+
+🐛 **Enregistrer et Annuler sous le titre d'une tâche fonctionnent au clavier.** Entrée et Espace font ce que fait un clic.
+
+🐛 **À venir change de jour à minuit.** Laissée ouverte la nuit, la page gagne seule le nouveau dernier jour, et une tâche qui vient d'entrer dans la période ne reste plus cachée jusqu'à ce que vous quittiez la page.
+
+🐛 **Une fenêtre au-dessus d'une autre.** Échap ne ferme plus que celle de devant, Tab fait le tour des deux boutons d'une confirmation, et le panneau de tâche derrière ne répond plus aux touches.
+
+🐛 **Supprimer une tâche avec ses sous-tâches.** Sélectionner un parent et ses sous-tâches supprime la branche une seule fois, sans faux « Todoist a refusé ceci », et une annulation tardive rend chaque tâche une seule fois.
+
+🐛 **Un accent personnalisé suit le mode sombre.** Quand votre appareil passe en sombre app ouverte, les couleurs de l'accent suivent au lieu d'attendre un rechargement.
+
+🐛 **Le texte « @@link0@@ » s'affiche tel quel.** Il ne devient plus « undefined » dans un titre ou une description, et un @ collé à un mot, comme dans une adresse e-mail, n'est plus pris pour un tag.
+
+🐛 **L'app s'ouvre même quand le navigateur bloque le stockage du site.** Elle restait sur « Chargement… ». Si quelque chose plante, un court message et un bouton Recharger remplacent la page blanche.
+
+🐛 **Les modifications hors ligne vont au bon compte.** Les modifications faites hors ligne avec un compte Todoist ne sont plus envoyées à un autre compte qui se connecte ensuite. On vous dit combien ont été laissées de côté.
+
+🐛 **Une modification faite juste avant de fermer est conservée hors ligne.** Changer d'app ou fermer l'onglet juste après une modification ne la perd plus de la copie gardée sur votre appareil.
+
+🐛 **Une connexion lente ou bloquée se termine proprement.** Un téléchargement qui s'arrête à moitié compte comme un délai dépassé, et un long « réessayer après » de Todoist ne fige plus la synchronisation.
+
+🐛 **La démo répète bien les tâches.** Cocher une tâche quotidienne la décale d'un jour en gardant son heure, et « tous les lundis » passe au lundi suivant. Une tâche tapée avec « tous les jours à 15h » affiche Aujourd'hui 15:00.
+
+🆕 **Les notifications ont un bouton de fermeture et disparaissent plus vite.** Les confirmations restent 3 secondes, les erreurs 6, et la durée d'annulation reste 8. Fermer une notification garde l'annulation disponible avec le raccourci d'annulation.
+
+🆕 **Les lecteurs d'écran annoncent les notifications.** Les confirmations sont lues poliment, les refus de Todoist tout de suite, et le bouton Annuler dit ce qu'il annule.
+
+🎨 **Les listes de tâches se lisent plus facilement.** Les tags, les compteurs de groupe, ceux des colonnes de tableau et les petites étiquettes du panneau de tâche passent de 11 à 12 pixels.
+
 ## 1.16.0
 
 Après chaque mise à jour, une courte fenêtre vous dit ce qui a changé, la fenêtre de nouvelle tâche se lit plus facilement, et choisir une date se fait de la même façon partout.

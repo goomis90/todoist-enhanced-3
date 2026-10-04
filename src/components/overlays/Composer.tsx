@@ -45,6 +45,7 @@ export function Composer({
   const snapshot = useStore((s) => s.snapshot);
   const createTask = useStore((s) => s.createTask);
   const naturalDates = useStore((s) => s.prefs.naturalDates);
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -100,7 +101,7 @@ export function Composer({
     .sort(byLabelOrder);
   const filteredTags = tags.filter((label) => matchesSearch(label.name, tagQuery));
 
-  const parsed = parseShorthand(name, snapshot, naturalDates, refusals);
+  const parsed = parseShorthand(name, snapshot, naturalDates, refusals, dateFormat);
 
   /*
    * The task's tags: the ones picked by hand, and the ones the name says right
@@ -199,10 +200,35 @@ export function Composer({
     if (readMinutes !== null) setMinutes(readMinutes);
   }, [readMinutes, refusals]);
 
+  /**
+   * One creation at a time (#142).
+   *
+   * The sheet stays open while the task is sent, so a second click, or Enter
+   * pressed twice, used to start a second creation before the first was done:
+   * two tasks with two ids, not one task drawn twice. The ref is what shuts the
+   * door, because two calls in the same moment both read the same render's
+   * state; the state only draws the wait. A task that failed to save leaves the
+   * sheet as it was, ready to be sent again, and two tasks with the same name
+   * typed on purpose are still two tasks: nothing here compares titles.
+   */
+  const submitting = useRef(false);
+  const [saving, setSaving] = useState(false);
+
   async function submit() {
+    if (submitting.current) return;
     const content = parsed.content;
     if (!content) return;
+    submitting.current = true;
+    setSaving(true);
+    try {
+      await create(content);
+    } finally {
+      submitting.current = false;
+      setSaving(false);
+    }
+  }
 
+  async function create(content: string) {
     const allLabels = [...allTags];
     if (minutes !== null) allLabels.push(estimateLabel(minutes));
 
@@ -303,7 +329,7 @@ export function Composer({
               <Icon name="close" size="sm" />
             </button>
           ) : (
-            <DateField variant="chip" value={date} onChange={setDate} label={t('composer.date')} />
+            <DateField variant="chip" withTime value={date} onChange={setDate} label={t('composer.date')} />
           )}
 
           <DateField
@@ -480,7 +506,12 @@ export function Composer({
             <kbd>⌘</kbd><kbd>↵</kbd> {t('composer.hintAdd')}
           </span>
           <button className="btn quiet" onClick={onClose}>{t('composer.cancel')}</button>
-          <button className="btn primary" disabled={!name.trim()} onClick={() => void submit()}>
+          <button
+            className="btn primary"
+            disabled={!name.trim() || saving}
+            aria-busy={saving}
+            onClick={() => void submit()}
+          >
             {t('composer.add')}
           </button>
         </div>

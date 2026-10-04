@@ -30,6 +30,9 @@ export interface Release {
 
 const MARKS: Array<[string, ChangeKind]> = [['🆕', 'new'], ['🎨', 'design'], ['🐛', 'fix']];
 
+/** The order a release reads in: from the most visible to the least. */
+const KIND_ORDER: Record<ChangeKind, number> = { new: 0, design: 1, fix: 2 };
+
 /** Reads every release in the file, newest first as the file has them. */
 export function parseChangelog(source: string): Release[] {
   const releases: Release[] = [];
@@ -52,6 +55,12 @@ export function parseChangelog(source: string): Release[] {
     // Anything before the first release is the file's own header.
     if (!current) continue;
     addParagraph(current, paragraph);
+  }
+  /* Each release reads by impact, whatever order it was written in: what is
+     new first, then what looks different, then what was fixed. A stable sort,
+     so within a kind the author's order stands (most visible first) (#148). */
+  for (const release of releases) {
+    release.changes.sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
   }
   return releases;
 }
@@ -99,9 +108,15 @@ export function unseenReleases(
       : compareVersions(release.version, seen) > 0));
 }
 
-/** Whether a set of releases is worth a dialog: at least one new thing (#115). */
-export const hasNews = (releases: Release[]): boolean =>
-  releases.some((release) => release.changes.some((change) => change.kind === 'new'));
+/**
+ * Whether a set of releases is worth a dialog: any release that says anything.
+ *
+ * Every release opens the window once after an update, not only those with a
+ * 🆕: a release made of fixes and redesigns used to be marked as read without
+ * anyone being told (#148).
+ */
+export const hasChanges = (releases: Release[]): boolean =>
+  releases.some((release) => release.changes.length > 0);
 
 /**
  * The releases in the reader's language.

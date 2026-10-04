@@ -89,12 +89,13 @@ export function TaskNameField({
 }: TaskNameFieldProps) {
   const { t } = useT();
   const createLabel = useStore((s) => s.createLabel);
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
   const inputRef = useRef<(HTMLInputElement & HTMLTextAreaElement) | null>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
   const [caret, setCaret] = useState(0);
   const [pick, setPick] = useState(0);
 
-  const { ranges } = parseShorthand(value, snapshot, naturalDates, refusals);
+  const { ranges } = parseShorthand(value, snapshot, naturalDates, refusals, dateFormat);
   const token = tokenAtCaret(value, caret);
 
   /**
@@ -109,7 +110,7 @@ export function TaskNameField({
    */
   const live = refusals.filter((refusal) => {
     const without = refusals.filter((other) => other !== refusal);
-    return parseShorthand(value, snapshot, naturalDates, without).ranges.some(
+    return parseShorthand(value, snapshot, naturalDates, without, dateFormat).ranges.some(
       (mark) => mark.start === refusal.start && mark.end === refusal.end,
     );
   });
