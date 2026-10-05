@@ -13,6 +13,24 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 1.18.0
+
+Paste a list to create several tasks, the date menu starts with shortcuts, subtasks show their progress, and moving everything late to today is instant.
+
+🆕 **Paste a list to create several tasks.** Paste lines of text, with or without bullets, into the new task window's name field and it asks "Create the 3 tasks?" before making one separate task per line. Each line is read as a title on its own, so `(25)`, a date or `#Project` in a line applies to that task. Cancelling keeps what you pasted.
+
+🆕 **Estimates on new subtasks.** End a subtask with its estimate in brackets, like `Draft outline (5)` or `Research (1h15)`, in the new task window or when adding a subtask to an open task, and the subtask is created with that estimate. The estimate is highlighted as you type, like in a task's name. Brackets that are not a duration, like `(maybe)`, stay in the title.
+
+🎨 **The date menu starts with shortcuts.** Today, Tomorrow, Next week, This week and Someday come first, then Skip to next occurrence (with the date it goes to, when that is certain) and Remove the date, and the calendar opens only when you choose Pick a date. Escape or the back link returns to the shortcuts without changing anything. The same menu is used in a row, the new task window, the task panel and the bar for several tasks.
+
+🎨 **A ticked box keeps its priority colour.** A completed task or subtask is filled with its priority's colour (grey for P4) instead of green.
+
+🎨 **Subtask progress fills in.** Next to "1/3", a small ring fills as subtasks are done, in the lists and in the task panel, and turns green when all of them are.
+
+🎨 **Move all to today is instant.** In My week, Behind schedule empties at once after you confirm, everything is sent in one go, and the message says how many tasks moved, with Undo.
+
+🐛 **A completed subtask is ticked in the task panel.** Its checkbox stayed empty while its title was struck through. Both now show it is done.
+
 ## 1.17.1
 
 Insights counts the right days again, and the What's new window now opens after every update, with the most visible changes first.

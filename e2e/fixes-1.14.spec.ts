@@ -110,13 +110,15 @@ test('after a priority change, T and V still reach the selection, and the panels
   const date = page.getByRole('menu', { name: 'Date' });
   await expect(date).toBeVisible();
   // The one date picker (#110), inside the panel itself: its field has the
-  // caret, ↓ walks the quick choices and then the month.
+  // caret, ↓ walks the quick choices, and "Pick a date" opens the month.
   await expect(date.getByRole('textbox')).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(date.locator('.datepicker-options .opt').first()).toBeFocused();
-  for (let at = 0; at < 8 && !(await date.locator('.dateday:focus').count()); at += 1) {
+  const pick = date.getByRole('button', { name: 'Pick a date' });
+  for (let at = 0; at < 12 && !(await pick.evaluate((el) => el === document.activeElement)); at += 1) {
     await page.keyboard.press('ArrowDown');
   }
+  await page.keyboard.press('Enter');
   await expect(date.locator('.dateday:focus')).toBeVisible();
   // One Escape closes the whole panel, field and all, not just the field.
   await page.keyboard.press('Escape');

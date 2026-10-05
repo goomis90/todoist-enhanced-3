@@ -753,7 +753,13 @@ ul{margin:0;padding:0;list-style:none}
 .check.p1{border-color:var(--p1);background:rgba(209,69,59,.07)}
 .check.p2{border-color:var(--p2);background:rgba(181,101,0,.07)}
 .check.p4{border-color:var(--check-quiet);background:transparent}
-.task.done .check,.tcard.done .check{color:#fff;border-color:var(--ok);background:var(--ok)}
+/* A ticked box keeps its priority's colour, filled in, rather than turning
+   green for everything: P4 is the quiet grey. */
+.task.done .check,.tcard.done .check,.detail-headline.done .check,.subtaskrow.done .check,.reviewrow.done .check{
+  color:#fff;border-color:var(--p4);background:var(--p4)}
+.task.done .check.p1,.tcard.done .check.p1,.detail-headline.done .check.p1,.subtaskrow.done .check.p1,.reviewrow.done .check.p1{border-color:var(--p1);background:var(--p1)}
+.task.done .check.p2,.tcard.done .check.p2,.detail-headline.done .check.p2,.subtaskrow.done .check.p2,.reviewrow.done .check.p2{border-color:var(--p2);background:var(--p2)}
+.task.done .check.p3,.tcard.done .check.p3,.detail-headline.done .check.p3,.subtaskrow.done .check.p3,.reviewrow.done .check.p3{border-color:var(--p3);background:var(--p3)}
 /* A "* " task: Todoist itself gives it no checkbox, since a click on one
    would have nothing to do. The slot stays, empty, so the row still lines
    up with every completable one around it. */

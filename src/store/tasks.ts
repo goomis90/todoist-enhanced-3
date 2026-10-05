@@ -1,5 +1,5 @@
 /** Tasks: creating, editing, ticking, recurring, deleting and restoring. */
-import { command, addItem, completeItem, deleteItem, newUuid, reorderItems, uncompleteItem, updateItem } from '@/api/commands';
+import { command, addItem, type Command, completeItem, deleteItem, newUuid, reorderItems, uncompleteItem, updateItem } from '@/api/commands';
 import * as idb from '@/db/idb';
 import { fetchComments, fetchTask, itemFromCompleted } from '@/api/tasks';
 import { isUncompletable, toTodoistPriority, type Item, type Note, type Snapshot } from '@/domain/types';
@@ -13,6 +13,104 @@ import {
   restoreOrder, schedulePersist, settleFromServer,
 } from './helpers';
 import type { Slice, TasksSlice } from './types';
+
+/** A subtask created with its parent: a title, and the labels it starts with. */
+interface NewSubtask { content: string; labels?: string[] }
+
+/**
+ * One task as the screen draws it and the commands that create it.
+ *
+ * Built from the snapshot it will land in, so a task planned after another in
+ * the same batch finds its siblings and takes its place after them.
+ */
+function planTask(
+  snapshot: Snapshot,
+  args: Record<string, unknown>,
+): { commands: Command[]; items: Record<string, Item> } {
+    const tempId = newUuid();
+    // The task appears at once under a temporary id; the sync response that
+    // follows carries the real one and replaces it.
+    const optimisticItem: Item = {
+      id: tempId,
+      user_id: snapshot.user?.id ?? '',
+      project_id: String(args.project_id ?? snapshot.user?.inbox_project_id ?? ''),
+      section_id: (args.section_id as string) ?? null,
+      parent_id: (args.parent_id as string) ?? null,
+      content: String(args.content ?? ''),
+      description: String(args.description ?? ''),
+      priority: (args.priority as 1 | 2 | 3 | 4) ?? 1,
+      /* A task created from a repeat rule is sent without a date, so that
+         Todoist resolves it — but the row drawn a moment later still has to
+         have one to read. Today stands in until the real one comes back. */
+      due: provisionalDue(args.due as Item['due']),
+      deadline: (args.deadline as Item['deadline']) ?? null,
+      duration: null,
+      labels: (args.labels as string[]) ?? [],
+      /* Last among its siblings, which is where a task just added belongs and
+         where the server is about to put it. Left at 0 the row appeared at the
+         top of its parent for the half second before the sync answered, and
+         then jumped. */
+      child_order: nextChildOrder(
+        snapshot,
+        (args.parent_id as string) ?? null,
+        String(args.project_id ?? snapshot.user?.inbox_project_id ?? ''),
+        (args.section_id as string) ?? null,
+      ),
+      order_key: nextOrderKey(
+        snapshot,
+        (args.parent_id as string) ?? null,
+        String(args.project_id ?? snapshot.user?.inbox_project_id ?? ''),
+        (args.section_id as string) ?? null,
+      ),
+      day_order: -1,
+      collapsed: false,
+      checked: false,
+      is_deleted: false,
+      added_at: new Date().toISOString(),
+      completed_at: null,
+      updated_at: new Date().toISOString(),
+      responsible_uid: (args.responsible_uid as string) ?? null,
+    };
+
+    /* Subtasks go out in the same batch, pointing at the parent's temp id.
+       Todoist resolves a temp id used as an argument inside one call, so the
+       whole tree is created in a single round trip and can never half-exist. */
+    const subtasks = (args.subtasks as Array<string | NewSubtask> | undefined) ?? [];
+    const { subtasks: _ignored, ...parentArgs } = args;
+
+    const children = subtasks.map((subtask) => {
+      const { content, labels = [] } = typeof subtask === 'string' ? { content: subtask } : subtask;
+      return {
+        tempId: newUuid(),
+        args: {
+          content,
+          project_id: parentArgs.project_id,
+          parent_id: tempId,
+          ...(labels.length > 0 ? { labels } : {}),
+        },
+      };
+    });
+
+    const optimisticChildren: Record<string, Item> = {};
+    for (const child of children) {
+      optimisticChildren[child.tempId] = {
+        ...optimisticItem,
+        id: child.tempId,
+        parent_id: tempId,
+        content: String(child.args.content),
+        description: '',
+        priority: 1,
+        due: null,
+        deadline: null,
+        labels: (child.args.labels as string[] | undefined) ?? [],
+      };
+    }
+
+  return {
+    commands: [addItem(parentArgs, tempId), ...children.map((c) => addItem(c.args, c.tempId))],
+    items: { [tempId]: optimisticItem, ...optimisticChildren },
+  };
+}
 
 /**
  * A due the rest of the app can read.
@@ -385,88 +483,31 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
     });
   },
   async createTask(args) {
-    const tempId = newUuid();
-    // The task appears at once under a temporary id; the sync response that
-    // follows carries the real one and replaces it.
-    const optimisticItem: Item = {
-      id: tempId,
-      user_id: get().snapshot.user?.id ?? '',
-      project_id: String(args.project_id ?? get().snapshot.user?.inbox_project_id ?? ''),
-      section_id: (args.section_id as string) ?? null,
-      parent_id: (args.parent_id as string) ?? null,
-      content: String(args.content ?? ''),
-      description: String(args.description ?? ''),
-      priority: (args.priority as 1 | 2 | 3 | 4) ?? 1,
-      /* A task created from a repeat rule is sent without a date, so that
-         Todoist resolves it — but the row drawn a moment later still has to
-         have one to read. Today stands in until the real one comes back. */
-      due: provisionalDue(args.due as Item['due']),
-      deadline: (args.deadline as Item['deadline']) ?? null,
-      duration: null,
-      labels: (args.labels as string[]) ?? [],
-      /* Last among its siblings, which is where a task just added belongs and
-         where the server is about to put it. Left at 0 the row appeared at the
-         top of its parent for the half second before the sync answered, and
-         then jumped. */
-      child_order: nextChildOrder(
-        get().snapshot,
-        (args.parent_id as string) ?? null,
-        String(args.project_id ?? get().snapshot.user?.inbox_project_id ?? ''),
-        (args.section_id as string) ?? null,
-      ),
-      order_key: nextOrderKey(
-        get().snapshot,
-        (args.parent_id as string) ?? null,
-        String(args.project_id ?? get().snapshot.user?.inbox_project_id ?? ''),
-        (args.section_id as string) ?? null,
-      ),
-      day_order: -1,
-      collapsed: false,
-      checked: false,
-      is_deleted: false,
-      added_at: new Date().toISOString(),
-      completed_at: null,
-      updated_at: new Date().toISOString(),
-      responsible_uid: (args.responsible_uid as string) ?? null,
-    };
-
-    /* Subtasks go out in the same batch, pointing at the parent's temp id.
-       Todoist resolves a temp id used as an argument inside one call, so the
-       whole tree is created in a single round trip and can never half-exist. */
-    const subtasks = (args.subtasks as string[] | undefined) ?? [];
-    const { subtasks: _ignored, ...parentArgs } = args;
-
-    const children = subtasks.map((content) => ({
-      tempId: newUuid(),
-      args: {
-        content,
-        project_id: parentArgs.project_id,
-        parent_id: tempId,
-      },
-    }));
-
-    const optimisticChildren: Record<string, Item> = {};
-    for (const child of children) {
-      optimisticChildren[child.tempId] = {
-        ...optimisticItem,
-        id: child.tempId,
-        parent_id: tempId,
-        content: String(child.args.content),
-        description: '',
-        priority: 1,
-        due: null,
-        deadline: null,
-        labels: [],
-      };
+    await get().createTasks([args]);
+  },
+  /**
+   * Several independent tasks, in one request (#152).
+   *
+   * Each is built exactly as `createTask` builds one, and all of them go out
+   * in a single `apply`: the screen shows them at once, Todoist answers once,
+   * and a command it refuses is taken back on its own while the rest stay.
+   * That is the whole of "partly succeeded", and nothing here can be sent a
+   * second time, so nothing is created twice.
+   */
+  async createTasks(list) {
+    const commands: Command[] = [];
+    const created: Record<string, Item> = {};
+    for (const args of list) {
+      const { snapshot } = get();
+      const planned = planTask({ ...snapshot, items: { ...snapshot.items, ...created } }, args);
+      commands.push(...planned.commands);
+      Object.assign(created, planned.items);
     }
-
-    await get().apply(
-      [addItem(parentArgs, tempId), ...children.map((c) => addItem(c.args, c.tempId))],
-      (snapshot) => ({
-        ...snapshot,
-        items: { ...snapshot.items, [tempId]: optimisticItem, ...optimisticChildren },
-      }),
-    );
+    if (commands.length === 0) return;
+    await get().apply(commands, (current) => ({
+      ...current,
+      items: { ...current.items, ...created },
+    }));
   },
   async setTaskLabels(id, labels) {
     await get().updateTask(id, { labels });

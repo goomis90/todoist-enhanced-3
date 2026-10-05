@@ -8,6 +8,24 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 1.18.0
+
+Coller une liste pour créer plusieurs tâches, un menu de date qui commence par les raccourcis, des sous-tâches qui montrent leur avancement, et tout passer à aujourd'hui qui est instantané.
+
+🆕 **Coller une liste pour créer plusieurs tâches.** Collez des lignes de texte, avec ou sans puces, dans le champ nom de la fenêtre de nouvelle tâche : l'app demande « Est-ce que vous voulez créer les 3 tâches ? » avant de créer une tâche séparée par ligne. Chaque ligne est lue comme un titre à part, donc `(25)`, une date ou `#Projet` dans une ligne s'applique à cette tâche. Annuler garde ce que vous avez collé.
+
+🆕 **Des estimations sur les nouvelles sous-tâches.** Terminez une sous-tâche par son estimation entre parenthèses, comme `Faire le plan (5)` ou `Recherches (1h15)`, dans la fenêtre de nouvelle tâche ou en ajoutant une sous-tâche à une tâche ouverte, et elle est créée avec cette estimation. L'estimation est surlignée pendant la saisie, comme dans le nom d'une tâche. Des parenthèses qui ne sont pas une durée, comme `(peut-être)`, restent dans le titre.
+
+🎨 **Le menu de date commence par les raccourcis.** Aujourd'hui, Demain, La semaine prochaine, Cette semaine et Un jour d'abord, puis Passer à la prochaine occurrence (avec la date où elle va, quand elle est sûre) et Retirer la date ; le calendrier ne s'ouvre que si vous choisissez Choisir une date. Échap ou le lien de retour ramène aux raccourcis sans rien changer. Le même menu sert sur une ligne, dans la fenêtre de nouvelle tâche, le panneau de tâche et la barre pour plusieurs tâches.
+
+🎨 **Une case cochée garde la couleur de sa priorité.** Une tâche ou sous-tâche terminée est remplie de la couleur de sa priorité (gris pour P4) au lieu du vert.
+
+🎨 **L'avancement des sous-tâches se remplit.** À côté de « 1/3 », un petit anneau se remplit à mesure que les sous-tâches sont faites, dans les listes et dans le panneau de tâche, et passe au vert quand elles le sont toutes.
+
+🎨 **Tout passer à aujourd'hui est instantané.** Dans Cette semaine, le bloc En retard se vide dès que vous confirmez, tout part en une fois, et le message dit combien de tâches ont été déplacées, avec Annuler.
+
+🐛 **Une sous-tâche terminée est cochée dans le panneau de tâche.** Sa case restait vide alors que son titre était barré. Les deux montrent maintenant qu'elle est faite.
+
 ## 1.17.1
 
 Insights compte de nouveau les bons jours, et la fenêtre Nouveautés s'ouvre maintenant après chaque mise à jour, avec les changements les plus visibles en premier.

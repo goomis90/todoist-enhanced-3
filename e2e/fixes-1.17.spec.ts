@@ -369,18 +369,21 @@ test('#135 follow-up: @@link0@@ typed in the composer stays text, with no tag', 
   await expect(row(page, 'Fill @@link0@@ in')).toBeVisible();
 });
 
-test('the changelog opens on 1.17.1, its lines ordered from the most visible to the least (#148)', async ({ demo: page }) => {
+test('the changelog lists every release\'s lines from the most visible to the least (#148)', async ({ demo: page }) => {
   await page.route('https://github.com/**', (route) => route.fulfill({ status: 204 }));
   await go(page, '#/settings');
   await page.getByRole('button', { name: 'See the changes' }).click();
   const dialog = page.getByRole('dialog', { name: 'Changelog' });
-  const first = dialog.locator('.whatsnew-release').first();
-  await expect(first).toContainText('1.17.1');
-  // A redesign comes before a fix, even though the file could list them either way.
-  const kinds = await first.locator('.whatsnew-change').evaluateAll((els) => els.map((el) => el.classList[1]));
-  expect(kinds).toEqual(['design', 'fix']);
-  // 1.17.0 opens with what is new.
-  const older = dialog.locator('.whatsnew-release').nth(1);
-  await expect(older.locator('.whatsnew-change').first()).toHaveClass(/new/);
-  await expect(older.locator('.whatsnew-change').last()).toHaveClass(/fix/);
+  const releases = dialog.locator('.whatsnew-release');
+  await expect(releases.first()).toBeVisible();
+
+  // New things, then redesigns, then fixes, even though the file could list
+  // them in any order; whichever release is on top.
+  const rank: Record<string, number> = { new: 0, design: 1, fix: 2 };
+  for (const at of [0, 1, 2]) {
+    const kinds = await releases.nth(at).locator('.whatsnew-change')
+      .evaluateAll((els) => els.map((el) => el.classList[1]));
+    expect(kinds.length).toBeGreaterThan(0);
+    expect(kinds).toEqual([...kinds].sort((x, y) => rank[x] - rank[y]));
+  }
 });

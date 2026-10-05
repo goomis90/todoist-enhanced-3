@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Overlay } from './Overlay';
+import { useConfirm } from './Confirm';
 import { Icon } from '../Icon';
 import { EstimateField } from '../EstimateField';
 import { PlacementField } from '../PlacementField';
@@ -12,7 +13,7 @@ import { estimateLabel, formatDuration } from '@/domain/estimates';
 import { markerStyle } from '@/domain/colors';
 import { toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import {
-  parseShorthand, type HighlightKind, type Shorthand, type TextRange,
+  parseShorthand, splitTrailingEstimate, type HighlightKind, type Shorthand, type TextRange,
 } from '@/domain/shorthand';
 import { matchesSearch } from '@/domain/search';
 import { byLabelOrder } from '@/domain/orderKey';
@@ -44,6 +45,8 @@ export function Composer({
   const { t } = useT();
   const snapshot = useStore((s) => s.snapshot);
   const createTask = useStore((s) => s.createTask);
+  const createTasks = useStore((s) => s.createTasks);
+  const confirm = useConfirm();
   const naturalDates = useStore((s) => s.prefs.naturalDates);
   const dateFormat = useStore((s) => s.prefs.dateFormat);
 
@@ -228,6 +231,57 @@ export function Composer({
     }
   }
 
+  /**
+   * A pasted list (#152): one independent task per line, after asking.
+   *
+   * Each line is read on its own, the way a title typed here is, so `(25)`, a
+   * date, `#Project` or `p1` in a line applies to that task. What was chosen
+   * in the window, its date, priority, tags and project, is not carried over:
+   * the lines are the whole of what is asked for. Nothing is created until it
+   * is confirmed, and refusing puts the text into the field as an ordinary
+   * paste, so the draft is not lost.
+   */
+  async function pasteList(lines: string[], keepAsText: () => void) {
+    if (submitting.current) return;
+    const ok = await confirm({
+      title: t('composer.pasteListTitle', { count: lines.length }),
+      body: t('composer.pasteListBody', { count: lines.length }),
+      confirmLabel: t('composer.pasteListConfirm', { count: lines.length }),
+    });
+    if (!ok) {
+      keepAsText();
+      return;
+    }
+    if (submitting.current) return;
+    submitting.current = true;
+    setSaving(true);
+    try {
+      const inbox = snapshot.user?.inbox_project_id;
+      await createTasks(lines.map((line) => {
+        const read = parseShorthand(line, snapshot, naturalDates, [], dateFormat);
+        return {
+          content: read.content || line,
+          project_id: read.projectId || inbox,
+          section_id: read.sectionId || undefined,
+          priority: toTodoistPriority(read.priority ?? 4),
+          labels: [
+            ...read.labels,
+            ...(read.minutes !== null ? [estimateLabel(read.minutes)] : []),
+          ],
+          due: read.recurrence
+            ? { string: read.recurrence.string, lang: read.recurrence.lang, is_recurring: true }
+            : read.date
+              ? { date: read.date, timezone: null, string: read.date, lang: 'en', is_recurring: false }
+              : undefined,
+        };
+      }));
+      onClose();
+    } finally {
+      submitting.current = false;
+      setSaving(false);
+    }
+  }
+
   async function create(content: string) {
     const allLabels = [...allTags];
     if (minutes !== null) allLabels.push(estimateLabel(minutes));
@@ -239,7 +293,12 @@ export function Composer({
     const dueDate = date;
     const repeat = recurrence;
     const pending = subtaskDraft.trim();
-    const allSubtasks = pending ? [...subtasks, pending] : subtasks;
+    /* A subtask can end with its own estimate, read the way the name's is and
+       written the same way (#163). */
+    const allSubtasks = (pending ? [...subtasks, pending] : subtasks).map((line) => {
+      const { content: title, minutes: estimate } = splitTrailingEstimate(line);
+      return { content: title, labels: estimate === null ? [] : [estimateLabel(estimate)] };
+    });
 
     await createTask({
       content,
@@ -285,6 +344,7 @@ export function Composer({
           value={name}
           onChange={setName}
           onSubmit={() => void submit()}
+          onPasteList={(lines, keepAsText) => void pasteList(lines, keepAsText)}
           placeholder={t('composer.namePlaceholder')}
           ariaLabel={t('composer.name')}
           snapshot={snapshot}
@@ -452,24 +512,24 @@ export function Composer({
           {subtasks.map((content, index) => (
             <div className="composer-sub" key={index}>
               <span className="check p4" aria-hidden="true" />
-              <input
+              <TaskNameField
+                estimateOnly
+                autoFocus={false}
+                fieldClassName="subtaskfield"
                 value={content}
-                aria-label={t('detail.subtasks')}
-                onChange={(e) => {
-                  const { value } = e.target;
-                  setSubtasks((prev) => prev.map((s, i) => (i === index ? value : s)));
-                }}
+                onChange={(value) => setSubtasks((prev) => prev.map((s, i) => (i === index ? value : s)))}
                 onBlur={() => setSubtasks((prev) => {
                   const trimmed = prev[index]?.trim();
                   if (!trimmed) return prev.filter((_, i) => i !== index);
                   return trimmed === prev[index] ? prev : prev.map((s, i) => (i === index ? trimmed : s));
                 })}
-                onKeyDown={(e) => {
-                  if (e.key !== 'Enter') return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  (e.target as HTMLInputElement).blur();
-                }}
+                onSubmit={() => (document.activeElement as HTMLElement | null)?.blur()}
+                placeholder=""
+                ariaLabel={t('detail.subtasks')}
+                snapshot={snapshot}
+                naturalDates={false}
+                refusals={[]}
+                onRefusals={() => {}}
               />
               <button
                 className="iconbtn"
@@ -482,20 +542,24 @@ export function Composer({
           ))}
           <div className="composer-sub adding">
             <span className="check p4" aria-hidden="true" />
-            <input
+            <TaskNameField
+              estimateOnly
+              autoFocus={false}
+              fieldClassName="subtaskfield"
               value={subtaskDraft}
-              placeholder={t('composer.subtaskPlaceholder')}
-              aria-label={t('detail.addSubtask')}
-              onChange={(e) => setSubtaskDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter') return;
-                e.preventDefault();
-                e.stopPropagation();
+              onChange={setSubtaskDraft}
+              onSubmit={() => {
                 const value = subtaskDraft.trim();
                 if (!value) return;
                 setSubtasks((prev) => [...prev, value]);
                 setSubtaskDraft('');
               }}
+              placeholder={t('composer.subtaskPlaceholder')}
+              ariaLabel={t('detail.addSubtask')}
+              snapshot={snapshot}
+              naturalDates={false}
+              refusals={[]}
+              onRefusals={() => {}}
             />
           </div>
         </div>

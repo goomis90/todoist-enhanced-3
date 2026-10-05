@@ -14,7 +14,8 @@ import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
 import { withEstimate, effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { EstimateField } from './EstimateField';
-import { DatePicker, taskShortcuts, type RecurrenceReading } from './DatePicker';
+import { DatePicker, shortDay, taskShortcuts, type RecurrenceReading } from './DatePicker';
+import { nextOccurrence } from '@/domain/nextOccurrence';
 import { formatDayOrName, formatTime, toApiDate } from '@/domain/dates';
 import { dueForDate } from '@/domain/recurrence';
 import { weekLabel } from '@/domain/types';
@@ -241,6 +242,8 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
   }, [menu]);
 
   const { minutes, computed } = effectiveEstimate(item, childrenOf);
+  /* Where "next occurrence" lands, said only when that is certain. */
+  const nextDate = nextOccurrence(item);
 
   /* Moving a task means moving it somewhere it can live. Where it sits in time
      is the schedule menu's business, which is the button next to this one. */
@@ -515,6 +518,7 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
                       onClick={() => { setMenu('none'); void skipOccurrence(item.id); }}
                     >
                       <span><Icon name="repeat" size="sm" /> {t('task.nextOccurrence')}</span>
+                      {nextDate && <small>{shortDay(nextDate, locale)}</small>}
                     </button>
                   )}
                   {item.due && (
