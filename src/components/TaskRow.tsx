@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './Icon';
+import { ProgressRing } from './ProgressRing';
 import { useRowTarget } from './dnd/useRowTarget';
 import {
   GROUP_ATTR, TASK_DROP_EVENT, TASK_PLACE_EVENT, groupAnswers, useRowList,
@@ -386,7 +387,7 @@ export function TaskRow({
 
             {children.length > 0 && (
               <span className="subprog">
-                <Icon name="subtask" />
+                <ProgressRing done={doneChildren} total={children.length} />
                 {t('task.subtaskProgress', { done: doneChildren, total: children.length })}
               </span>
             )}

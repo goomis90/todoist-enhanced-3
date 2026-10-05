@@ -1249,7 +1249,7 @@
 .datepicker .pickerreading{display:flex;align-items:center;gap:6px}
 .datepicker .pickersuggestions button.active{background:var(--accent-soft);color:var(--accent-dark)}
 .datepicker .pickersuggestions button.active small{color:var(--accent-dark)}
-.datepicker-options{display:grid;gap:1px;padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+.datepicker-options{display:grid;gap:1px;padding-bottom:2px}
 .datepicker button.opt{
   width:100%;height:auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
   min-height:30px;padding:0 8px;border-radius:var(--r-sm);
@@ -1264,7 +1264,7 @@
 .datepicker button.opt:focus-visible .ic{color:var(--accent-dark)}
 .datepicker button.opt:disabled{opacity:.4;cursor:default}
 .datepicker-month{padding:0 2px}
-.datepicker-foot{display:grid;gap:1px;margin-top:8px;padding-top:6px;border-top:1px solid var(--border)}
+.datepicker button.datepicker-back{margin-bottom:4px}
 .rowmenu.schedulemenu{width:288px;max-width:calc(100vw - 16px)}
 .bulkpop:has(.datepicker){width:288px}
 .datepicker .dateday{aspect-ratio:auto;height:32px}

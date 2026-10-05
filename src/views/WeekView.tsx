@@ -69,8 +69,7 @@ function WeekBody({
   const { t } = useT();
   const { snapshot, items, childrenOf } = useData();
   const prefs = useStore((s) => s.prefs);
-  const updateTask = useStore((s) => s.updateTask);
-  const toast = useStore((s) => s.toast);
+  const updateMany = useStore((s) => s.updateMany);
   const confirm = useConfirm();
   /* Two pages, two sets of display preferences: a filter set on Today has no
      business following you to the rest of the week. */
@@ -120,17 +119,21 @@ function WeekBody({
     if (!ok) return;
 
     const today = toApiDate(new Date());
-    for (const item of affected) {
-      // Moving to today drops the `week` label, which would otherwise put the
-      // same task in two groups at once.
-      /* A repeating task among them keeps its rule: this button catches up on
-         what is late, and a series being late is not a reason to end it. */
-      await updateTask(item.id, {
+    const week = weekLabel().toLowerCase();
+    /* One request for the lot, shown at once, with one undo (#162): a request
+       per task emptied the block at the speed of the network. */
+    await updateMany(
+      affected.map((item) => item.id),
+      (item) => ({
+        // A repeating task among them keeps its rule: this button catches up
+        // on what is late, and a series being late is not a reason to end it.
         due: dueForDate(item.due, today),
-        labels: item.labels.filter((l) => l.toLowerCase() !== weekLabel().toLowerCase()),
-      });
-    }
-    toast(t('group.rescheduleAll'));
+        // Moving to today drops the `week` label, which would otherwise put
+        // the same task in two groups at once.
+        labels: item.labels.filter((l) => l.toLowerCase() !== week),
+      }),
+      t('task.rescheduledMany', { count: affected.length }),
+    );
   }
 
   /* A week is drawn from every project at once, so the order it is put into
