@@ -162,7 +162,9 @@ test('Shift+↓ and Shift+↑ grow and shrink the selection from the cursor', as
 });
 
 test('⌘↓ and ⌘↑ move the task under the cursor, and the cursor goes with it', async ({ demo: page }) => {
-  await page.goto('/#/project/home');
+  /* A project with nothing quick in it: the Quick group (#154) is a group of
+     its own, and its tasks are not moved by hand. */
+  await page.goto('/#/project/personal');
   await expect(page.locator('.screen.active [data-task-id]').first()).toBeVisible();
   const before = await titles(page);
   expect(before.length).toBeGreaterThan(2);
@@ -191,24 +193,31 @@ async function groupTitles(page: import('@playwright/test').Page): Promise<Array
   ] as [string, string[]]));
 }
 
+/* A project's sections, without the Quick group that leads it (#154): its
+   tasks are not moved by hand, and these journeys are about the sections. */
+const sectionTitles = async (page: import('@playwright/test').Page) =>
+  (await groupTitles(page)).filter(([name]) => name !== 'Quick');
+
 test('⌘↓ at the end of a section carries the task into the next one, ⌘↑ brings it back', async ({ demo: page }) => {
   await page.goto('/#/project/site');
   await expect(page.locator('.screen.active [data-task-id]').first()).toBeVisible();
-  const groups = (await groupTitles(page)).filter(([, tasks]) => tasks.length > 0);
+  const groups = (await sectionTitles(page)).filter(([, tasks]) => tasks.length > 0);
   const [fromName, fromTasks] = groups[0];
   const [toName, toTasks] = groups[1];
   const moving = fromTasks[fromTasks.length - 1];
 
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  for (let at = 0; at < fromTasks.length; at += 1) await page.keyboard.press('ArrowDown');
+  // The Quick group's rows come first on the page and the cursor walks through them.
+  const leading = await page.locator('.screen.active .group.accent-quick [data-task-id]').count();
+  for (let at = 0; at < leading + fromTasks.length; at += 1) await page.keyboard.press('ArrowDown');
   await expect(row(page, moving)).toBeFocused();
   await page.keyboard.press('ControlOrMeta+ArrowDown');
-  await expect.poll(async () => new Map(await groupTitles(page)).get(toName)?.[0]).toBe(moving);
+  await expect.poll(async () => new Map(await sectionTitles(page)).get(toName)?.[0]).toBe(moving);
   await expect(row(page, moving)).toBeFocused();
 
   await page.keyboard.press('ControlOrMeta+ArrowUp');
-  await expect.poll(async () => new Map(await groupTitles(page)).get(fromName)?.at(-1)).toBe(moving);
-  expect(new Map(await groupTitles(page)).get(toName)).toEqual(toTasks);
+  await expect.poll(async () => new Map(await sectionTitles(page)).get(fromName)?.at(-1)).toBe(moving);
+  expect(new Map(await sectionTitles(page)).get(toName)).toEqual(toTasks);
 });
 
 test('in My week, ⌘↓ passes over the timed tasks into Anytime, and ⌘↑ never makes a task late', async ({ demo: page }) => {
@@ -247,11 +256,11 @@ test('Things keys: ⌥↑↓ jump to the ends, ⌥⇧↓ selects to the end, ⌥
   await page.keyboard.press('Escape');
 
   // ⌥⌘↓: the first task of the first group goes to the bottom of that group.
-  const groups = (await groupTitles(page)).filter(([, tasks]) => tasks.length > 1);
+  const groups = (await sectionTitles(page)).filter(([, tasks]) => tasks.length > 1);
   const [name, tasks] = groups[0];
   await row(page, tasks[0]).focus();
   await page.keyboard.press('Alt+ControlOrMeta+ArrowDown');
-  await expect.poll(async () => new Map(await groupTitles(page)).get(name)).toEqual([...tasks.slice(1), tasks[0]]);
+  await expect.poll(async () => new Map(await sectionTitles(page)).get(name)).toEqual([...tasks.slice(1), tasks[0]]);
 });
 
 test('Things keys: ^] moves a date a day later, on a selection too; ⌘S, ⇧⌘M and ⌘/ open what they should', async ({ demo: page }) => {

@@ -56,12 +56,12 @@ test('#108 a project board adds a section from its last column', async ({ demo: 
   await add.click();
   // Escape makes nothing.
   await page.keyboard.press('Escape');
-  await expect(board.locator('.col .chead strong')).toHaveText(['To do', 'In progress', 'To review']);
+  await expect(board.locator('.col:not(.accent-quick) .chead strong')).toHaveText(['To do', 'In progress', 'To review']);
 
   await add.click();
   await page.keyboard.type('Launch');
   await page.keyboard.press('Enter');
-  await expect(board.locator('.col .chead strong')).toHaveText(['To do', 'In progress', 'To review', 'Launch']);
+  await expect(board.locator('.col:not(.accent-quick) .chead strong')).toHaveText(['To do', 'In progress', 'To review', 'Launch']);
 
   // The same section in the list.
   await page.getByRole('button', { name: 'Display' }).click();

@@ -149,6 +149,8 @@ interface TaskActionsProps {
   item: Item;
   childrenOf: (id: string) => Item[];
   onOpen: (id: string) => void;
+  /** Present on a task gathering dust: keeps it in Someday on purpose (#161). */
+  onKeep?: () => void;
 }
 
 /**
@@ -157,7 +159,7 @@ interface TaskActionsProps {
  * Each one is an icon with a real label and tooltip, so nothing depends on the
  * reader guessing what a glyph does.
  */
-export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
+export function TaskActions({ item, childrenOf, onOpen, onKeep }: TaskActionsProps) {
   const { t, locale } = useT();
   const updateTask = useStore((s) => s.updateTask);
   const removeTask = useStore((s) => s.removeTask);
@@ -634,6 +636,12 @@ export function TaskActions({ item, childrenOf, onOpen }: TaskActionsProps) {
                 </button>
                 <hr />
               </>
+            )}
+            {onKeep && (
+              <button className="opt" onClick={() => { setMenu('none'); onKeep(); }}>
+                <span><Icon name="someday" size="sm" /> {t('task.keepInSomeday')}</span>
+                <small className="opthint">⇧K</small>
+              </button>
             )}
             {/* Dragging a subtask out to the left does this too, but a gesture
                 nobody has been told about is not a way out of anything. */}

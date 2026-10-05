@@ -481,6 +481,8 @@
 .group.accent-late .gheadblock{border-bottom-color:var(--late)}
 .group.accent-quick .gname{color:var(--p3)}
 .group.accent-quick .gheadblock{border-bottom-color:var(--p3)}
+.group.accent-dust .gname{color:var(--dust-dark)}
+.group.accent-dust .gheadblock{border-bottom-color:var(--dust)}
 
 /* A heavier tick reads better at this size. */
 .check .ic{stroke-width:2.6}
@@ -819,7 +821,8 @@
 
 /* ---------- Behind schedule and Quick read as callouts ---------- */
 .group.accent-late,
-.group.accent-quick{
+.group.accent-quick,
+.group.accent-dust{
   padding:var(--s4) 20px;
   /* The bleed covers the padding, so the text inside lands on exactly the
      same left edge as an unframed section. */
@@ -829,13 +832,17 @@
 }
 .group.accent-late{background:var(--late-wash)}
 .group.accent-quick{background:var(--wash-quick-deep)}
+.group.accent-dust{background:var(--dust-wash)}
 /* A count sitting on a wash needs its own chip, or it disappears. */
 .group.accent-late .gcount{color:var(--late-dark);background:var(--late-badge)}
+.group.accent-dust .gcount{color:var(--dust-dark);background:var(--dust-badge)}
 /* Inside a callout the heading no longer needs its own rule to stand out. */
 .group.accent-late .gheadblock,
-.group.accent-quick .gheadblock{border-bottom-color:transparent}
+.group.accent-quick .gheadblock,
+.group.accent-dust .gheadblock{border-bottom-color:transparent}
 .group.accent-late .task,
-.group.accent-quick .task{border-bottom-color:var(--row-line-on-wash)}
+.group.accent-quick .task,
+.group.accent-dust .task{border-bottom-color:var(--row-line-on-wash)}
 
 /* ---------- The repeat rule, in the task panel ----------
    A field rather than a line of text: the rule is the thing being edited, and
@@ -979,7 +986,8 @@
    Declared here, after the rule it overrides. */
 @media (max-width:700px){
   .group.accent-late,
-  .group.accent-quick{margin-inline:0}
+  .group.accent-quick,
+  .group.accent-dust{margin-inline:0}
 }
 
 /* ---------- In-app confirmation ---------- */

@@ -151,5 +151,5 @@ export function detectConflicts(
 
 /** Tasks with no estimate. Listed for completion, never flagged as errors. */
 export function detectIncomplete(items: Item[]): Item[] {
-  return items.filter((i) => readEstimate(i.labels).minutes === null);
+  return items.filter((i) => estimateOf(i) === null);
 }

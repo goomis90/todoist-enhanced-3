@@ -42,6 +42,7 @@ import { rootItems } from './store/selectors';
 import { detectConflicts } from './domain/conflicts';
 import { anytimeItems, bucketOf, hasLabel, somedayItems, upcomingItems, weekItems } from './domain/views';
 import { effectiveEstimate } from './domain/estimates';
+import type { Item } from './domain/types';
 import type { TranslationKey } from './i18n';
 
 export function App() {
@@ -59,6 +60,10 @@ export function App() {
   const demo = useStore((s) => s.demo);
   const walkthroughOpen = useStore((s) => s.walkthrough);
   const [tourOpen, setTourOpen] = useState(false);
+  /* Null is the whole tour, for a new account. A list of versions is the tour
+     of what an update brought, asked for from What's new: shorter, and with no
+     first-run dialog after it. */
+  const [tourVersions, setTourVersions] = useState<string[] | null>(null);
   const [onboardingStarted, setOnboardingStarted] = useState(false);
   const setWalkthrough = useStore((s) => s.setWalkthrough);
   const beginTourPreview = useStore((s) => s.beginTourPreview);
@@ -82,7 +87,13 @@ export function App() {
   const [searchSeed, setSearchSeed] = useState('');
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
-  const [insightsOpen, setInsightsOpen] = useState(false);
+  /* One right-hand panel at a time (Insights, I have time): which one is open
+     is the store's to say, so opening one closes the other. */
+  const insightsOpen = useStore((s) => s.sidePanel === 'insights');
+  const openSidePanel = useStore((s) => s.openSidePanel);
+  const closeSidePanel = useStore((s) => s.closeSidePanel);
+  const setInsightsOpen = (open: boolean) =>
+    (open ? openSidePanel('insights') : closeSidePanel('insights'));
   /* Not a boolean: what the sheet was opened to do — create one here, or edit
      that one — is carried by the open state itself. */
   const [projectSheet, setProjectSheet] = useState<ProjectSheetTarget>(null);
@@ -192,8 +203,14 @@ export function App() {
   }, [ready, connected, demo, settled, userId, tourOpen, walkthroughOpen, whatsNew,
     seenVersion, whatsNewOn, setPrefs]);
 
+  /* Settings opens the whole history. With `detail.versions` the same event
+     opens the window as an update would, for those releases only: how the
+     "Show me" button is reached without an update to make. */
   useEffect(() => {
-    const show = () => setWhatsNew('all');
+    const show = (event: Event) => {
+      const versions = (event as CustomEvent<{ versions?: string[] } | null>).detail?.versions;
+      setWhatsNew(Array.isArray(versions) ? { versions } : 'all');
+    };
     window.addEventListener('enhanced:changelog', show);
     return () => window.removeEventListener('enhanced:changelog', show);
   }, []);
@@ -248,9 +265,12 @@ export function App() {
       />
       <Tour
         open={tourOpen}
+        versions={tourVersions}
         onDone={() => {
           setTourOpen(false);
-          setWalkthrough(true);
+          // Only a first run goes on to the first-run choices.
+          if (tourVersions === null) setWalkthrough(true);
+          setTourVersions(null);
         }}
       />
       <WhatsNew
@@ -258,6 +278,14 @@ export function App() {
         onClose={() => {
           if (whatsNew !== 'all') setPrefs({ seenVersion: VERSION });
           setWhatsNew(null);
+        }}
+        onShowMe={(versions) => {
+          // Read, as closing it is; then the tour of what was in it, on My week.
+          setPrefs({ seenVersion: VERSION });
+          setWhatsNew(null);
+          navigate('week');
+          setTourVersions(versions);
+          window.setTimeout(() => setTourOpen(true), 100);
         }}
       />
 
@@ -433,6 +461,9 @@ function paintBrowserChrome(): void {
   if (accent) meta.setAttribute('content', accent);
 }
 
+/** The pages that list tasks to work through, which is where "I have time" is offered (#159). */
+const TIME_PAGES = new Set<Route['view']>(['week', 'today', 'project', 'label', 'inbox', 'someday']);
+
 function AppShell({
   route, openTaskId, setOpenTaskId, composerOpen, setComposerOpen,
   searchOpen, setSearchOpen, searchSeed, openSearch, shortcutsOpen, setShortcutsOpen,
@@ -513,10 +544,22 @@ function AppShell({
     () => contextItems.filter((i) => effectiveEstimate(i, childrenOf).minutes === null),
     [contextItems, childrenOf],
   );
+  /* The estimate pass is for the page in front, unless something else names
+     the tasks: the "I have time" panel hands over the ones it set aside. */
+  const [unestimatedFor, setUnestimatedFor] = useState<Item[] | null>(null);
 
   /* Every way out of the browse page is a navigation, so one effect closes it
      rather than each of its thirty buttons remembering to. */
   useEffect(() => setBrowseOpen(false), [route.view, route.id, route.sectionId, setBrowseOpen]);
+
+  /* The "I have time" panel answers about the page it is on. A page with no
+     pill for it (Upcoming, Insights, the review) has nothing to ask it of, so
+     going there puts the panel away rather than leaving it over a page it
+     cannot speak for. The duration is kept for when you come back. */
+  const closeSidePanel = useStore((s) => s.closeSidePanel);
+  useEffect(() => {
+    if (!TIME_PAGES.has(route.view)) closeSidePanel('time');
+  }, [route.view, closeSidePanel]);
 
   /* A selection belongs to the page it was made on. Carrying it to the next
      one would leave a bar offering to delete tasks that are no longer shown. */
@@ -569,7 +612,11 @@ function AppShell({
     setComposerOpen(true);
   };
   const openInsights = () => setInsightsOpen(true);
-  const openUnestimated = () => setUnestimatedOpen(true);
+  const openUnestimated = (tasks?: Item[]) => {
+    // A click hands its event to whatever it calls: only a list is a list.
+    setUnestimatedFor(Array.isArray(tasks) ? tasks : null);
+    setUnestimatedOpen(true);
+  };
   const viewProps = {
     onOpen: openTask,
     onInsights: openInsights,
@@ -740,8 +787,8 @@ function AppShell({
       </Overlay>
       <Unestimated
         open={unestimatedOpen}
-        onClose={() => setUnestimatedOpen(false)}
-        items={unestimatedItems}
+        onClose={() => { setUnestimatedOpen(false); setUnestimatedFor(null); }}
+        items={unestimatedFor ?? unestimatedItems}
         onOpen={openTask}
       />
       <BulkBar />

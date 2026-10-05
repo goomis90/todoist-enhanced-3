@@ -4,6 +4,7 @@ import { DEFAULT_WEEK_LABEL, defaultViewPrefs, type ViewPrefs } from '@/domain/t
 import { defaultConflictSettings, type ConflictSettings } from '@/domain/conflicts';
 import { defaultCapacity, type DailyCapacity } from '@/domain/load';
 import { DATE_FORMATS, type DateFormat } from '@/domain/dates';
+import { DEFAULT_DUST_MONTHS, isDustMonths, type DustMonths } from '@/domain/views';
 
 /**
  * The Todoist task that held the settings up to 1.12.
@@ -250,6 +251,10 @@ export interface Preferences {
   dailyCapacity: DailyCapacity;
   weeklyCapacityOverride: number | null;
   showQuickGroup: boolean;
+  /** The Gathering dust group at the top of Someday (#161). */
+  showDustGroup: boolean;
+  /** How many months a task sits in Someday before it is said to gather dust. */
+  dustAfterMonths: DustMonths;
   conflicts: ConflictSettings;
   sidebarCollapsed: boolean;
   /** How much room a list gives each task. */
@@ -327,6 +332,8 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
   dailyCapacity: defaultCapacity(),
   weeklyCapacityOverride: null,
   showQuickGroup: true,
+  showDustGroup: true,
+  dustAfterMonths: DEFAULT_DUST_MONTHS,
   conflicts: defaultConflictSettings(),
   sidebarCollapsed: false,
   density: 'comfortable',
@@ -408,6 +415,9 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
     eisenhowerShowFuture: s.eisenhowerShowFuture === true,
     eisenhowerIncludeSomeday: s.eisenhowerIncludeSomeday === true,
     eisenhowerWorkspace: typeof s.eisenhowerWorkspace === 'string' ? s.eisenhowerWorkspace : null,
+    showDustGroup: s.showDustGroup !== false,
+    // Only the delays the Settings offers: anything else reads as the default.
+    dustAfterMonths: isDustMonths(s.dustAfterMonths) ? s.dustAfterMonths : base.dustAfterMonths,
     onboarded: s.onboarded === true,
     whatsNew: s.whatsNew !== false,
     seenVersion: typeof s.seenVersion === 'string' && /^\d+\.\d+\.\d+$/.test(s.seenVersion)

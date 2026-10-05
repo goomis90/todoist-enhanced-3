@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  effectiveEstimate, formatDuration, parseDurationInput, readEstimate, withEstimate,
+  durationMinutes, effectiveEstimate, estimateOf, formatDuration, parseDurationInput, readEstimate, withEstimate,
 } from './estimates';
+import type { TodoistDuration } from './types';
 import { item } from '@/test/items';
 
 describe('parseDurationInput', () => {
@@ -31,6 +32,7 @@ describe('readEstimate', () => {
   it('finds no estimate on a task without one', () => {
     expect(readEstimate(['week', 'quick'])).toEqual({
       minutes: null, raw: [], multiple: false, invalid: false,
+      source: null, tagMinutes: null, durationMinutes: null, mismatch: false,
     });
   });
 
@@ -87,5 +89,68 @@ describe('effectiveEstimate', () => {
 
   it('otherwise sums the open children', () => {
     expect(effectiveEstimate(parent, childrenOf)).toEqual({ minutes: 45, computed: true });
+  });
+});
+
+describe("Todoist's own duration, read beside the tag (#151)", () => {
+  const minutes = (amount: number): TodoistDuration => ({ amount, unit: 'minute' });
+
+  it('counts a duration on a task with no tag', () => {
+    expect(readEstimate({ labels: [], duration: minutes(25) })).toMatchObject({ minutes: 25, source: 'duration' });
+  });
+
+  it('counts a tag on a task with no duration', () => {
+    expect(readEstimate({ labels: ['est-40'], duration: null })).toMatchObject({ minutes: 40, source: 'tag' });
+  });
+
+  it("lets Todoist's duration win over the tag when they differ", () => {
+    expect(readEstimate({ labels: ['est-40'], duration: minutes(60) })).toMatchObject({
+      minutes: 60, source: 'duration', tagMinutes: 40, durationMinutes: 60, mismatch: true,
+    });
+  });
+
+  it('falls back to the tag when the duration is in days', () => {
+    expect(readEstimate({ labels: ['est-40'], duration: { amount: 1, unit: 'day' } }))
+      .toMatchObject({ minutes: 40, source: 'tag' });
+  });
+
+  it('sees no mismatch when both say the same', () => {
+    expect(readEstimate({ labels: ['est-30'], duration: minutes(30) }).mismatch).toBe(false);
+  });
+
+  it('ignores a duration in days, and amounts that are not a positive number of minutes', () => {
+    expect(durationMinutes({ amount: 2, unit: 'day' })).toBeNull();
+    expect(durationMinutes(minutes(0))).toBeNull();
+    expect(durationMinutes(minutes(-5))).toBeNull();
+    expect(durationMinutes(minutes(Number.NaN))).toBeNull();
+    expect(durationMinutes(minutes(12.6))).toBe(13);
+    expect(durationMinutes(null)).toBeNull();
+    expect(estimateOf({ labels: [], duration: { amount: 2, unit: 'day' } })).toBeNull();
+  });
+
+  it('never reports a duration as a second or broken estimate', () => {
+    const reading = readEstimate({ labels: ['est-30'], duration: minutes(45) });
+    expect(reading.multiple).toBe(false);
+    expect(reading.invalid).toBe(false);
+    expect(reading.raw).toEqual(['est-30']);
+  });
+
+  it('reads labels alone as tags only', () => {
+    expect(readEstimate(['est-15'])).toMatchObject({ minutes: 15, durationMinutes: null });
+  });
+
+  it('sums children carrying either one under a parent without its own', () => {
+    const parent = item({ id: 'p' });
+    const children = [
+      item({ id: 'a', parent_id: 'p', labels: ['est-10'] }),
+      item({ id: 'b', parent_id: 'p', duration: minutes(20) }),
+    ];
+    expect(effectiveEstimate(parent, () => children)).toEqual({ minutes: 30, computed: true });
+  });
+
+  it("uses a parent's own duration before its children", () => {
+    const parent = item({ id: 'p', duration: minutes(50) });
+    const children = [item({ id: 'a', parent_id: 'p', labels: ['est-10'] })];
+    expect(effectiveEstimate(parent, () => children)).toEqual({ minutes: 50, computed: false });
   });
 });
