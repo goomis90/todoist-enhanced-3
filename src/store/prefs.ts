@@ -142,7 +142,7 @@ export function mergeSynced(
 
 /** The views that make sense as a landing page: no view that needs an id. */
 export const HOME_VIEWS = [
-  'week', 'today', 'inbox', 'upcoming', 'someday', 'dashboard', 'insights', 'labels',
+  'week', 'today', 'inbox', 'upcoming', 'someday', 'dashboard', 'insights', 'labels', 'planning',
 ] as const satisfies readonly ViewId[];
 
 export type HomeView = (typeof HOME_VIEWS)[number];
@@ -364,8 +364,12 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
  * The defaults are the view's own: what a page opens grouped by depends on
  * what the page is, so the key goes with the question.
  */
-export const viewPrefs = (prefs: Preferences, viewKey: string): ViewPrefs =>
-  prefs.views[viewKey] ?? defaultViewPrefs(viewKey);
+/* Stored choices over the view's defaults, so a setting added later (such as
+   a board's width) takes its default on a view saved before it existed. */
+export const viewPrefs = (prefs: Preferences, viewKey: string): ViewPrefs => {
+  const stored = prefs.views[viewKey];
+  return stored ? { ...defaultViewPrefs(viewKey), ...stored } : defaultViewPrefs(viewKey);
+};
 
 /**
  * Merges stored preferences over the defaults so a version that adds a new

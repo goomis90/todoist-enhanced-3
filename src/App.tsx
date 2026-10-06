@@ -15,6 +15,7 @@ import { ConfirmProvider } from './components/overlays/Confirm';
 import { Overlay } from './components/overlays/Overlay';
 import { QUICK_ADD, QuickAdd } from './QuickAdd';
 import { WeekView } from './views/WeekView';
+import { PlanningView } from './views/PlanningView';
 import { UpcomingView } from './views/UpcomingView';
 import { SimpleListView } from './views/SimpleListView';
 import { ProjectView } from './views/ProjectView';
@@ -672,6 +673,7 @@ function AppShell({
             <WeekView {...viewProps} scope={weekLayout === 'split' ? 'anytime' : 'all'} />
           )}
           {route.view === 'today' && <WeekView {...viewProps} scope="today" />}
+          {route.view === 'planning' && <PlanningView {...viewProps} />}
           {route.view === 'upcoming' && <UpcomingView {...viewProps} />}
           {route.view === 'someday' && <SimpleListView kind="someday" {...viewProps} />}
           {route.view === 'inbox' && <SimpleListView kind="inbox" {...viewProps} />}

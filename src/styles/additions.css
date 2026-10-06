@@ -1180,6 +1180,72 @@
 .dragoverlay.project .hash{width:18px;height:18px;font-size:var(--fs-12);flex:0 0 auto}
 .dragoverlay.tag .ic{color:var(--muted);flex:0 0 auto}
 
+/* A board column is as tall as its tasks. Only one whose tasks don't fit on
+   screen scrolls on its own (.scrolls, set in ModeSurface), capped at the
+   screen height measured there; the heading stays put while it scrolls. */
+.board .col{position:relative}
+.board .col.scrolls{
+  max-height:var(--colh,none);
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+}
+.board .col.scrolls > .chead{
+  position:sticky;
+  top:calc(-1 * var(--s4));
+  margin-top:calc(-1 * var(--s4));
+  padding-top:var(--s4);
+  background:inherit;
+  z-index:2;
+}
+/* The page's own deep bottom margin only pushes a full-height board off
+   screen; a board page keeps a small one. Phones keep theirs for the nav bar. */
+@media (min-width:721px){
+  .page:has(.board){padding-bottom:var(--s4)}
+}
+
+/* While a task is carried every column stretches to full height, so any of
+   them is an easy drop target. */
+.board.dragging .col,
+.board.measuring .col{height:var(--colh,auto)}
+
+/* The board's page arrows sit at the end of the metrics line. */
+/* A zero-height slot: the 32px arrows overhang it evenly above and below, so
+   the metrics line is the same height with or without them and the board
+   below never shifts when they appear. */
+.metrics-slot{margin-left:auto;display:flex;align-items:center;height:0;align-self:center}
+.metrics-slot .boardnav{margin:0}
+
+/* ---------- Quieter scrollbars ----------
+   Every one of them — the page's, the board's, a column's own — is a 3px
+   hairline, just enough to say there is more. Chromium and Safari draw these; a
+   scrollbar-width/color on the same element would switch them off, hence the
+   reset. Firefox, without these, gets its thinnest native bar. */
+@supports selector(::-webkit-scrollbar){
+  .workspace .screen,
+  .page .board,
+  .page .board .col{scrollbar-width:auto;scrollbar-color:auto}
+  .workspace .screen::-webkit-scrollbar{width:3px;height:3px}
+  .page .board::-webkit-scrollbar{height:3px}
+  .page .board .col::-webkit-scrollbar{width:3px}
+  .workspace .screen::-webkit-scrollbar-track,
+  .page .board::-webkit-scrollbar-track,
+  .page .board .col::-webkit-scrollbar-track{background:transparent}
+  .workspace .screen::-webkit-scrollbar-thumb,
+  .page .board::-webkit-scrollbar-thumb,
+  .page .board .col::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .workspace .screen::-webkit-scrollbar-thumb:hover,
+  .page .board::-webkit-scrollbar-thumb:hover,
+  .page .board .col::-webkit-scrollbar-thumb:hover{background:var(--border-strong)}
+  .workspace .screen::-webkit-scrollbar-button,
+  .page .board::-webkit-scrollbar-button,
+  .page .board .col::-webkit-scrollbar-button{display:none}
+  .workspace .screen::-webkit-scrollbar-corner,
+  .page .board::-webkit-scrollbar-corner{background:transparent}
+}
+@supports not selector(::-webkit-scrollbar){
+  .page .board .col{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+}
+
 /* What's new (#115). The title and the buttons hold still; the list scrolls
    between them. The sheet itself stops scrolling so there is one scroller,
    and it is no taller than the composer, with the composer's side room. */

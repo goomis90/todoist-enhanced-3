@@ -9,6 +9,7 @@ import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { TaskRow } from './TaskRow';
 import { formatDuration, effectiveEstimate } from '@/domain/estimates';
+import { summariseLoad } from '@/domain/load';
 import type { Item } from '@/domain/types';
 
 interface TaskGroupProps {
@@ -17,7 +18,7 @@ interface TaskGroupProps {
   childrenOf: (id: string) => Item[];
   onOpen: (id: string) => void;
   /** Extra visual weight for Behind schedule and Quick. */
-  tint?: 'late' | 'quick';
+  tint?: 'late' | 'quick' | 'dust' | 'deadline' | 'today' | 'tomorrow';
   actions?: ReactNode;
   showProject?: boolean;
   /** Names each task's section in its row, for a group gathered from several. */
@@ -34,8 +35,9 @@ interface TaskGroupProps {
   viewKey?: string;
   /** Stays on the page with nothing in it, so the line that fills it is there. */
   keepWhenEmpty?: boolean;
-  /** An accent for the sections that carry meaning: late, quick, and gathering dust. */
-  accent?: 'late' | 'quick' | 'dust';
+  /** An accent for the sections that carry meaning: late, quick, gathering dust,
+      and Planning's deadline/today/tomorrow. */
+  accent?: 'late' | 'quick' | 'dust' | 'deadline' | 'today' | 'tomorrow';
   /** Said quietly after the title, as "over 3 months" is after Gathering dust. */
   subtitle?: string;
   /** The tasks here have been gathering dust: each row says its age and offers three actions. */
@@ -48,12 +50,17 @@ interface TaskGroupProps {
   onDelete?: () => void;
   /** Decision views can reuse rows while explicitly forbidding drag semantics. */
   draggable?: boolean;
+  /** Same meaning as a Board day column's own: shows "X% of capacity" below the heading. */
+  capacityMinutes?: number | null;
+  /** A short line under the heading, styled like an over-capacity warning — Planning's own "too many real tasks today" reading, or anything else a caller wants flagged there. */
+  warning?: string;
 }
 
 export function TaskGroup({
   title, items, childrenOf, onOpen, tint, actions,
   showProject = true, showSection = false, defaultCollapsed = false, dropTarget, onAddTask, accent,
   sectionId, onRename, onDelete, reorderable, viewKey, keepWhenEmpty = false, draggable = true,
+  capacityMinutes = null, warning,
   subtitle, dust = false,
 }: TaskGroupProps) {
   const { t, locale } = useT();
@@ -70,6 +77,10 @@ export function TaskGroup({
     (acc, item) => acc + (effectiveEstimate(item, childrenOf).minutes ?? 0),
     0,
   );
+  // Same "X% of capacity" reading Board mode already gives each day column —
+  // a list group had no equivalent, so a capacity-aware group (Planning's
+  // Today/Tomorrow) went unmeasured in list mode specifically.
+  const load = capacityMinutes != null ? summariseLoad(items, childrenOf, capacityMinutes) : null;
 
   // The meaning stays in the heading's colour rather than a panel behind it.
   const mark = accent ?? tint;
@@ -135,6 +146,12 @@ export function TaskGroup({
           </button>
         </div>
 
+        {load && (load.percentage !== null || warning) && (
+          <p className={`cload${load.level === 'over' ? ' over' : ''}`}>
+            {load.percentage !== null && `${load.percentage} %`}
+            {warning && <span className="cload-warning">{warning}</span>}
+          </p>
+        )}
         </div>
       )}
 
