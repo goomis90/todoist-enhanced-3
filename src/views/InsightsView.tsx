@@ -692,7 +692,7 @@ function Logbook({ completed, onOpen }: { completed: CompletedItem[]; onOpen?: (
               </h4>
               {entry.rows.map((task) => {
                 const project = snapshot.projects[task.project_id];
-                const minutes = task.labels ? estimateOf({ labels: task.labels } as never) : null;
+                const minutes = estimateOf({ labels: task.labels ?? [], duration: task.duration });
                 const priority = toDisplayPriority(task.priority ?? 1);
                 return (
                   <div

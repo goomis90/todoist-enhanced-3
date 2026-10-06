@@ -6,6 +6,7 @@ import { createTasksSlice } from './tasks';
 import { createTasksMoveSlice } from './tasks-move';
 import { createStructureSlice } from './structure';
 import { createUiSlice } from './ui';
+import { createDustSlice } from './dust';
 import * as idb from '@/db/idb';
 import { flushPersist, pendingDeletes } from './helpers';
 
@@ -13,7 +14,8 @@ import { flushPersist, pendingDeletes } from './helpers';
  * The app's one store, built from slices — one file per area:
  * sync.ts (Todoist, the queue, the demo), preferences.ts (settings and the
  * settings comment), tasks.ts and tasks-move.ts (tasks), structure.ts
- * (projects, sections, labels) and ui.ts (toasts, undo, drag, selection).
+ * (projects, sections, labels), ui.ts (toasts, undo, drag, selection) and
+ * dust.ts (the Someday tasks kept on purpose, on this device).
  * Shared helpers are in helpers.ts and the types in types.ts. Components
  * import `useStore` from here, as before.
  */
@@ -24,6 +26,7 @@ export const useStore = create<AppState>()((...a) => ({
   ...createTasksMoveSlice(...a),
   ...createStructureSlice(...a),
   ...createUiSlice(...a),
+  ...createDustSlice(...a),
 }));
 
 export type { AppState, SyncState, Toast, UndoEntry } from './types';

@@ -167,6 +167,8 @@ export interface CompletedItem {
   content: string;
   completed_at: string;
   labels?: string[];
+  /** Todoist's own duration, read as an estimate like on an open task (#151). */
+  duration?: TodoistDuration | null;
   priority?: TodoistPriority;
   note_count?: number;
 }

@@ -53,4 +53,15 @@ describe('detectIncomplete', () => {
     const bare = item({ id: 'bare' });
     expect(detectIncomplete([estimated, bare]).map((task) => task.id)).toEqual(['bare']);
   });
+
+  it("counts Todoist's own duration as an estimate (#151)", () => {
+    const timed = item({ id: 'timed', duration: { amount: 30, unit: 'minute' } });
+    const days = item({ id: 'days', duration: { amount: 1, unit: 'day' } });
+    expect(detectIncomplete([timed, days]).map((task) => task.id)).toEqual(['days']);
+  });
+
+  it('never reports a duration as a second estimate', () => {
+    const both = item({ labels: ['est-30'], duration: { amount: 45, unit: 'minute' } });
+    expect(detectConflicts([both], noChildren, defaultConflictSettings())).toEqual([]);
+  });
 });

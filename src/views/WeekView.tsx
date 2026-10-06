@@ -5,7 +5,9 @@ import { DisplayMenu } from '@/components/DisplayMenu';
 import { TaskGroup } from '@/components/TaskGroup';
 import { ModeSurface } from '@/components/ModeSurface';
 import { Icon } from '@/components/Icon';
+import { TimePanel } from '@/components/TimePanel';
 import { useT } from '@/hooks/useT';
+import { useTimePill } from '@/hooks/useTimePill';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { useConfirm } from '@/components/overlays/Confirm';
@@ -17,7 +19,7 @@ import { toApiDate } from '@/domain/dates';
 import { dueForDate } from '@/domain/recurrence';
 import { weekLabel } from '@/domain/types';
 import { placementFor, type TaskPlacement } from '@/domain/dnd';
-import type { GroupKey } from '@/domain/types';
+import type { GroupKey, Item } from '@/domain/types';
 
 /**
  * How much of the week this page is showing.
@@ -32,7 +34,7 @@ export type WeekScope = 'all' | 'today' | 'anytime';
 interface WeekViewProps {
   onOpen: (id: string) => void;
   onInsights: () => void;
-  onUnestimated: () => void;
+  onUnestimated: (items?: Item[]) => void;
   onAddTaskTo: (placement: TaskPlacement) => void;
   scope?: WeekScope;
 }
@@ -67,6 +69,7 @@ function WeekBody({
   onOpen, onInsights, onUnestimated, onAddTaskTo, scope = 'all',
 }: WeekViewProps) {
   const { t } = useT();
+  const timePill = useTimePill();
   const { snapshot, items, childrenOf } = useData();
   const prefs = useStore((s) => s.prefs);
   const updateMany = useStore((s) => s.updateMany);
@@ -156,8 +159,9 @@ function WeekBody({
     const today = [
       { id: 'overdue', title: t('group.overdue'), items: groups.overdue },
       ...(prefs.showQuickGroup
-        ? [{ id: 'quick', title: t('group.quick'), items: groups.quick,
-            dropTarget: { kind: 'quick' as const } }]
+        /* Blue, and a place to look rather than somewhere to drop: a card is
+           not made quick by being dragged here. */
+        ? [{ id: 'quick', title: t('group.quick'), items: groups.quick, accent: 'quick' as const }]
         : []),
       { id: 'untimed', title: t('group.untimed'), items: groups.untimed,
         dropTarget: { kind: 'today' as const } },
@@ -196,6 +200,13 @@ function WeekBody({
         }
         load={load}
         onOpenUnestimated={load.unestimatedCount > 0 ? onUnestimated : undefined}
+        time={timePill}
+      />
+      <TimePanel
+        pageItems={scoped}
+        pageLabel={t(scope === 'today' ? 'nav.today' : 'nav.week')}
+        onOpen={onOpen}
+        onUnestimated={onUnestimated}
       />
 
 

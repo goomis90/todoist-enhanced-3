@@ -6,6 +6,7 @@ import { applySync, applyWrite, sync } from '@/api/sync';
 import { sendCommands, type Command } from '@/api/commands';
 import * as idb from '@/db/idb';
 import { emptySnapshot, setWeekLabel } from '@/domain/types';
+import { readKept } from '@/domain/views';
 import { detectLocale, translate } from '@/i18n';
 import { buildDemoSnapshot } from '@/demo/demoData';
 import { sessionGet, sessionRemove, sessionSet } from '@/lib/sessionStore';
@@ -16,6 +17,7 @@ import {
 import {
   PREFS_KEY, preferencesWriteTimer, remotePreferences, tourSnapshotBackup, withOnboarding,
 } from './preferences';
+import { DUST_KEY } from './dust';
 import type { AppState } from './types';
 import type { Slice, SyncSlice } from './types';
 
@@ -144,10 +146,11 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       if (signIn === 'signed-in') sessionRemove('demo');
       if (signIn === 'denied' || signIn === 'failed') set({ signInError: signIn });
 
-      const [storedPrefs, snapshot, queue] = await Promise.all([
+      const [storedPrefs, snapshot, queue, storedKept] = await Promise.all([
         idb.loadPrefs<Preferences>(PREFS_KEY),
         idb.loadSnapshot(),
         idb.readQueue(),
+        idb.loadPrefs<unknown>(DUST_KEY),
       ]);
 
       const prefs = hydratePreferences(storedPrefs, detectLocale());
@@ -166,6 +169,8 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
         demo: resumeDemo,
         ready: true,
         pendingCount: queue.length,
+        // The demo is a sandbox: it never reads what a real account kept here.
+        dustKept: resumeDemo ? {} : readKept(storedKept),
       });
 
       if (connected) {
@@ -193,7 +198,10 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       if (canonical) setWeekLabel(canonical.weekLabel);
       const adopted = canonical ?? get().prefs;
       const prefs = withOnboarding(snapshot, adopted);
-      set({ connected: true, snapshot, prefs, syncState: 'idle' });
+      set({
+        connected: true, snapshot, prefs, syncState: 'idle',
+        sidePanel: null, timeFilter: { minutes: null, scope: 'page', sort: 'duration' },
+      });
       void idb.saveSnapshot(snapshot);
       if (canonical || prefs !== adopted) void idb.savePrefs(PREFS_KEY, prefs);
       /* What the same person left waiting goes out now; what another account
@@ -235,6 +243,10 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       pendingCount: 0,
       syncState: 'idle',
       resolvedIds: {},
+      dustKept: {},
+      // What was asked of one account's tasks is not asked of the next one's.
+      sidePanel: null,
+      timeFilter: { minutes: null, scope: 'page', sort: 'duration' },
     });
   },
   async refresh(full = false, signedIn) {

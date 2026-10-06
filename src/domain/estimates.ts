@@ -1,8 +1,18 @@
 import { ESTIMATE_PREFIX, type Item } from './types';
 
 /**
- * An estimate is the label `est-<positive integer>`, where the integer is a
- * number of minutes. Any positive value is accepted; there is no fixed grid.
+ * An estimate is a number of minutes, carried one of two ways (#151):
+ *
+ * - the label `est-<positive integer>`, which works on every plan and is what
+ *   this app has always written;
+ * - Todoist's own `duration` field, in minutes, which Todoist officially
+ *   supports on a task with a date and a time (where it is the length of the
+ *   block in its calendar) and is rolling out for undated tasks.
+ *
+ * Both are read. When a task carries both and they differ, Todoist's own
+ * duration wins and the tag is the fallback: the field Todoist shows is the
+ * one the person sees and edits there. A duration counted in days is not an
+ * estimate and is ignored.
  */
 
 export interface EstimateReading {
@@ -14,14 +24,40 @@ export interface EstimateReading {
   multiple: boolean;
   /** True when an `est-*` label is present but its value is not a positive integer. */
   invalid: boolean;
+  /** Which of the two the minutes came from. */
+  source: 'tag' | 'duration' | null;
+  /** The first valid `est-*` tag, in minutes. */
+  tagMinutes: number | null;
+  /** The `duration` field, when it is a positive number of minutes. */
+  durationMinutes: number | null;
+  /** Both are valid, and they disagree. */
+  mismatch: boolean;
 }
 
 const ESTIMATE_RE = new RegExp(`^${ESTIMATE_PREFIX}(.+)$`, 'i');
 
-/** Reads the estimate carried by a set of labels, reporting conflicts rather than guessing. */
-export function readEstimate(labels: string[]): EstimateReading {
+type EstimateSource = Pick<Item, 'labels'> & { duration?: Item['duration'] };
+
+/** Todoist's duration as minutes, or null when it is absent, in days, or not a positive amount. */
+export function durationMinutes(duration: Item['duration'] | undefined): number | null {
+  if (!duration || duration.unit !== 'minute') return null;
+  const amount = Number(duration.amount);
+  if (!Number.isFinite(amount)) return null;
+  const minutes = Math.round(amount);
+  return minutes > 0 ? minutes : null;
+}
+
+/**
+ * Reads the estimate a task carries, reporting tag conflicts rather than
+ * guessing. Given labels alone, only the tag is read.
+ *
+ * `multiple` and `invalid` are about tags only: a duration can never be the
+ * reason a task is reported as having two estimates or a broken one.
+ */
+export function readEstimate(source: string[] | EstimateSource): EstimateReading {
+  const labels = Array.isArray(source) ? source : source.labels;
+  const fromDuration = Array.isArray(source) ? null : durationMinutes(source.duration);
   const raw = labels.filter((l) => ESTIMATE_RE.test(l));
-  if (raw.length === 0) return { minutes: null, raw, multiple: false, invalid: false };
 
   const parsed = raw.map((label) => {
     const value = label.match(ESTIMATE_RE)![1];
@@ -30,17 +66,26 @@ export function readEstimate(labels: string[]): EstimateReading {
     const n = Number.parseInt(value, 10);
     return n > 0 ? n : null;
   });
-
   const valid = parsed.filter((n): n is number => n !== null);
+  const fromTag = valid.length > 0 ? valid[0] : null;
+
+  const [chosen, minutes]: ['tag' | 'duration' | null, number | null] = fromDuration !== null
+    ? ['duration', fromDuration]
+    : fromTag !== null ? ['tag', fromTag] : [null, null];
+
   return {
-    minutes: valid.length > 0 ? valid[0] : null,
+    minutes,
     raw,
     multiple: raw.length > 1,
     invalid: valid.length !== raw.length,
+    source: chosen,
+    tagMinutes: fromTag,
+    durationMinutes: fromDuration,
+    mismatch: fromTag !== null && fromDuration !== null && fromTag !== fromDuration,
   };
 }
 
-export const estimateOf = (item: Item): number | null => readEstimate(item.labels).minutes;
+export const estimateOf = (item: EstimateSource): number | null => readEstimate(item).minutes;
 
 /**
  * Parses what a human types into minutes. Accepts "12", "12 min", "1 h",
@@ -104,7 +149,7 @@ export function formatDuration(minutes: number, locale: 'en' | 'fr' = 'en'): str
  * stands in as a computed estimate. Children are looked up through `childrenOf`.
  */
 export function effectiveEstimate(
-  item: Item,
+  item: Pick<Item, 'id' | 'labels' | 'duration'>,
   childrenOf: (parentId: string) => Item[],
 ): { minutes: number | null; computed: boolean } {
   const own = estimateOf(item);
