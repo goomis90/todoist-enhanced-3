@@ -142,7 +142,7 @@ export interface AppState {
    * Filling in a page's missing estimates is a single act, so it costs a
    * single round trip and undoes as a single mistake.
    */
-  setEstimates: (entries: Array<{ id: string; minutes: number }>) => Promise<void>;
+  setEstimates: (entries: Array<{ id: string; minutes: number | null }>) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
   /**
    * The Logbook row a task was just opened from (#103): the date it was

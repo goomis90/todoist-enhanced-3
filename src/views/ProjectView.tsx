@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, Fragment } from 'react';
+import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { SubtasksProvider } from '@/components/TaskRow';
 import { DisplayMenu } from '@/components/DisplayMenu';
@@ -141,7 +141,7 @@ function ProjectBody({
     () => current.mode === 'board' && current.group !== 'none'
       ? { quick: [], rest: scoped }
       : pullQuick(scoped, prefs.showQuickGroup, current.sort, childrenOf, 'project', snapshot),
-    [scoped, current.mode, current.sort, prefs.showQuickGroup, childrenOf, snapshot],
+    [scoped, current.mode, current.group, current.sort, prefs.showQuickGroup, childrenOf, snapshot],
   );
   const pool = split.rest;
 
@@ -153,7 +153,10 @@ function ProjectBody({
     [snapshot.sections, projectId],
   );
 
-  const sorted = (list: typeof scoped) => sortItems(list, current.sort, childrenOf, 'project', snapshot);
+  const sorted = useCallback(
+    (list: typeof scoped) => sortItems(list, current.sort, childrenOf, 'project', snapshot),
+    [current.sort, childrenOf, snapshot],
+  );
 
   /**
    * The tasks in the project itself, in no section.
@@ -165,8 +168,7 @@ function ProjectBody({
    */
   const looseItems = useMemo(
     () => sorted(pool.filter((i) => !i.section_id)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pool, current.sort, childrenOf],
+    [pool, sorted],
   );
 
   const sectionGroups = useMemo(
@@ -176,8 +178,7 @@ function ProjectBody({
         title: section.name,
         items: sorted(pool.filter((i) => i.section_id === section.id)),
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sections, pool, current.sort, childrenOf],
+    [sections, pool, sorted],
   );
 
   useEffect(() => {

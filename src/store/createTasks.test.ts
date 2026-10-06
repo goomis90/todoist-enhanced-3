@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/db/idb', () => ({
+  savePrefs: vi.fn(async () => {}),
   saveSnapshot: vi.fn(async () => {}),
   enqueue: vi.fn(async () => {}),
   dequeue: vi.fn(async () => {}),
@@ -14,6 +15,8 @@ vi.mock('@/api/commands', async (importOriginal) => ({
 
 import { sendCommands, type Command, type CommandResult } from '@/api/commands';
 import { emptySnapshot } from '@/domain/types';
+import { item, due } from '@/test/items';
+import { defaultPreferences } from './prefs';
 import { useStore } from './store';
 
 const sent = vi.mocked(sendCommands);
@@ -26,7 +29,7 @@ beforeEach(() => {
   vi.stubGlobal('navigator', { onLine: true });
   vi.clearAllMocks();
   sent.mockImplementation(async (_token, commands) => ok(commands));
-  useStore.setState({ demo: false, snapshot: emptySnapshot(), toasts: [], undoStack: [], pendingCount: 0, syncState: 'idle' });
+  useStore.setState({ prefs: defaultPreferences('en'), connected: false, demo: false, snapshot: emptySnapshot(), toasts: [], undoStack: [], pendingCount: 0, syncState: 'idle' });
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -56,5 +59,36 @@ describe('several tasks at once (#152)', () => {
   it('sends nothing for an empty list', async () => {
     await useStore.getState().createTasks([]);
     expect(sent).not.toHaveBeenCalled();
+  });
+});
+
+describe('estimate writes use the selected storage', () => {
+  it('queues native estimates for a parent and its subtasks with read-back metadata', async () => {
+    vi.stubGlobal('navigator', { onLine: false });
+    useStore.setState({ prefs: { ...defaultPreferences('en'), estimateStorage: 'duration' } });
+    await useStore.getState().createTask({ content: 'Parent', project_id: 'inbox', estimateMinutes: 25, subtasks: [{ content: 'Child', estimateMinutes: 10 }] });
+    const tasks = Object.values(useStore.getState().snapshot.items);
+    expect(tasks.map((task) => task.duration?.amount)).toEqual([25, 10]);
+    expect(tasks.every((task) => !task.labels.some((l) => l.startsWith('est-')))).toBe(true);
+    expect(sent).not.toHaveBeenCalled();
+  });
+  it('uses tags and preserves the calendar block on edit and clear', async () => {
+    const snapshot = emptySnapshot();
+    snapshot.items.a = item({ id: 'a', labels: ['work', 'est-25'], due: due('2026-10-06T10:00:00'), duration: { amount: 60, unit: 'minute' } });
+    useStore.setState({ snapshot });
+    await useStore.getState().updateTask('a', { estimateMinutes: 90 });
+    expect(sent.mock.calls[0][1][0].args).toEqual({ id: 'a', labels: ['work', 'est-90'] });
+    await useStore.getState().setEstimates([{ id: 'a', minutes: null }]);
+    expect(useStore.getState().snapshot.items.a.duration?.amount).toBe(60);
+    expect(useStore.getState().snapshot.items.a.labels).toEqual(['work']);
+  });
+  it('blocks duration writes for a free account, including stored preferences from another device', async () => {
+    const snapshot = emptySnapshot();
+    snapshot.user = { id: 'free', is_premium: false } as NonNullable<typeof snapshot.user>;
+    useStore.setState({ snapshot, prefs: { ...defaultPreferences('en'), estimateStorage: 'duration' } });
+    expect(useStore.getState().prefs.estimateStorage).toBe('tag');
+    await useStore.getState().createTask({ content: 'Free', estimateMinutes: 25 });
+    expect(sent.mock.calls[0][1][0].args).toMatchObject({ labels: ['est-25'] });
+    expect(sent.mock.calls[0][1][0].args).not.toHaveProperty('duration');
   });
 });

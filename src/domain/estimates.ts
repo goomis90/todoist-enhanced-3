@@ -1,4 +1,4 @@
-import { ESTIMATE_PREFIX, type Item } from './types';
+import { ESTIMATE_PREFIX, estimateStorage, type EstimateStorage, type TodoistUser, type Item } from './types';
 
 /**
  * An estimate is a number of minutes, carried one of two ways (#151):
@@ -9,10 +9,9 @@ import { ESTIMATE_PREFIX, type Item } from './types';
  *   supports on a task with a date and a time (where it is the length of the
  *   block in its calendar) and is rolling out for undated tasks.
  *
- * Both are read. When a task carries both and they differ, Todoist's own
- * duration wins and the tag is the fallback: the field Todoist shows is the
- * one the person sees and edits there. A duration counted in days is not an
- * estimate and is ignored.
+ * Both are read: the chosen storage wins, with the other as fallback. In tag
+ * mode a timed duration can be a calendar block, so the tag takes precedence.
+ * A duration counted in days is not an estimate and is ignored.
  */
 
 export interface EstimateReading {
@@ -69,8 +68,10 @@ export function readEstimate(source: string[] | EstimateSource): EstimateReading
   const valid = parsed.filter((n): n is number => n !== null);
   const fromTag = valid.length > 0 ? valid[0] : null;
 
-  const [chosen, minutes]: ['tag' | 'duration' | null, number | null] = fromDuration !== null
-    ? ['duration', fromDuration]
+  const preferred = estimateStorage();
+  const [chosen, minutes]: ['tag' | 'duration' | null, number | null] = preferred === 'tag' && fromTag !== null
+    ? ['tag', fromTag]
+    : fromDuration !== null ? ['duration', fromDuration]
     : fromTag !== null ? ['tag', fromTag] : [null, null];
 
   return {
@@ -129,6 +130,21 @@ export const estimateLabel = (minutes: number): string => `${ESTIMATE_PREFIX}${M
 export function withEstimate(labels: string[], minutes: number | null): string[] {
   const kept = labels.filter((l) => !ESTIMATE_RE.test(l));
   return minutes === null ? kept : [...kept, estimateLabel(minutes)];
+}
+
+/** Explicit free accounts drop duration writes silently (verified on Pro/Free).
+ * Unknown plans are allowed and verified after writing; team membership wins. */
+export function canStoreDurations(user: Pick<TodoistUser, 'is_premium' | 'premium_status'> | null): boolean {
+  if (user?.premium_status && user.premium_status !== 'not_premium') return true;
+  return user?.is_premium !== false;
+}
+
+/** The only builder of estimate fields. Tag mode never owns the calendar block. */
+export function estimatePatch(item: Pick<Item, 'labels'>, minutes: number | null, storage: EstimateStorage = estimateStorage()): Pick<Item, 'labels'> & Partial<Pick<Item, 'duration'>> {
+  if (minutes !== null && (!Number.isFinite(minutes) || Math.round(minutes) <= 0)) throw new Error('Invalid estimate');
+  return storage === 'tag'
+    ? { labels: withEstimate(item.labels, minutes) }
+    : { labels: withEstimate(item.labels, null), duration: minutes === null ? null : { amount: Math.round(minutes), unit: 'minute' } };
 }
 
 /** "1 h 15", "45 min", "2 h". The separator keeps the mockup's typography. */

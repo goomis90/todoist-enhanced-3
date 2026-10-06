@@ -13,6 +13,22 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 1.20.0
+
+Choose where estimates are stored and preview conversions between tags and Todoist durations.
+
+🆕 **Choose tags or Todoist durations for estimates in Settings.** Tags remain the default and keep calendar blocks independent from estimates. Duration mode uses Todoist’s own field, removes estimate tags and changes the calendar block on timed tasks. Free accounts use tags because Todoist does not retain their durations. Every duration write is checked against Todoist; if it is refused or lost, the estimate is recovered as a tag and a message explains the change. Unknown account plans are allowed with the same check.
+
+🆕 **Convert existing estimates with a preview in Settings.** The preview counts open tasks and subtasks, identifies timed tasks and lists skipped invalid tags, differing estimates and durations in days. Converting durations to tags preserves timed calendar blocks and clears untimed durations. Completed tasks and account labels are left alone. The result lists failed tasks or says when changes are waiting for a connection.
+
+🆕 **Settle differing estimates in Conflicts when using durations.** Keep the duration and remove its estimate tag, or use the tag as the duration. The second choice warns when a calendar block will change. Totals and Insights use your selected source first and fall back to the other when needed. Existing accounts get a separate choice after the startup windows, and new accounts choose during setup.
+
+🆕 **Estimate selected tasks together.** Select several tasks, open Estimate in the bottom bar and type minutes or hours such as 25, 1h15 or 90 min to apply one value to all of them, or remove their estimates. The chosen storage mode applies to the whole selection.
+
+🐛 **Create a missing tag wherever you choose tags.** Search for its name and choose Create in task details, the composer or bulk selection to create and attach it. Display filters also offer creation.
+
+🐛 **A click on the page background clears the task selection.** Task rows, bulk controls and open dialogs keep their own interactions.
+
 ## 1.19.0
 
 A time filter for the minutes you have, a Gathering dust group in Someday, the Quick group on every list, and a tour of what an update brings.

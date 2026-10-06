@@ -1,3 +1,4 @@
+import { useCreateTag } from '@/hooks/useCreateTag';
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { copyText, isTemporaryId, todoistTaskUrl } from '@/api/links';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
@@ -12,7 +13,7 @@ import { navigate } from '@/hooks/useRoute';
 import { useStore } from '@/store/store';
 import { useConfirm } from './Confirm';
 import {
-  effectiveEstimate, estimateLabel, formatDuration, withEstimate,
+  effectiveEstimate, formatDuration,
 } from '@/domain/estimates';
 import {
   deadlineDate, dueDate, formatRelativeDay, hasTime, toApiDate, toApiDateTime,
@@ -349,6 +350,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [tagQuery, setTagQuery] = useState('');
+  const newTagChoice = useCreateTag(tagQuery);
   const panelRef = useRef<HTMLDivElement>(null);
   const menuRef = useMenuKeys(menuOpen, () => setMenuOpen(false));
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -470,7 +472,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
     setRefusals(savedRefusals(item.content, snapshot, naturalDates, dateFormat));
     setMenuOpen(false);
     setTagPickerOpen(false);
-  }, [item?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [item?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- Re-seed only for a different task; sync updates must preserve edits.
 
   useEffect(() => {
     if (editingDescription) descriptionRef.current?.focus();
@@ -540,6 +542,18 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
     .sort(byLabelOrder);
   const filteredTags = allTags.filter((label) => matchesSearch(label.name, tagQuery));
 
+  const { name: newTag, available: canCreateTag, busy: creatingTag } = newTagChoice;
+  async function createAndAttachTag() {
+    if (!item) return;
+    const taskId = item.id;
+    const name = await newTagChoice.create();
+    const current = useStore.getState().snapshot.items[taskId];
+    if (name && current) {
+      await updateTask(taskId, { labels: [...new Set([...current.labels, name])] });
+      setTagQuery('');
+    }
+  }
+
   const toggleTag = (name: string) => void updateTask(item.id, {
     labels: item.labels.includes(name)
       ? item.labels.filter((label) => label !== name)
@@ -585,7 +599,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
     let labels = item.labels;
     if (read.labels.length > 0) labels = [...new Set([...labels, ...read.labels])];
-    if (read.minutes !== null) labels = withEstimate(labels, read.minutes);
+    if (read.minutes !== null) fields.estimateMinutes = read.minutes;
     if (labels !== item.labels) fields.labels = labels;
 
     if (Object.keys(fields).length > 0) void updateTask(item.id, fields);
@@ -648,7 +662,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
       content: title,
       project_id: item!.project_id,
       parent_id: item!.id,
-      ...(estimate === null ? {} : { labels: [estimateLabel(estimate)] }),
+      ...(estimate === null ? {} : { estimateMinutes: estimate }),
     });
     setSubtaskDraft('');
   }
@@ -1068,7 +1082,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                   : t('task.estimatePlaceholder')
               }
               onCommit={(value) =>
-                void updateTask(item.id, { labels: withEstimate(item.labels, value) })}
+                void updateTask(item.id, { estimateMinutes: value })}
             />
           </div>
 
@@ -1144,7 +1158,10 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                     onChange={(event) => setTagQuery(event.target.value)}
                     onKeyDown={(event) => {
                       event.stopPropagation();
-                      if (event.key === 'Enter' && filteredTags[0]) {
+                      if (event.key === 'Enter' && canCreateTag) {
+                        event.preventDefault();
+                        void createAndAttachTag();
+                      } else if (event.key === 'Enter' && filteredTags[0]) {
                         event.preventDefault();
                         toggleTag(filteredTags[0].name);
                       }
@@ -1152,6 +1169,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                     }}
                   />
                 </div>
+                {canCreateTag && <button className="opt" disabled={creatingTag} onClick={() => void createAndAttachTag()}><Icon name="plus" size="sm" />{t('estimates.createTag', { name: newTag })}</button>}
                 {allTags.length === 0 && <p className="menuhint">{t('labels.none')}</p>}
                 {allTags.length > 0 && filteredTags.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
                 {filteredTags.map((label) => (

@@ -8,6 +8,22 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 1.20.0
+
+Choisissez où stocker les estimations et prévisualisez leur conversion entre étiquettes et durées Todoist.
+
+🆕 **Choisissez les étiquettes ou les durées Todoist dans les Réglages.** Les étiquettes restent le choix par défaut et préservent l’indépendance des blocs du calendrier. Le mode durée utilise le champ Todoist, retire les étiquettes d’estimation et modifie le bloc des tâches avec une heure. Les comptes gratuits utilisent les étiquettes, car Todoist ne conserve pas leurs durées. Chaque écriture de durée est contrôlée auprès de Todoist ; si elle est refusée ou perdue, l’estimation est récupérée en étiquette et un message explique le changement. Les abonnements inconnus sont autorisés avec le même contrôle.
+
+🆕 **Convertissez les estimations existantes avec une prévisualisation dans les Réglages.** L’aperçu compte les tâches ouvertes et les sous-tâches, identifie celles avec une heure et liste les exclusions : étiquettes invalides, estimations différentes et durées en jours. La conversion vers les étiquettes conserve les blocs horaires et efface les durées sans heure. Les tâches terminées et les étiquettes du compte sont préservées. Le bilan liste les tâches en échec ou indique les changements en attente de connexion.
+
+🆕 **Réglez les estimations différentes dans les Conflits en mode durée.** Conservez la durée et retirez son étiquette d’estimation, ou utilisez l’étiquette comme durée. Ce second choix avertit lorsqu’un bloc du calendrier va changer. Les totaux et les Analyses privilégient la source choisie et utilisent l’autre en secours. Les comptes existants choisissent après les fenêtres de démarrage ; les nouveaux comptes choisissent pendant la configuration.
+
+🆕 **Estimez plusieurs tâches sélectionnées ensemble.** Sélectionnez les tâches, ouvrez Estimation dans la barre du bas et saisissez des minutes ou des heures comme 25, 1h15 ou 90 min pour appliquer une valeur commune, ou retirez leurs estimations. Le mode de stockage choisi s’applique à toute la sélection.
+
+🐛 **Créez une étiquette manquante partout où vous choisissez les étiquettes.** Recherchez son nom et choisissez Créer dans une tâche, le formulaire de création ou la sélection groupée pour la créer et l’attacher. Les filtres d’affichage proposent aussi la création.
+
+🐛 **Un clic sur le fond de la page efface la sélection de tâches.** Les lignes, les commandes groupées et les fenêtres ouvertes conservent leurs interactions.
+
 ## 1.19.0
 
 Un filtre de temps pour les minutes dont vous disposez, un groupe Elles prennent la poussière dans Un jour, le groupe Rapide sur toutes les listes, et une visite de ce que chaque mise à jour apporte.

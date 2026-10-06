@@ -1,3 +1,4 @@
+import { useCreateTag } from '@/hooks/useCreateTag';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Overlay } from './Overlay';
 import { useConfirm } from './Confirm';
@@ -9,7 +10,7 @@ import { DateField } from '../DateField';
 import { TaskNameField } from '../TaskNameField';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
-import { estimateLabel, formatDuration } from '@/domain/estimates';
+import { formatDuration } from '@/domain/estimates';
 import { markerStyle } from '@/domain/colors';
 import { toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import {
@@ -63,6 +64,7 @@ export function Composer({
   const [minutes, setMinutes] = useState<number | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [tagQuery, setTagQuery] = useState('');
+  const newTag = useCreateTag(tagQuery);
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [subtaskDraft, setSubtaskDraft] = useState('');
   /* The description is as tall as what is written in it (#113). */
@@ -137,6 +139,11 @@ export function Composer({
     else setLabels((prev) => [...prev, tag]);
   };
 
+  async function createAndPickTag() {
+    const name = await newTag.create();
+    if (name) { setLabels((previous) => [...new Set([...previous, name])]); setTagQuery(''); }
+  }
+
   /* The default the project field falls back to, which is where a refused
      `#project` leaves it: the composer was opened on somewhere, and "nowhere"
      is not a project a task can be created in. */
@@ -189,6 +196,7 @@ export function Composer({
      on every keystroke and the effect would never stop firing. */
   useEffect(() => {
     if (readRepeat) setRecurrence(readRepeat);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- The rule text is stable; the parser recreates the object on each keystroke.
   }, [readRepeat?.string, refusals]);
   useEffect(() => { if (readProject) setProjectId(readProject); }, [readProject, refusals]);
   /* The section follows the project it was named with. It watches both, so
@@ -264,10 +272,8 @@ export function Composer({
           project_id: read.projectId || inbox,
           section_id: read.sectionId || undefined,
           priority: toTodoistPriority(read.priority ?? 4),
-          labels: [
-            ...read.labels,
-            ...(read.minutes !== null ? [estimateLabel(read.minutes)] : []),
-          ],
+          labels: read.labels,
+          ...(read.minutes !== null ? { estimateMinutes: read.minutes } : {}),
           due: read.recurrence
             ? { string: read.recurrence.string, lang: read.recurrence.lang, is_recurring: true }
             : read.date
@@ -284,7 +290,7 @@ export function Composer({
 
   async function create(content: string) {
     const allLabels = [...allTags];
-    if (minutes !== null) allLabels.push(estimateLabel(minutes));
+
 
     /* `||`, not `??`: an unset picker is an empty string, not null, and an
        empty string sent as project_id is what Todoist answers "invalid
@@ -297,7 +303,7 @@ export function Composer({
        written the same way (#163). */
     const allSubtasks = (pending ? [...subtasks, pending] : subtasks).map((line) => {
       const { content: title, minutes: estimate } = splitTrailingEstimate(line);
-      return { content: title, labels: estimate === null ? [] : [estimateLabel(estimate)] };
+      return { content: title, ...(estimate === null ? {} : { estimateMinutes: estimate }) };
     });
 
     await createTask({
@@ -307,6 +313,7 @@ export function Composer({
       section_id: sectionId || undefined,
       priority: toTodoistPriority(priority),
       labels: allLabels,
+      ...(minutes !== null ? { estimateMinutes: minutes } : {}),
       /* A recurrence is sent as the rule and nothing else. Todoist resolves
          it, and a date sent alongside would pin the first occurrence to
          whatever this device worked out — which is the one number the app has
@@ -477,7 +484,9 @@ export function Composer({
                   onChange={(event) => setTagQuery(event.target.value)}
                   onKeyDown={(event) => {
                     event.stopPropagation();
-                    if (event.key === 'Enter' && filteredTags[0]) {
+                    if (event.key === 'Enter' && newTag.available) {
+                      event.preventDefault(); void createAndPickTag();
+                    } else if (event.key === 'Enter' && filteredTags[0]) {
                       event.preventDefault();
                       toggleTag(filteredTags[0].name);
                     }
@@ -485,6 +494,7 @@ export function Composer({
                   }}
                 />
               </div>
+              {newTag.available && <button className="opt" disabled={newTag.busy} onClick={() => void createAndPickTag()}><Icon name="plus" size="sm" />{t('estimates.createTag', { name: newTag.name })}</button>}
               {tags.length === 0 && <p className="menuhint">{t('labels.none')}</p>}
               {tags.length > 0 && filteredTags.length === 0 && <p className="menuhint">{t('search.noResults')}</p>}
               {filteredTags.map((label) => (

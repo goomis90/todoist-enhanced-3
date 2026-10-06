@@ -1,4 +1,5 @@
 /** Talking to Todoist: signing in and out, reading, writing, the offline queue, the demo. */
+import { verifyEstimateWrites } from './estimate-safety';
 import { auth } from '@/api/auth';
 import { completeSignIn } from '@/api/oauth';
 import { ApiError, NotConnectedError } from '@/api/client';
@@ -51,6 +52,7 @@ export async function flushQueue(
     .map(({ queuedAt: _q, attempts: _a, userId: _u, ...cmd }) => cmd);
   if (commands.length === 0) return false;
   try {
+    const optimistic = get().snapshot;
     const result = await sendCommands(get().snapshot.syncToken, commands);
     let merged = applyWrite(get().snapshot, result.responses, result.mapping);
 
@@ -75,18 +77,22 @@ export async function flushQueue(
     }
 
     set({ snapshot: hidePending(merged), resolvedIds: { ...get().resolvedIds, ...result.mapping } });
-    await idb.dequeue(result.delivered);
+    const safety = await verifyEstimateWrites(get, set, commands, result, optimistic);
+    await idb.dequeue(result.delivered.filter((id) => !safety.pending.some((cmd) => cmd.uuid === id)));
+    if (safety.pending.length > 0) await idb.updateQueued(safety.pending);
     if (result.undelivered.length > 0) await idb.updateQueued(result.undelivered);
-    set({ pendingCount: result.undelivered.length });
-    if (result.failures.length > 0) {
+    set({ pendingCount: (await idb.readQueue()).length });
+    schedulePersist(get().snapshot);
+    const failures = result.failures.filter((f) => !safety.handled.has(f.uuid));
+    if (failures.length > 0) {
       get().toast(
-        explainFailures(result.failures, result.delivered.length, get().prefs.locale),
+        explainFailures(failures, result.delivered.length, get().prefs.locale),
         undefined,
         { tone: 'error' },
       );
     }
     // A full read would wipe the placeholders of what is still waiting to go.
-    return stale && result.undelivered.length === 0;
+    return stale && get().pendingCount === 0;
   } catch {
     /* Only the network can throw from here (see `failures` above), so this is
        always "still unreachable": the queue is left alone and retried later. */
@@ -375,13 +381,17 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
 
       /* Only what Todoist received leaves the queue. What the network lost
          part-way stays, with the ids resolved so far written into it. */
-      await idb.dequeue(result.delivered);
+      const safety = await verifyEstimateWrites(get, set, commands, result, after);
+      await idb.dequeue(result.delivered.filter((id) => !safety.pending.some((cmd) => cmd.uuid === id)));
+      if (safety.pending.length > 0) await idb.updateQueued(safety.pending);
       if (result.undelivered.length > 0) await idb.updateQueued(result.undelivered);
-      set({ pendingCount: Math.max(0, get().pendingCount - result.delivered.length) });
+      set({ pendingCount: Math.max(0, get().pendingCount - result.delivered.length + safety.pending.length) });
 
-      if (result.failures.length > 0) {
+      schedulePersist(get().snapshot);
+      const failures = result.failures.filter((f) => !safety.handled.has(f.uuid));
+      if (failures.length > 0) {
         get().toast(explainFailures(
-          result.failures, result.delivered.length, get().prefs.locale,
+          failures, result.delivered.length, get().prefs.locale,
         ), undefined, { tone: 'error' });
       }
       return result.mapping;

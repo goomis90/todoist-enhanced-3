@@ -177,7 +177,7 @@ export function InsightsView({ onOpen }: { onOpen?: (id: string) => void }) {
         value: entry.count,
         color: seriesColor(index),
       })),
-    [summary.byLabel, t],
+    [summary.byLabel],
   );
 
   const tasksPerDay = spanOf(range) > 0

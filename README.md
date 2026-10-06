@@ -79,8 +79,17 @@ untouched, because it never lived anywhere else.
   parent with no estimate of its own sums its subtasks, and anything still
   unestimated is counted separately and listed in one place so you can fill a
   page of them in one pass. A duration set in Todoist's own field counts too,
-  and wins over the tag when a task carries both; a duration in days is not an
-  estimate and is ignored. The app still writes estimates as tags.
+  with the source chosen in Settings taking priority when both are present.
+  Tags are the default and work on every plan; editing a tag estimate keeps
+  Todoist’s calendar duration. Duration mode is blocked on free accounts.
+  Every native estimate write is checked against server data; a dropped or
+  refused duration switches back to tags and recovers the estimate. An
+  unavailable verification stays queued for the next sync. Durations in days
+  are ignored; estimates of 24 hours or more keep their exact minute value.
+  Settings offers a conversion preview for open tasks, including subtasks,
+  with skipped conflicts and a result per batch. Converting timed durations
+  to tags preserves calendar blocks; untimed durations are cleared. Account
+  labels and completed tasks are never deleted by conversion.
 
 - **I have time:** a pill next to the load figure on My week, projects, tags,
   the Inbox and Someday. Pick how long you have, 5 minutes to an hour or any
@@ -247,14 +256,15 @@ be installed. No UI or CSS framework.
 
 ```bash
 npm install
-npm run dev      # Node 20+, pinned in .nvmrc
+npm run dev      # Node 22, pinned in .nvmrc
 npm run build    # a static site in dist/, see docs/deploying.md
+npm run lint     # ESLint, including React hook rules
 npm test         # unit tests on the rules (Vitest)
 npm run e2e      # demo journeys in a browser (Playwright); add --headed to watch
 ```
 
 The journeys need Playwright's Chromium: `npx playwright install chromium`
-once on a new machine. GitHub runs the typecheck, the unit tests and a build
+once on a new machine. GitHub runs lint, the typecheck, the unit tests and a build
 on every push, and the journeys on every pull request.
 
 ### Self-hosting

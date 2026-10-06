@@ -3,7 +3,7 @@ import { command, addItem, type Command, completeItem, deleteItem, newUuid, reor
 import * as idb from '@/db/idb';
 import { fetchComments, fetchTask, itemFromCompleted } from '@/api/tasks';
 import { isUncompletable, toTodoistPriority, type Item, type Note, type Snapshot } from '@/domain/types';
-import { withEstimate } from '@/domain/estimates';
+import { canStoreDurations, estimatePatch } from '@/domain/estimates';
 import { toApiDate } from '@/domain/dates';
 import { readTime } from '@/domain/nlp';
 import { translate } from '@/i18n';
@@ -15,7 +15,7 @@ import {
 import type { Slice, TasksSlice } from './types';
 
 /** A subtask created with its parent: a title, and the labels it starts with. */
-interface NewSubtask { content: string; labels?: string[] }
+interface NewSubtask { content: string; labels?: string[]; estimateMinutes?: number | null }
 
 /**
  * One task as the screen draws it and the commands that create it.
@@ -26,7 +26,10 @@ interface NewSubtask { content: string; labels?: string[] }
 function planTask(
   snapshot: Snapshot,
   args: Record<string, unknown>,
+  storage: 'tag' | 'duration',
 ): { commands: Command[]; items: Record<string, Item> } {
+    const { estimateMinutes, ...fields } = args;
+    args = estimateMinutes === undefined ? fields : { ...fields, ...estimatePatch({ labels: (fields.labels as string[]) ?? [] }, estimateMinutes as number | null, storage) };
     const tempId = newUuid();
     // The task appears at once under a temporary id; the sync response that
     // follows carries the real one and replaces it.
@@ -44,7 +47,7 @@ function planTask(
          have one to read. Today stands in until the real one comes back. */
       due: provisionalDue(args.due as Item['due']),
       deadline: (args.deadline as Item['deadline']) ?? null,
-      duration: null,
+      duration: (args.duration as Item['duration']) ?? null,
       labels: (args.labels as string[]) ?? [],
       /* Last among its siblings, which is where a task just added belongs and
          where the server is about to put it. Left at 0 the row appeared at the
@@ -79,14 +82,16 @@ function planTask(
     const { subtasks: _ignored, ...parentArgs } = args;
 
     const children = subtasks.map((subtask) => {
-      const { content, labels = [] } = typeof subtask === 'string' ? { content: subtask } : subtask;
+      const { content, labels = [], estimateMinutes: minutes } = typeof subtask === 'string' ? { content: subtask } : subtask;
+      const patch = minutes === undefined ? { labels } : estimatePatch({ labels }, minutes, storage);
       return {
         tempId: newUuid(),
+        minutes,
         args: {
           content,
           project_id: parentArgs.project_id,
           parent_id: tempId,
-          ...(labels.length > 0 ? { labels } : {}),
+          ...patch,
         },
       };
     });
@@ -103,11 +108,15 @@ function planTask(
         due: null,
         deadline: null,
         labels: (child.args.labels as string[] | undefined) ?? [],
+        duration: (child.args as Partial<Item>).duration ?? null,
       };
     }
 
   return {
-    commands: [addItem(parentArgs, tempId), ...children.map((c) => addItem(c.args, c.tempId))],
+    commands: [
+      { ...addItem(parentArgs, tempId), ...(storage === 'duration' && estimateMinutes !== undefined ? { estimateMinutes: estimateMinutes as number | null } : {}) },
+      ...children.map((c) => ({ ...addItem(c.args, c.tempId), ...(storage === 'duration' && c.minutes !== undefined ? { estimateMinutes: c.minutes } : {}) })),
+    ],
     items: { [tempId]: optimisticItem, ...optimisticChildren },
   };
 }
@@ -230,7 +239,14 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
     }
   },
   async updateTask(id, args) {
-    await get().apply([updateItem(id, args)], (snapshot) => patchItem(snapshot, id, args));
+    const item = get().snapshot.items[id];
+    if (!item) return;
+    const { estimateMinutes: minutes, ...fields } = args;
+    const storage = get().prefs.estimateStorage === 'duration' && canStoreDurations(get().snapshot.user) ? 'duration' : 'tag';
+    const patch = minutes === undefined ? fields : { ...fields, ...estimatePatch({ labels: (fields.labels as string[]) ?? item.labels }, minutes as number | null, storage) };
+    const cmd = updateItem(id, patch);
+    if (storage === 'duration' && minutes !== undefined) cmd.estimateMinutes = minutes as number | null;
+    await get().apply([cmd], (snapshot) => patchItem(snapshot, id, patch));
   },
   /**
    * Gives a task a repeat rule.
@@ -264,20 +280,15 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
     await settleFromServer(get, id, (current) => current.updated_at === stamp);
   },
   async setEstimates(entries) {
-    const snapshot = get().snapshot;
-    const changes = entries
-      .map(({ id, minutes }) => {
-        const item = snapshot.items[id];
-        return item ? { id, labels: withEstimate(item.labels, minutes) } : null;
-      })
-      .filter((change): change is { id: string; labels: string[] } => change !== null);
-
+    const { snapshot, prefs } = get();
+    const storage = prefs.estimateStorage === 'duration' && canStoreDurations(snapshot.user) ? 'duration' : 'tag';
+    const changes = entries.filter(({ id }) => snapshot.items[id]).map(({ id, minutes }) => ({
+      id, minutes, patch: estimatePatch(snapshot.items[id], minutes, storage),
+    }));
     if (changes.length === 0) return;
-
     await get().apply(
-      changes.map(({ id, labels }) => updateItem(id, { labels })),
-      (current) =>
-        changes.reduce((acc, { id, labels }) => patchItem(acc, id, { labels }), current),
+      changes.map(({ id, minutes, patch }) => ({ ...updateItem(id, patch), ...(storage === 'duration' ? { estimateMinutes: minutes } : {}) })),
+      (current) => changes.reduce((acc, { id, patch }) => patchItem(acc, id, patch), current),
     );
   },
   async toggleTask(id) {
@@ -499,7 +510,7 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
     const created: Record<string, Item> = {};
     for (const args of list) {
       const { snapshot } = get();
-      const planned = planTask({ ...snapshot, items: { ...snapshot.items, ...created } }, args);
+      const planned = planTask({ ...snapshot, items: { ...snapshot.items, ...created } }, args, get().prefs.estimateStorage === 'duration' && canStoreDurations(snapshot.user) ? 'duration' : 'tag');
       commands.push(...planned.commands);
       Object.assign(created, planned.items);
     }

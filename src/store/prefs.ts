@@ -1,5 +1,5 @@
 import type { Locale } from '@/i18n';
-import type { ViewId } from '@/domain/types';
+import type { EstimateStorage, ViewId } from '@/domain/types';
 import { DEFAULT_WEEK_LABEL, defaultViewPrefs, type ViewPrefs } from '@/domain/types';
 import { defaultConflictSettings, type ConflictSettings } from '@/domain/conflicts';
 import { defaultCapacity, type DailyCapacity } from '@/domain/load';
@@ -119,7 +119,7 @@ export function mergeSynced(
   locale: Locale,
 ): Preferences {
   const { views: remoteViews, savedAt: _stamp, ...settings } = remote;
-  const hydrated = hydratePreferences({ ...local, ...settings, views: undefined }, locale);
+  const hydrated = hydratePreferences({ ...local, ...settings, views: undefined, estimateStorage: settings.estimateStorage ?? null }, locale);
   const views = { ...local.views };
   for (const [key, shared] of Object.entries(remoteViews ?? {})) {
     if (!key.startsWith('project:') || !shared) continue;
@@ -236,6 +236,8 @@ export const isWeekLayout = (value: unknown): value is WeekLayout =>
 /** Everything the user can tune. Stored on the device, never on a server. */
 export interface Preferences {
   locale: Locale;
+  /** Null means this account has not yet chosen; reads and writes default to tags. */
+  estimateStorage: EstimateStorage | null;
   /** Where the app opens when no destination is in the address bar. */
   homepage: HomeView;
   /**
@@ -325,6 +327,7 @@ export interface Preferences {
 
 export const defaultPreferences = (locale: Locale): Preferences => ({
   locale,
+  estimateStorage: null,
   homepage: 'week',
   naturalDates: true,
   hour12: false,
@@ -379,6 +382,7 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
   return {
     ...base,
     ...s,
+    estimateStorage: s.estimateStorage === 'tag' || s.estimateStorage === 'duration' ? s.estimateStorage : null,
     dailyCapacity: Array.isArray(s.dailyCapacity) && s.dailyCapacity.length === 7
       ? (s.dailyCapacity as DailyCapacity)
       : base.dailyCapacity,
