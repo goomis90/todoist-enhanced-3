@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { defaultConflictSettings, detectConflicts, detectIncomplete } from './conflicts';
-import { weekLabel } from './types';
+import { setEstimateStorage, weekLabel } from './types';
 import { due, item } from '@/test/items';
 
 const noChildren = () => [];
@@ -63,5 +63,19 @@ describe('detectIncomplete', () => {
   it('never reports a duration as a second estimate', () => {
     const both = item({ labels: ['est-30'], duration: { amount: 45, unit: 'minute' } });
     expect(detectConflicts([both], noChildren, defaultConflictSettings())).toEqual([]);
+  });
+});
+
+afterEach(() => setEstimateStorage(null));
+describe('estimate storage conflicts', () => {
+  it('shows differing sources only when duration is selected, and warns about timed blocks', () => {
+    const task = item({ labels: ['est-25'], duration: { amount: 60, unit: 'minute' }, due: due('2026-10-06T10:00:00') });
+    expect(kinds([task])).toEqual([]);
+    setEstimateStorage('duration');
+    const conflicts = detectConflicts([task], noChildren);
+    expect(conflicts[0].kind).toBe('estimate-mismatch');
+    expect(conflicts[0].options[1].labelKey).toBe('estimates.keepTagTimed');
+    expect(detectConflicts([task], noChildren, { ...defaultConflictSettings(), estimateMismatch: false })).toEqual([]);
+    expect(kinds([item({ labels: ['est-60'], duration: { amount: 60, unit: 'minute' } })])).toEqual([]);
   });
 });

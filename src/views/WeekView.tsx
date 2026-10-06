@@ -178,7 +178,6 @@ function WeekBody({
       .map((column) => ({
         ...column, items: sortItems(column.items, current.sort, childrenOf, 'day', snapshot),
       }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, scope]);
 
   return (

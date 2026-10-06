@@ -177,3 +177,11 @@ On a phone it is a full-screen sheet with 44px targets.
 2. Labels: one tag picker with a tri-state variant.
 3. Inline-edit fields: one style.
 4. Priority in the bulk bar through `Select`'s option rendering.
+
+## Estimate storage and tag creation (1.20)
+
+`EstimateStorageChoice` is shared by setup, the existing-account dialog and Settings. Its recommendation badge favours tags on Free and durations on known Pro or Business plans, without changing a saved choice.
+
+`useCreateTag` normalises names, checks duplicates and creates tags in the composer, task details, bulk selection and display filters. `CreateTagInput` is the inline creation control for filters; task-name @ completion also offers creation. A refused creation must not attach a nonexistent label.
+
+Bulk estimates accept minutes or hours (25, 1h15, 90 min), with an explicit Apply button and a separate Remove action. Conversion rows distinguish ready, checking, verified, pending and failed states; verified rows use a green check and struck-through title.

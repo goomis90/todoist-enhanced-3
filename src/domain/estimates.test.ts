@@ -1,9 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import {
-  durationMinutes, effectiveEstimate, estimateOf, formatDuration, parseDurationInput, readEstimate, withEstimate,
+  canStoreDurations, estimatePatch, durationMinutes, effectiveEstimate, estimateOf, formatDuration, parseDurationInput, readEstimate, withEstimate,
 } from './estimates';
-import type { TodoistDuration } from './types';
+import { setEstimateStorage, type TodoistDuration } from './types';
 import { item } from '@/test/items';
+
+beforeEach(() => setEstimateStorage(null));
+afterEach(() => setEstimateStorage(null));
 
 describe('parseDurationInput', () => {
   it.each([
@@ -103,7 +106,8 @@ describe("Todoist's own duration, read beside the tag (#151)", () => {
     expect(readEstimate({ labels: ['est-40'], duration: null })).toMatchObject({ minutes: 40, source: 'tag' });
   });
 
-  it("lets Todoist's duration win over the tag when they differ", () => {
+  it("lets Todoist's duration win in duration mode", () => {
+    setEstimateStorage('duration');
     expect(readEstimate({ labels: ['est-40'], duration: minutes(60) })).toMatchObject({
       minutes: 60, source: 'duration', tagMinutes: 40, durationMinutes: 60, mismatch: true,
     });
@@ -152,5 +156,38 @@ describe("Todoist's own duration, read beside the tag (#151)", () => {
     const parent = item({ id: 'p', duration: minutes(50) });
     const children = [item({ id: 'a', parent_id: 'p', labels: ['est-10'] })];
     expect(effectiveEstimate(parent, () => children)).toEqual({ minutes: 50, computed: false });
+  });
+});
+
+describe('estimate storage (#151)', () => {
+  it('defaults to tags, leaving a calendar duration independent', () => {
+    expect(readEstimate(item({ labels: ['est-20'], duration: { amount: 60, unit: 'minute' } })))
+      .toMatchObject({ minutes: 20, source: 'tag', mismatch: true });
+  });
+  it.each(['tag', 'duration'] as const)('reads either source as fallback in %s mode', (storage) => {
+    setEstimateStorage(storage);
+    expect(estimateOf(item({ labels: ['est-20'] }))).toBe(20);
+    expect(estimateOf(item({ duration: { amount: 45, unit: 'minute' } }))).toBe(45);
+  });
+  it('tag writes and clearing never return a duration key, including a day-unit calendar block', () => {
+    const task = item({ labels: ['work', 'est-10'], duration: { amount: 2, unit: 'day' } });
+    expect(estimatePatch(task, 25, 'tag')).toEqual({ labels: ['work', 'est-25'] });
+    expect(estimatePatch(task, null, 'tag')).toEqual({ labels: ['work'] });
+    expect(task.duration).toEqual({ amount: 2, unit: 'day' });
+  });
+  it('duration writes remove legacy tags and clearing removes both', () => {
+    const task = item({ labels: ['work', 'est-10', 'est-bad'] });
+    expect(estimatePatch(task, 1500, 'duration')).toEqual({ labels: ['work'], duration: { amount: 1500, unit: 'minute' } });
+    expect(estimatePatch(task, null, 'duration')).toEqual({ labels: ['work'], duration: null });
+    expect(() => estimatePatch(task, -5, 'duration')).toThrow();
+  });
+  it('allows unknown plans and team members, but forbids explicitly free accounts', () => {
+    expect(canStoreDurations(null)).toBe(true);
+    expect(canStoreDurations({})).toBe(true);
+    expect(canStoreDurations({ is_premium: true, premium_status: 'current_personal_plan' })).toBe(true);
+    expect(canStoreDurations({ is_premium: false, premium_status: 'not_premium' })).toBe(false);
+    expect(canStoreDurations({ is_premium: false, premium_status: 'teams_business_member' })).toBe(true);
+    expect(canStoreDurations({ is_premium: false, premium_status: 'future_plan' })).toBe(true);
+    expect(canStoreDurations({ is_premium: false })).toBe(false);
   });
 });

@@ -1,3 +1,4 @@
+import { EstimateConversion } from '@/components/overlays/EstimateConversion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './components/Icon';
 import { Sidebar } from './components/Sidebar';
@@ -24,12 +25,13 @@ import { ReviewView } from './views/ReviewView';
 import { SettingsView } from './views/SettingsView';
 import { EisenhowerView } from './views/EisenhowerView';
 import { ConnectView } from './views/ConnectView';
+import { EstimateStorageDialog } from './components/overlays/EstimateStorageDialog';
 import { Walkthrough } from './components/overlays/Walkthrough';
 import { Tour } from './components/overlays/Tour';
 import { WhatsNew, type WhatsNewScope } from './components/overlays/WhatsNew';
 import { hasChanges, parseChangelog, unseenReleases } from './domain/changelog';
 import { VERSION } from './app-info';
-import { hasOnboarded } from './domain/onboarding';
+import { hasOnboarded, shouldAskEstimateStorage } from './domain/onboarding';
 import { useStore } from './store/store';
 import type { Accent, Theme } from './store/prefs';
 import { ACCENT_TOKENS, accentFamily, hexToHsl } from './domain/accent';
@@ -76,7 +78,11 @@ export function App() {
   const setPrefs = useStore((s) => s.setPrefs);
   const [whatsNew, setWhatsNew] = useState<WhatsNewScope | null>(null);
   /** The account's own settings have been read at least once since loading. */
+  const storage = useStore((s) => s.prefs.estimateStorage);
+  const onboarded = useStore((s) => s.prefs.onboarded);
+  const [storageDismissed, setStorageDismissed] = useState<string | null>(null);
   const [settled, setSettled] = useState(false);
+  const [conversionRequest, setConversionRequest] = useState({ target: 'tag' as 'tag' | 'duration', request: 0 });
   const syncing = useRef(false);
 
   const route = useRoute();
@@ -203,6 +209,13 @@ export function App() {
   }, [ready, connected, demo, settled, userId, tourOpen, walkthroughOpen, whatsNew,
     seenVersion, whatsNewOn, setPrefs]);
 
+  const storageOpen = shouldAskEstimateStorage({
+    ready: ready && connected && Boolean(userId), settled, demo, quickAdd: QUICK_ADD,
+    onboarded: onboarded || hasOnboarded(userId), storage,
+    busy: tourOpen || walkthroughOpen || Boolean(whatsNew) || seenVersion !== VERSION,
+    dismissed: storageDismissed === userId,
+  });
+
   /* Settings opens the whole history. With `detail.versions` the same event
      opens the window as an update would, for those releases only: how the
      "Show me" button is reached without an update to make. */
@@ -259,6 +272,8 @@ export function App() {
 
       {/* Outside the shell, and above it. The choices it offers change the
           page behind it, which is the point of showing them here. */}
+      <EstimateStorageDialog onConvert={(target) => setConversionRequest((previous) => ({ target, request: previous.request + 1 }))} open={storageOpen && !demo && !tourOpen && !walkthroughOpen && !whatsNew} onClose={() => { setStorageDismissed(userId ?? null); }} />
+      <EstimateConversion target={conversionRequest.target} openRequest={conversionRequest.request} hideTrigger />
       <Walkthrough
         open={walkthroughOpen}
         onDone={() => setWalkthrough(false)}
@@ -564,6 +579,18 @@ function AppShell({
   /* A selection belongs to the page it was made on. Carrying it to the next
      one would leave a bar offering to delete tasks that are no longer shown. */
   useEffect(() => clearSelection(), [route.view, route.id, route.sectionId, clearSelection]);
+  useEffect(() => {
+    const onBackground = (event: MouseEvent) => {
+      if (document.querySelector('[role="dialog"]')) return;
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
+      const target = event.target as Element | null;
+      if (!target || target.closest('[data-task-id], .bulkbar, [role="dialog"], .popover, .datepanel, .fselect-list, button, a, input, textarea, select')) return;
+      clearSelection();
+    };
+    document.addEventListener('click', onBackground, true);
+    return () => document.removeEventListener('click', onBackground, true);
+  }, [clearSelection]);
+
 
   useEffect(() => {
     document.querySelector<HTMLElement>('.screen.active')?.scrollTo({ top: 0 });

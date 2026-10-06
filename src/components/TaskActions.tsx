@@ -12,7 +12,7 @@ import { copyText, isTemporaryId, todoistTaskUrl } from '@/api/links';
 import { ROW_PRESS_EVENT, type RowMenu } from '@/domain/gestures';
 import { useStore } from '@/store/store';
 import { useConfirm } from './overlays/Confirm';
-import { withEstimate, effectiveEstimate, formatDuration } from '@/domain/estimates';
+import { effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { EstimateField } from './EstimateField';
 import { DatePicker, shortDay, taskShortcuts, type RecurrenceReading } from './DatePicker';
 import { nextOccurrence } from '@/domain/nextOccurrence';
@@ -241,7 +241,7 @@ export function TaskActions({ item, childrenOf, onOpen, onKeep }: TaskActionsPro
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [menu]);
+  }, [menu, placement.ref]);
 
   const { minutes, computed } = effectiveEstimate(item, childrenOf);
   /* Where "next occurrence" lands, said only when that is certain. */
@@ -450,7 +450,7 @@ export function TaskActions({ item, childrenOf, onOpen, onKeep }: TaskActionsPro
      wide. */
   const setEstimate = (value: number | null) => {
     setMenu('none');
-    void updateTask(item.id, { labels: withEstimate(item.labels, value) });
+    void updateTask(item.id, { estimateMinutes: value });
   };
 
   const estimateSheet = (
@@ -701,7 +701,7 @@ export function TaskActions({ item, childrenOf, onOpen, onKeep }: TaskActionsPro
           onCancel={() => setMenu('none')}
           onCommit={(value) => {
             setMenu('none');
-            void updateTask(item.id, { labels: withEstimate(item.labels, value) });
+            void updateTask(item.id, { estimateMinutes: value });
           }}
         />
       ) : (

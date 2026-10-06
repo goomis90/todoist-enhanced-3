@@ -116,3 +116,16 @@ describe('the Gathering dust settings (#161)', () => {
     expect(hydratePreferences({ showDustGroup: 'no' }, 'en').showDustGroup).toBe(true);
   });
 });
+
+describe('estimate storage preference', () => {
+  it('defaults to not asked, rejects unknown values and syncs a confirmed choice', () => {
+    expect(defaultPreferences('en').estimateStorage).toBeNull();
+    expect(hydratePreferences({ estimateStorage: 'unknown' }, 'en').estimateStorage).toBeNull();
+    expect(syncedPreferences(prefs({ estimateStorage: 'duration' })).estimateStorage).toBe('duration');
+    expect(mergeSynced(prefs(), syncedPreferences(prefs({ estimateStorage: 'tag' })), 'en').estimateStorage).toBe('tag');
+  });
+  it('does not mark old synced settings as a confirmed choice', () => {
+    const { estimateStorage: _unused, ...legacy } = syncedPreferences(prefs());
+    expect(mergeSynced(prefs({ estimateStorage: 'duration' }), legacy, 'en').estimateStorage).toBeNull();
+  });
+});

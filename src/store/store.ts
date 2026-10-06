@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { canStoreDurations } from '@/domain/estimates';
+import { setEstimateStorage } from '@/domain/types';
 import type { AppState } from './types';
 import { createSyncSlice } from './sync';
 import { createPreferencesSlice } from './preferences';
@@ -28,6 +30,13 @@ export const useStore = create<AppState>()((...a) => ({
   ...createUiSlice(...a),
   ...createDustSlice(...a),
 }));
+
+// Covers hydration, remote settings, account switches and the quick-add entry.
+setEstimateStorage(useStore.getState().prefs.estimateStorage);
+useStore.subscribe((state) => {
+  setEstimateStorage(state.prefs.estimateStorage);
+  if (state.prefs.estimateStorage === 'duration' && !canStoreDurations(state.snapshot.user)) state.setPrefs({ estimateStorage: 'tag' });
+});
 
 export type { AppState, SyncState, Toast, UndoEntry } from './types';
 

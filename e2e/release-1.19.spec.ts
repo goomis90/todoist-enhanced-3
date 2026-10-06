@@ -1,5 +1,14 @@
-import { expect, go, row, rows, test } from './demo';
+import { expect, go, row, rows, test as demoTest } from './demo';
 import type { Locator, Page } from '@playwright/test';
+
+// Seed the demo on a Monday: Water the plants recurs on Mondays, and the
+// fitting-task counts below must not depend on the weekday CI happens to run.
+const test = demoTest.extend({
+  page: async ({ page }, use) => {
+    await page.clock.setFixedTime(new Date('2026-10-05T10:00:00Z'));
+    await use(page);
+  },
+});
 
 /** The group with this title on the page in front. */
 const group = (page: Page, title: string | RegExp): Locator =>
