@@ -53,6 +53,14 @@ export function Overlay({
   const id = overlayId ?? ownId;
   const sheetRef = useRef<HTMLDivElement>(null);
   const restoreTo = useRef<HTMLElement | null>(null);
+  /* What had the keyboard the moment the dialog was asked for, read while it
+     renders: by the time its effect runs, a field inside it that grabs the
+     focus on its own (an estimate, a search) already has it, and "where it came
+     from" would be a field that is about to be gone. */
+  const wasOpen = useRef(false);
+  const opener = useRef<HTMLElement | null>(null);
+  if (open && !wasOpen.current) opener.current = document.activeElement as HTMLElement | null;
+  wasOpen.current = open;
 
   /* Escape has to reach whichever `onClose` is current, but the effect below
      must not be torn down and set up again merely because the caller passed a
@@ -70,7 +78,7 @@ export function Overlay({
   useEffect(() => {
     if (!open) return;
 
-    restoreTo.current = document.activeElement as HTMLElement | null;
+    restoreTo.current = opener.current;
     /* The first dialog to open remembers the scroll setting and the last one to
        close gives it back, whatever order they close in: a second dialog used
        to remember the "hidden" the first had just set. */

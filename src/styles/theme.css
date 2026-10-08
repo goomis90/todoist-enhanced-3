@@ -1770,7 +1770,7 @@
 /* ---------- The page frame ---------- */
 [data-density="compact"] .page,
 [data-density="compact"] .page.wide{padding:22px 40px 72px}
-[data-density="compact"] .ptitle{font-size:var(--fs-22)}
+[data-density="compact"] .ptitle{font-size:var(--fs-22,var(--fs-26))}
 [data-density="compact"] .phead{margin-bottom:2px}
 [data-density="compact"] .metrics{margin-bottom:var(--s3);gap:6px}
 

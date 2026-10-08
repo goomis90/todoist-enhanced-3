@@ -13,6 +13,42 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 1.21.0
+
+Checklists in a task's description, a calmer, more finished look across Settings, Setup, the dashboard and the lists.
+
+🆕 **Write checklists in a task’s description and tick them in place.** Lines like “- [ ] item” and “- [x] item” show as small checkboxes in the task panel, with “3 of 7” next to the description. Tick one and only that line changes; the rest of the description is left exactly as it was, so the same text still reads fine in Todoist. Editing is as in a note: Enter adds the next item, Enter on an empty one leaves the list, Backspace at its start makes it plain text, an × at the right removes it, and several pasted lines become several items. Typing [] or - [] and a space starts a list, in a task’s description and in the new task window. Rows in lists never show the checklist lines. Select words in a description to show its formatting toolbar; Link opens fields for the displayed text and address. Pasting an address over selected words makes them a link, and the next typing stays outside it. The composer keeps a plain field with Markdown and keyboard shortcuts.
+
+🆕 **Rearrange the dashboard’s cards.** Edit layout on the dashboard gives every card two arrows to move it, with the mouse or the keyboard, each move announced to a screen reader. Cards stay in their own section, nothing is removed, and Reset to default puts them back. Your order is kept with your settings and survives changing the period.
+
+🆕 **Choose how the chips on a task are coloured.** A new Task metadata colours choice in Settings and in Setup: Todoist inspired (the default, text without chips), Inherited colours draws the date, the project and each tag in the colour it has in Todoist, on a very light fill; Neutral keeps them grey. The duration is always grey, and an overdue date stays red. Minimalist keeps the title and description, with duration and date at the far right and recurrence beside the title.
+
+🆕 **Drag a subtask above or below its siblings in any list.** My week, a tag or Someday now reorder subtasks the way a project already did: with the line showing where it will land, and nothing written when it is dropped back in place. The line follows the upper or lower half of the target row, and the task lands there. Dropping a child below its own parent puts it before the first sibling. Dropped between tasks at another level, it joins that level. Moving right nests it under the target; selected subtasks move together. Moving left promotes them one level. Parent changes offer Undo.
+
+🎨 **Task metadata offers four layouts.** Todoist inspired keeps the published plain texts, Neutral and Inherited colours use light chips, and Minimalist puts duration and date at the far right. The recurrence badge is grey in Neutral and sits beside the title in Minimalist; the full action bar appears on hover before the date. A task in the Inbox now names it, and how many days late a task is has moved from the date to the screen-reader text.
+
+🎨 **The line under a page’s title is one sentence.** Under the title of My week, a project or a tag: how many tasks, how long they take, and I have time, all on the left. The duration is plain text until 90% of your capacity, amber from 90%, red from 100%, and clicking it opens the tasks that have no estimate. The percentage and the unestimated count moved into its tooltip.
+
+🎨 **The dashboard is quieter and clearer.** Separate grey cards, the figure and its change on one line with the label under it (green for more, red for less), the dates of the period beside the title, a quarter drawn month by month, and the quarter’s heatmap at half width. Layout controls sit at the top without increasing card height; circles and legends are centred in the space below the heading.
+
+🎨 **The Insights panel counts the last seven days.** Today and the six days before it, every day drawn even when nothing was finished, a note saying which numbers belong to the page and which to every project, and the Estimate coverage card is gone.
+
+🎨 **Settings explain themselves.** The planning settings are grouped by what they do, capacity comes after them and says it is time for tasks after meetings and breaks, with the total of your days and your own weekly value apart. Small pictures show what the theme, colour and organisation choices do, and a day that is not a duration is refused out loud.
+
+🎨 **Setup is five short screens.** Appearance, colour, density and chip colours, organisation, and where to store estimates, each with a picture of the workspace above its choices. Custom colour is a card like the others, with the picker and the hex code below it, and a code that is not a colour is refused without losing the last good one.
+
+🎨 **The daily and weekly reviews show their steps joined.** The steps sit side by side in a soft strip with a thin line between them, the current one in bold, and on a narrow screen the steps wrap so every one stays accessible.
+
+🎨 **The Quick group is called Quick Tasks.**
+
+🐛 **Switching the dashboard to a month, a quarter or a year no longer freezes it.** The page looped for ever over the 25-hour day when clocks go back (25 October in Europe). Days are now counted on the calendar everywhere, the streak and the weekly review included, which also fixes a day being skipped or counted twice around a clock change. A slow answer for a period you have left can no longer replace the one you chose, and a failed or offline read says so and offers Retry.
+
+🐛 **Dragging several selected tasks inside another task moves them all.** They become subtasks in the order they were picked, a picked parent keeps its picked children, and a drop that would make a loop or go too deep is refused before anything is written. If Todoist refuses one move, none of them is left half moved.
+
+🐛 **A repeating task you tick no longer stays faded and unclickable.** In a list that keeps it, such as a project, it came back looking ticked and could not be clicked.
+
+🐛 **Formatting stays rich across line breaks.** Bold continues on the next line without showing Markdown markers; links end before the new paragraph. Link insertion also accepts web addresses without a scheme. Checklist is available in the selection toolbar.
+
 ## 1.20.0
 
 Choose where estimates are stored and preview conversions between tags and Todoist durations.

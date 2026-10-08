@@ -8,6 +8,42 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 1.21.0
+
+Des listes de contrôle dans la description des tâches, un rendu plus calme et plus abouti dans les Réglages, la configuration, le tableau de bord et les listes.
+
+🆕 **Écrivez des listes de contrôle dans la description d’une tâche et cochez-les sur place.** Les lignes « - [ ] élément » et « - [x] élément » s’affichent en petites cases dans le panneau de la tâche, avec « 3 sur 7 » à côté de la description. Cochez et seule cette ligne change ; le reste de la description reste exactement tel quel, donc le même texte se lit toujours dans Todoist. La modification se fait comme dans une note : Entrée ajoute l’élément suivant, Entrée sur un élément vide quitte la liste, Retour arrière en début d’élément en fait du texte, une × le retire et plusieurs lignes collées deviennent plusieurs éléments. Taper [] ou - [] puis une espace commence une liste, dans la description d’une tâche et dans la fenêtre de création. Les lignes des listes n’affichent jamais les lignes de la liste de contrôle. Sélectionnez des mots dans une description pour afficher sa barre de mise en forme ; Lien ouvre les champs de texte et d’adresse. Coller une adresse sur une sélection crée un lien, puis la frappe reprend en texte normal. Le composeur garde un champ discret, avec Markdown et raccourcis clavier.
+
+🆕 **Réorganisez les cartes du tableau de bord.** Modifier la disposition donne à chaque carte deux flèches pour la déplacer, à la souris ou au clavier, chaque déplacement étant annoncé aux lecteurs d’écran. Les cartes restent dans leur section, rien n’est retiré, et Rétablir par défaut les remet. Votre ordre est conservé avec vos réglages et survit au changement de période.
+
+🆕 **Choisissez comment les pastilles d’une tâche sont colorées.** Un nouveau choix, Métadonnées des tâches, dans les Réglages et la configuration : Inspiré de Todoist (textes sans pastilles), Couleurs héritées dessine la date, le projet et chaque étiquette dans la couleur qu’ils ont dans Todoist, sur un fond très léger ; Neutre les garde gris. La durée est toujours grise, et une date en retard reste rouge. Minimaliste garde le titre et la description, avec la durée et la date tout à droite et la récurrence à côté du titre.
+
+🆕 **Glissez une sous-tâche au-dessus ou au-dessous de ses sœurs dans n’importe quelle liste.** Ma semaine, une étiquette ou Un jour réordonnent maintenant les sous-tâches comme le faisait déjà un projet : avec la ligne qui montre où elle atterrira, et rien d’écrit si elle est reposée à sa place. La ligne suit la moitié supérieure ou inférieure de la tâche survolée, et la sous-tâche atterrit à cet endroit. Déposée sous son propre parent, elle passe avant la première sous-tâche. Déposée entre les tâches d’un autre niveau, elle rejoint ce niveau. Un déplacement vers la droite la place sous la tâche visée ; plusieurs sous-tâches sélectionnées suivent ensemble. Un déplacement vers la gauche remonte d’un niveau. Chaque changement de parent propose Annuler.
+
+🎨 **Les métadonnées proposent quatre styles.** Inspiré de Todoist conserve les textes sans pastilles ; Neutre et Couleurs héritées utilisent des pastilles légères ; Minimaliste place la durée et la date tout à droite. Le badge de récurrence est gris en mode Neutre et se place à côté du titre en mode Minimaliste. La barre complète d’actions apparaît au survol avant la date. Une tâche de la Boîte de réception la nomme désormais, et le nombre de jours de retard passe dans le texte pour lecteur d’écran.
+
+🎨 **La ligne sous le titre d’une page tient en une phrase.** Sous le titre de Ma semaine, d’un projet ou d’une étiquette : le nombre de tâches, leur durée et J’ai du temps, le tout à gauche. La durée est du texte simple jusqu’à 90 % de votre capacité, orange à partir de 90 %, rouge à partir de 100 %, et un clic dessus ouvre les tâches sans estimation. Le pourcentage et le nombre de tâches sans estimation sont passés dans son infobulle.
+
+🎨 **Le tableau de bord est plus calme et plus clair.** Des cartes grises séparées, le chiffre et son évolution sur une ligne avec le libellé dessous (vert pour plus, rouge pour moins), les dates de la période à côté du titre, un trimestre dessiné mois par mois et la carte d’activité du trimestre en demi-largeur. Les commandes de disposition sont en haut sans augmenter la hauteur des cartes ; les cercles et leurs légendes sont centrés dans l’espace sous le titre.
+
+🎨 **Le panneau Analyses compte les sept derniers jours.** Aujourd’hui et les six jours d’avant, chaque jour dessiné même s’il n’y a rien eu, une note qui dit quels chiffres sont ceux de la page et quels chiffres sont ceux de tous les projets, et la carte Couverture des estimations a disparu.
+
+🎨 **Les Réglages s’expliquent.** Les réglages de planification sont regroupés par usage, la capacité vient après et dit qu’il s’agit du temps pour les tâches après réunions et pauses, avec le total de vos jours et votre valeur hebdomadaire à part. De petites images montrent l’effet des choix de thème, de couleur et d’organisation, et un jour qui n’est pas une durée est refusé à voix haute.
+
+🎨 **La configuration tient en cinq écrans courts.** Apparence, couleur, densité et couleurs des pastilles, organisation, et où stocker les estimations, chacun avec une image de l’espace de travail au-dessus de ses choix. La couleur personnalisée est une carte comme les autres, avec le sélecteur et le code hexadécimal dessous, et un code qui n’est pas une couleur est refusé sans perdre la dernière bonne.
+
+🎨 **Les revues quotidienne et hebdomadaire montrent leurs étapes reliées.** Les étapes sont côte à côte dans une bande douce avec un fin trait entre elles, l’étape courante en gras, et sur un écran étroit la bande défile pour la garder visible.
+
+🎨 **Le groupe Rapide s’appelle Tâches rapides.**
+
+🐛 **Passer le tableau de bord à un mois, un trimestre ou une année ne le fige plus.** La page tournait sans fin sur la journée de 25 heures du retour à l’heure d’hiver (le 25 octobre en Europe). Les jours sont maintenant comptés sur le calendrier partout, la série et la revue hebdomadaire comprises, ce qui corrige aussi un jour sauté ou compté deux fois autour d’un changement d’heure. Une réponse lente pour une période que vous avez quittée ne peut plus remplacer celle que vous avez choisie, et une lecture échouée ou hors ligne le dit et propose Réessayer.
+
+🐛 **Glisser plusieurs tâches sélectionnées dans une autre tâche les déplace toutes.** Elles deviennent des sous-tâches dans l’ordre où elles ont été choisies, un parent choisi garde ses enfants choisis, et un dépôt qui ferait une boucle ou irait trop profond est refusé avant toute écriture. Si Todoist refuse un déplacement, aucune tâche ne reste à moitié déplacée.
+
+🐛 **Une tâche récurrente que vous cochez ne reste plus pâle et impossible à cliquer.** Dans une liste qui la garde, comme un projet, elle revenait cochée en apparence et ne répondait plus au clic.
+
+🐛 **La mise en forme reste invisible au retour à la ligne.** Le gras continue sur la ligne suivante ; les liens se terminent avant le nouveau paragraphe. Les liens acceptent aussi les adresses sans protocole. La barre de sélection propose une liste de contrôle.
+
 ## 1.20.0
 
 Choisissez où stocker les estimations et prévisualisez leur conversion entre étiquettes et durées Todoist.
