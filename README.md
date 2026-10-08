@@ -76,7 +76,9 @@ untouched, because it never lived anywhere else.
   how much time they add up to, and what share of the capacity you set for
   that day or week. That last figure is a load pill: green, amber, over. A day
   filled to 140% says so before you start it, not at six in the evening. A
-  parent with no estimate of its own sums its subtasks, and anything still
+  parent whose open subtasks all have a duration takes their sum, written to
+  the task so Todoist shows it too; with one missing it keeps its own, or shows
+  the partial sum as computed. Anything still
   unestimated is counted separately and listed in one place so you can fill a
   page of them in one pass. A duration set in Todoist's own field counts too,
   with the source chosen in Settings taking priority when both are present.
@@ -190,7 +192,9 @@ untouched, because it never lived anywhere else.
   handed to Todoist to resolve rather than guessed at here.
 
 - **Projects, sections, tags and favourites:** a page for each, nested and
-  ordered by dragging, with the Inbox and Upcoming where you expect them.
+  ordered by dragging, with the Inbox and Upcoming where you expect them. A
+  section has a menu: edit, move to another project, duplicate with its tasks,
+  copy its link, archive or delete.
 
 - **Search:** `⌘K`, or just start typing. It covers tasks, projects, sections,
   tags and every view in the app, which makes it the fastest way to anywhere.
