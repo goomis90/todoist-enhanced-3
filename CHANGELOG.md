@@ -13,6 +13,24 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 1.22.0
+
+A menu on every section, durations that follow the subtasks, and My week in the same order as Todoist's Today.
+
+🆕 **A menu on every section of a project.** The three dots at the right of a section's title replace the trash button and open Edit (the name is selected, ready to type over), Move to… (pick another project), Duplicate (a copy right below, with its open tasks and their subtasks), Copy section link, Archive and, apart at the bottom in red, Delete, which still asks first. Archiving hides the section and its tasks, with Undo in the message. The menu works with the keyboard: Enter or Space opens it, the arrows move, Esc closes it and puts you back on the button. The sections Behind schedule, Quick Tasks and the others built by the app keep their header.
+
+🆕 **A parent's duration follows its subtasks.** When every open subtask of a task has a duration, their sum replaces the parent's own, in the app and in Todoist: the app writes it for you, and again when a subtask's duration changes or a subtask is added, ticked off, deleted or moved. If one open subtask has no duration, nothing changes and the parent keeps its own. Totals, I have time, the load and the insights count each task once, and the “parent and subtasks both have a duration” item no longer appears in Items to settle when the sum applies.
+
+🎨 **Section titles show their count right after the title, with the fold arrow on the left.** The round count moved from the far right to just after the title, the arrow that folds a section is in the margin to the left of the title (so titles stay lined up with the tasks), and the grip to drag a section moved one step further left. A folded section stays folded after a reload on this device.
+
+🎨 **Dragging a task over another section only draws the landing line.** The frame around the whole section is gone: one red line shows where the task will go, and over an empty section or below the last task it sits at the end of the section.
+
+🐛 **My week follows the order of Todoist's Today.** At the same priority and the same date, tasks are now listed in the order of their projects in the sidebar (the Inbox first, a sub-project right after its parent) instead of the order they were added. A task you placed by hand still stays where you put it, and the other sorts are unchanged.
+
+🐛 **Adding a section puts the cursor in its name.** Clicking Add section now selects “Untitled section” so you can type straight away, even when Todoist takes a moment to answer, and what you have typed is not lost when it does. Clicking twice in a row no longer creates two sections.
+
+🐛 **A task or an Add a task button no longer stays outlined after you close its window with the mouse.** Keyboard users still see where the focus came back to.
+
 ## 1.21.0
 
 Checklists in a task's description, a calmer, more finished look across Settings, Setup, the dashboard and the lists.

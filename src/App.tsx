@@ -42,6 +42,7 @@ import { useData } from './hooks/useData';
 import { navigate, useRoute, type Route } from './hooks/useRoute';
 import { rootItems } from './store/selectors';
 import { detectConflicts } from './domain/conflicts';
+import { useParentEstimates } from './hooks/useParentEstimates';
 import { anytimeItems, bucketOf, hasLabel, somedayItems, upcomingItems, weekItems } from './domain/views';
 import { effectiveEstimate } from './domain/estimates';
 import type { Item } from './domain/types';
@@ -111,6 +112,7 @@ export function App() {
   const [placement, setPlacement] = useState<ComposerPlacement>({});
 
   useEffect(() => { void init(); }, [init]);
+  useParentEstimates();
 
   /* A task or a project made before Todoist answered is opened under its
      temporary id. When the answer lands — after reconnecting, most of all —

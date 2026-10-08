@@ -8,6 +8,24 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 1.22.0
+
+Un menu sur chaque section, des durées qui suivent les sous-tâches et Cette semaine dans le même ordre que l'Aujourd'hui de Todoist.
+
+🆕 **Un menu sur chaque section d’un projet.** Les trois points à droite du titre d’une section remplacent la corbeille et ouvrent Modifier (le nom est sélectionné, prêt à être remplacé), Déplacer vers… (choisissez un autre projet), Dupliquer (une copie juste en dessous, avec ses tâches ouvertes et leurs sous-tâches), Copier le lien de la section, Archiver et, à part en bas et en rouge, Supprimer, qui demande toujours confirmation. Archiver masque la section et ses tâches, avec Annuler dans le message. Le menu se commande au clavier : Entrée ou Espace l’ouvre, les flèches se déplacent, Échap le ferme et vous ramène sur le bouton. Les sections En retard, Tâches rapides et les autres construites par l’app gardent leur en-tête.
+
+🆕 **La durée d’un parent suit ses sous-tâches.** Quand chaque sous-tâche ouverte d’une tâche a une durée, leur somme remplace celle du parent, dans l’app comme dans Todoist : l’app l’écrit pour vous, et la met à jour quand la durée d’une sous-tâche change ou qu’une sous-tâche est ajoutée, cochée, supprimée ou déplacée. Si une sous-tâche ouverte n’a pas de durée, rien ne change et le parent garde la sienne. Les totaux, J’ai du temps, la charge et les analyses comptent chaque tâche une seule fois, et l’élément « le parent et ses sous-tâches ont chacun une durée » n’apparaît plus dans Éléments à régler quand la somme s’applique.
+
+🎨 **Le nombre de tâches suit directement le titre de section, avec la flèche de repli à gauche.** La pastille ronde est passée de l’extrémité droite à juste après le titre, la flèche qui replie une section est dans la marge à gauche du titre (les titres restent alignés sur les tâches), et la poignée pour déplacer une section a reculé d’un cran. Une section repliée le reste après un rechargement sur cet appareil.
+
+🎨 **Glisser une tâche au-dessus d’une autre section ne dessine plus que la ligne d’arrivée.** Le cadre autour de la section entière a disparu : une ligne rouge montre où la tâche ira, et sur une section vide ou sous la dernière tâche elle se place à la fin de la section.
+
+🐛 **Cette semaine suit l’ordre de l’Aujourd’hui de Todoist.** À priorité et date égales, les tâches sont maintenant classées dans l’ordre des projets de la barre latérale (la Boîte de réception d’abord, un sous-projet juste après son parent) au lieu de l’ordre où elles ont été ajoutées. Une tâche que vous avez placée à la main reste où vous l’avez mise, et les autres tris ne changent pas.
+
+🐛 **Ajouter une section place le curseur dans son nom.** Un clic sur Ajouter une section sélectionne « Section sans titre » pour taper tout de suite, même si Todoist met un moment à répondre, et ce que vous avez tapé n’est pas perdu quand il répond. Deux clics de suite ne créent plus deux sections.
+
+🐛 **Une tâche ou un bouton Ajouter une tâche ne reste plus entouré après la fermeture de sa fenêtre à la souris.** Au clavier, on voit toujours où le focus est revenu.
+
 ## 1.21.0
 
 Des listes de contrôle dans la description des tâches, un rendu plus calme et plus abouti dans les Réglages, la configuration, le tableau de bord et les listes.
