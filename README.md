@@ -100,6 +100,15 @@ untouched, because it never lived anywhere else.
   exactly as it was. Nothing is changed and nothing is remembered after a
   reload.
 
+- **Checklists:** lines like `- [ ] item` in a task's description show as small
+  checkboxes in the task panel, with "3 of 7" beside the description. Ticking
+  one changes only that line, so the same text still reads fine in Todoist's
+  own apps (which may show the lines as plain text). Editing is by rows rather
+  than syntax: Enter adds the next item, Enter on an empty one leaves the
+  list, Backspace at its start makes it plain text, and `[]` and a space starts
+  a list, in the panel and in the new task window. Task rows never show the
+  checklist lines.
+
 - **Folders:** group projects inside a folder the way Todoist's own apps do —
   a collapsible row you can expand or collapse on its own, in your personal
   projects as much as in any team workspace. Drop a project onto a folder to
@@ -131,7 +140,9 @@ untouched, because it never lived anywhere else.
 
 - **Dashboard:** a board that changes with the period you pick. A day shows
   the hours you finished things in, a week adds its shape and a comparison
-  with the one before, a year reads month by month. The focus score weights
+  with the one before, a quarter and a year read month by month. Edit layout
+  lets you put the cards in the order you want, with the mouse or the keyboard,
+  and Reset to default puts them back. The focus score weights
   what you finished by its priority — the only question worth asking about a
   finished week: whether the effort went where it mattered, or into whatever
   was easiest to close.
