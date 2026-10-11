@@ -673,7 +673,7 @@ test.describe('#177 Settings', () => {
     const real = page.locator('.sidebar:not(.pvscale .sidebar)');
     await expect(real.locator('.navitem', { hasText: 'Eisenhower Matrix' })).toBeVisible();
     // Today has no setting of its own: it is on the sidebar when it is ticked where the sidebar is arranged.
-    await page.getByRole('checkbox', { name: 'Today' }).setChecked(true, { force: true });
+    await page.getByRole('checkbox', { name: 'Today', exact: true }).setChecked(true, { force: true });
     await expect(real.locator('.navitem', { hasText: /^Today/ })).toBeVisible();
   });
 });

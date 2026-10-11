@@ -1,7 +1,11 @@
 import { test as accountTest } from '@playwright/test';
 import { item } from '../src/test/items';
-import { VERSION } from '../src/app-info';
+import { readFileSync } from 'node:fs';
 import { test, expect, go, row } from './demo';
+
+/* Read from package.json: `src/app-info.ts` reads `import.meta.env`, which does
+   not exist when Playwright loads a spec, so importing it stopped the whole run. */
+const { version: VERSION } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string };
 
 test('estimate conversion previews, converts and becomes idempotent in both directions', async ({ demo: page }) => {
   await go(page, '#/settings');

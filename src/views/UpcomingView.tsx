@@ -50,16 +50,19 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
      by itself, so the range never lags behind the tasks it lets in (#146). */
   const today = useToday();
 
-  const scoped = useMemo(() => {
+  const pool = useMemo(() => {
     const roots = datedRoots(items, snapshot);
     const future = upcomingItems(roots);
     const limit = startOfDay(addDays(today, horizon));
-    const withinHorizon = future.filter((item) => {
+    return future.filter((item) => {
       const d = dueDate(item);
       return d !== null && startOfDay(d) <= limit;
     });
-    return applyFilters(withinHorizon, current.filters, snapshot, childrenOf);
-  }, [items, today, horizon, current.filters, snapshot, childrenOf]);
+  }, [items, today, horizon, snapshot]);
+  const scoped = useMemo(
+    () => applyFilters(pool, current.filters, snapshot, childrenOf),
+    [pool, current.filters, snapshot, childrenOf],
+  );
 
   // Upcoming spans many days, so a single capacity percentage would be
   // meaningless here. The header shows counts and time only.
@@ -104,6 +107,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
         actions={
           <>
             <DisplayMenu
+              pageItems={pool}
               viewKey="upcoming"
               modes={['list', 'board']}
               groups={UPCOMING_GROUPS}

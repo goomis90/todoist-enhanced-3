@@ -79,6 +79,21 @@ describe('dropMutation', () => {
     expect(dropMutation(task, { kind: 'section', projectId: 'p', sectionId: 's' })).toBeNull();
   });
 
+  it('moves a task with no section to another project, whether it is picked as a project or as a section target (#205)', () => {
+    const task = item({ project_id: 'p', section_id: null });
+    expect(dropMutation(task, { kind: 'section', projectId: 'q', sectionId: null }))
+      .toEqual({ move: { project_id: 'q', section_id: null } });
+    expect(dropMutation(task, { kind: 'section', projectId: 'p', sectionId: null })).toBeNull();
+    expect(dropMutation(task, { kind: 'project', projectId: 'q' }))
+      .toEqual({ move: { project_id: 'q' } });
+  });
+
+  it('moves a task out of its section to the project it lives in', () => {
+    const task = item({ project_id: 'p', section_id: 's' });
+    expect(dropMutation(task, { kind: 'section', projectId: 'p', sectionId: null }))
+      .toEqual({ move: { project_id: 'p', section_id: null } });
+  });
+
   it('lifts a subtask out when dropped on its own project', () => {
     const task = item({ project_id: 'p', parent_id: 'parent' });
     expect(dropMutation(task, { kind: 'project', projectId: 'p' }))

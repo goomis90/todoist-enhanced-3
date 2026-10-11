@@ -218,7 +218,7 @@ export function Sidebar({
       {({ isOver }) => (
         <DraggableTag name={name}>
         <button
-          className={`navitem${isOver ? ' dropping' : ''}`}
+          className={`navitem tagitem${isOver ? ' dropping' : ''}`}
           aria-current={route.view === 'label' && route.id === name ? 'page' : undefined}
           onClick={() => navigate('label', name)}
         >

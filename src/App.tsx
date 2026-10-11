@@ -798,7 +798,11 @@ function AppShell({
           {route.view === 'today' && <WeekView {...viewProps} scope="today" />}
           {route.view === 'upcoming' && <UpcomingView {...viewProps} />}
           {route.view === 'someday' && <SimpleListView kind="someday" {...viewProps} />}
-          {route.view === 'inbox' && <SimpleListView kind="inbox" {...viewProps} />}
+          {/* The Inbox is a project like the others, with sections of its own
+             : it is drawn by the project page, which is what shows them. */}
+          {route.view === 'inbox' && (snapshot.user?.inbox_project_id
+            ? <ProjectView projectId={snapshot.user.inbox_project_id} {...viewProps} />
+            : <SimpleListView kind="inbox" {...viewProps} />)}
           {route.view === 'label' && route.id && (
             <SimpleListView kind="label" labelName={route.id} {...viewProps} />
           )}

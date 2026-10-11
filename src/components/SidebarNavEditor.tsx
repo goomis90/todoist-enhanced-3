@@ -90,6 +90,7 @@ function Block({
               key={entry.id}
               entry={entry}
               shown={entry.id === 'today' ? entry.on && split : entry.id === 'matrix' ? entry.on && matrixOn : entry.on}
+              split={split}
               onToggle={() => {
                 // Today is a page only while the week is split from it, so its tick is
                 // that setting: ticking it splits the week, unticking merges it back.
@@ -122,14 +123,23 @@ function Block({
   );
 }
 
-function EntryRow({ entry, shown, onToggle }: { entry: SidebarEntry; shown: boolean; onToggle: () => void }) {
+function EntryRow({
+  entry, shown, split, onToggle,
+}: { entry: SidebarEntry; shown: boolean; split: boolean; onToggle: () => void }) {
   const { t } = useT();
+  /* Ticking Today splits the week, and a checkbox alone reads as "show a page":
+     an unticked Today looks like today's tasks are shown nowhere. My week says
+     whether it holds them (#195). Only that row carries a line, and it always
+     does, so the list keeps its height whichever way the tick goes. */
+  const hint = entry.id === 'week'
+    ? t(split ? 'nav.weekHintSplit' : 'nav.weekHintUnified')
+    : null;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id });
   const { icon, label } = ENTRY[entry.id];
   return (
     <li
       ref={setNodeRef}
-      className={`navedit-row${isDragging ? ' dragging' : ''}${shown ? '' : ' off'}`}
+      className={`navedit-row${isDragging ? ' dragging' : ''}${shown ? '' : ' off'}${hint ? ' hinted' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
     >
       <button
@@ -145,7 +155,10 @@ function EntryRow({ entry, shown, onToggle }: { entry: SidebarEntry; shown: bool
         <input type="checkbox" checked={shown} onChange={onToggle} />
         <span className="checkbox" aria-hidden="true"><Icon name="check" size="sm" /></span>
         <Icon name={icon} size="sm" />
-        <span>{t(label)}</span>
+        <span className="navedit-text">
+          <span>{t(label)}</span>
+          {hint && <small className="navedit-hint">{hint}</small>}
+        </span>
       </label>
     </li>
   );

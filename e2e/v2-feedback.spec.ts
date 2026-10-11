@@ -26,13 +26,13 @@ test.describe('settings and the sidebar (feedback pass)', () => {
     await expect(page.getByRole('radiogroup', { name: 'Appearance' }).getByRole('radio')).toHaveCount(3);
 
     // Merged week: Today is not a page, so its tick is off and the sidebar does not list it.
-    const today = page.locator('.navedit-label', { hasText: 'Today' }).locator('input');
+    const today = page.locator('.navedit-label', { hasText: /^Today$/ }).locator('input');
     await expect(today).not.toBeChecked();
     await expect(sidebar(page).getByRole('button', { name: /^Today/ })).toHaveCount(0);
-    await page.locator('.navedit-label', { hasText: 'Today' }).click();
+    await page.locator('.navedit-label', { hasText: /^Today$/ }).click();
     await expect(today).toBeChecked();
     await expect(sidebar(page).getByRole('button', { name: /^Today/ })).toBeVisible();
-    await page.locator('.navedit-label', { hasText: 'Today' }).click();
+    await page.locator('.navedit-label', { hasText: /^Today$/ }).click();
     await expect(sidebar(page).getByRole('button', { name: /^Today/ })).toHaveCount(0);
   });
 
