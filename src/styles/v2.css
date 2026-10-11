@@ -962,7 +962,6 @@ html.dragging-row .col .taskwrap{transition:margin .16s ease}
   background:var(--surface);color:var(--text);font:inherit;font-size:13px;resize:none;box-sizing:border-box}
 .comment-field::placeholder{color:var(--faint)}
 .comment-new{align-items:center}
-.repeatfield{margin-top:6px}
 
 /* Search fields in menus and pickers: no accent frame while typing (focus is read by the caret). */
 .pickersearch:focus-within{border-color:var(--border-strong);box-shadow:0 0 0 var(--s2) var(--surface);outline:none}

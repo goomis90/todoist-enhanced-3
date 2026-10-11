@@ -13,6 +13,20 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.3.0
+
+Time, duration and repeat, without typing them.
+
+🆕 **Set a time, a duration and a repeat from the date picker.** Under the date shortcuts, three lines: Time, Duration and Repeat. Type a time ("20h30", "8pm") or a duration ("45", "1h30") and the matching values are offered as you type. Repeat offers Todoist's usual rules (every day, every week on the same day, every workday, every month, every year) and "Custom…" for the rest: from the scheduled date or from completion, every N days, workdays, weeks, months or years, the weekdays, the day of the month and an end date. The rule is written in your language, exactly as Todoist receives it. It works in the new task window, a task's Schedule menu and the open task.
+
+🎨 **A repeating task shows its day with the repeat mark.** In the new task window and in the open task, a task that repeats shows "↻ Tomorrow 09:30" instead of the rule's words, which you can read by hovering it. The open task no longer has a separate field to type the rule: everything is in the start date.
+
+🐛 **Changing the day keeps the time.** A task set to "today 12:00" moved to tomorrow stays at 12:00, and a time picked without a day goes to tomorrow when it has already passed today.
+
+🐛 **Giving a repeat to a task no longer skips its first day.** "Every day" given to a task due today starts today, not tomorrow, and changing the time of a repeating task keeps it on the same day.
+
+🐛 **A repeat with an end typed after a time keeps its end.** "Every monday at 9am until 31/12" used to lose "until 31/12".
+
 ## 2.2.0
 
 Your Todoist filters, and tags you can recolour.

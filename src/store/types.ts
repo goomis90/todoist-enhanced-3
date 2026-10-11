@@ -165,7 +165,8 @@ export interface AppState {
   /** Gives a task a repeat rule, leaving the date for Todoist to resolve. */
   /* Takes the rule and the language it was written in, which is all Todoist
      needs: where the reading came from is the caller's business. */
-  setRecurrence: (id: string, rule: Pick<RecurrenceReading, 'string' | 'lang'>) => Promise<void>;
+  /** `date`: the day (and time) the rule lands on first, when it is known (#202). */
+  setRecurrence: (id: string, rule: Pick<RecurrenceReading, 'string' | 'lang'> & { date?: string }) => Promise<void>;
   /**
    * Writes several estimates at once, as one request.
    *
