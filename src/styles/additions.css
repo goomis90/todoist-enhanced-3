@@ -875,6 +875,12 @@
 .movemenu .opt.sectionopt > span{padding-left:14px;color:var(--muted)}
 .movemenu .opt.sectionopt .icon{color:var(--faint)}
 .movemenu .opt.on{background:var(--accent-soft);color:var(--accent-dark)}
+/* A long project or section name takes one line and ends in an ellipsis: the
+   menu keeps a readable width instead of growing to the whole window. */
+.movemenu:not(.asSheet){width:max-content;max-width:min(360px, calc(100vw - 24px))}
+.movemenu .opt{min-width:0}
+.movemenu .opt > span{min-width:0;flex:1 1 auto}
+.movemenu .movelabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .movemenu .opt.on small{color:var(--accent-dark)}
 .movemenu .menuhint{padding:6px 8px}
 

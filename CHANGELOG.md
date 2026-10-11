@@ -13,6 +13,12 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.1.1
+
+A fix for the “Move to project” menu.
+
+🐛 **The “Move to project” menu keeps a sensible width.** With a very long project or section name, the menu used to stretch across the whole window. It now stays narrow, cuts the long name with “…” and shows it in full when you hover it.
+
 ## 2.1.0
 
 Fixes for what you reported, a clearer highlight while you type, and the Inbox with its sections.

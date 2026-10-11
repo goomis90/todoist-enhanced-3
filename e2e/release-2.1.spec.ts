@@ -76,3 +76,23 @@ test('the Display menu offers only the tags of the page in front', async ({ demo
   expect(inbox).toEqual(['quick']);
   expect(week).toEqual(['quick', 'week']);
 });
+
+test('the Move to project menu keeps its width when a section has a very long name', async ({ demo: page }) => {
+  await go(page, '#/project/site');
+  const title = page.locator('.screen.active input.gname').first();
+  await title.fill('A very long section name '.repeat(12));
+  await title.press('Enter');
+
+  await go(page, '#/inbox');
+  const first = page.locator('.screen.active [data-task-id]').first();
+  await first.hover();
+  await first.getByRole('button', { name: 'Move to project' }).click();
+  const menu = page.locator('.rowmenu');
+  await expect(menu).toBeVisible();
+  const box = (await menu.boundingBox())!;
+  expect(box.width).toBeLessThanOrEqual(360);
+  expect(box.width).toBeGreaterThanOrEqual(250);
+  // The long name is cut with an ellipsis, not allowed to run out of the menu.
+  const cut = await menu.locator('.movelabel').evaluateAll((labels) => labels.some((l) => l.scrollWidth > l.clientWidth));
+  expect(cut).toBe(true);
+});
