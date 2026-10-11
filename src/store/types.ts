@@ -55,6 +55,15 @@ export interface TimeFilter {
   sort: 'duration' | 'priority';
 }
 
+/** What a saved filter is made of, when one is created or changed here. */
+export interface FilterFields {
+  name: string;
+  query: string;
+  color: string;
+  is_favorite: boolean;
+  description?: string;
+}
+
 export interface AppState {
   ready: boolean;
   connected: boolean;
@@ -229,6 +238,17 @@ export interface AppState {
   setTaskLabels: (id: string, labels: string[]) => Promise<void>;
   setTaskPriority: (id: string, priority: DisplayPriority) => Promise<void>;
   setLabelFavourite: (id: string, favourite: boolean) => Promise<void>;
+  setLabelColour: (id: string, color: string) => Promise<void>;
+  /** Deletes a tag in Todoist, which also takes it off every task. */
+  deleteLabel: (id: string) => Promise<void>;
+  /** Stars or unstars a saved filter, in Todoist as well. */
+  setFilterFavourite: (id: string, favourite: boolean) => Promise<void>;
+  /** Saves a new filter; resolves with its temporary id, or null when name or query is empty. */
+  createFilter: (fields: FilterFields) => Promise<string | null>;
+  updateFilter: (id: string, fields: Partial<FilterFields> & { order_key?: string }) => Promise<void>;
+  deleteFilter: (id: string) => Promise<void>;
+  /** The filters in their new order, and the one that was moved to get there. */
+  reorderFilters: (ids: string[], moved: string) => Promise<void>;
   /**
    * Creates a tag.
    *
@@ -236,7 +256,7 @@ export interface AppState {
    * only becomes a thing you can find, colour and favourite once it exists as
    * a label of its own — so it is created outright rather than left implied.
    */
-  createLabel: (name: string, color?: string) => Promise<void>;
+  createLabel: (name: string, color?: string, favourite?: boolean) => Promise<void>;
   /** Puts the tags in this order, which is also the order of the sidebar's favourites. */
   reorderLabels: (ids: string[]) => Promise<void>;
   /**
@@ -369,5 +389,5 @@ export type DustSlice = Pick<AppState, 'dustKept' | 'keepInSomeday'>;
 export type PreferencesSlice = Pick<AppState, 'prefs' | 'walkthrough' | 'setPrefs' | 'setViewPrefs' | 'setLocale' | 'ensurePreferencesTask' | 'beginTourPreview' | 'endTourPreview' | 'setWalkthrough'>;
 export type TasksSlice = Pick<AppState, 'logbookEntry' | 'setLogbookEntry' | 'loadTask' | 'updateTask' | 'addComment' | 'updateComment' | 'deleteComment' | 'toggleReaction' | 'duplicateTask' | 'setRecurrence' | 'setEstimates' | 'toggleTask' | 'completeTasks' | 'removeTask' | 'removeTasks' | 'restoreTasks' | 'createTask' | 'createTasks' | 'setTaskLabels' | 'setTaskPriority' | 'skipOccurrence' | 'skipOccurrences' | 'reorderSubtasks'>;
 export type TasksMoveSlice = Pick<AppState, 'sendTo' | 'sendManyTo' | 'updateMany' | 'moveMany' | 'nestMany' | 'moveTask'>;
-export type StructureSlice = Pick<AppState, 'createLabel' | 'setLabelFavourite' | 'reorderLabels' | 'reorderProjects' | 'nestProject' | 'moveProjectToWorkspace' | 'createProject' | 'archiveProject' | 'deleteProject' | 'duplicateProject' | 'updateProjectFields' | 'createSection' | 'moveSection' | 'removeSection' | 'archiveSection' | 'moveSectionToProject' | 'duplicateSection' | 'updateSectionFields'>;
+export type StructureSlice = Pick<AppState, 'createLabel' | 'setLabelFavourite' | 'setLabelColour' | 'deleteLabel' | 'setFilterFavourite' | 'createFilter' | 'updateFilter' | 'deleteFilter' | 'reorderFilters' | 'reorderLabels' | 'reorderProjects' | 'nestProject' | 'moveProjectToWorkspace' | 'createProject' | 'archiveProject' | 'deleteProject' | 'duplicateProject' | 'updateProjectFields' | 'createSection' | 'moveSection' | 'removeSection' | 'archiveSection' | 'moveSectionToProject' | 'duplicateSection' | 'updateSectionFields'>;
 export type UiSlice = Pick<AppState, 'toasts' | 'undoStack' | 'draggingTaskId' | 'draggingSectionId' | 'nesting' | 'outdenting' | 'draggingProjectId' | 'draggingTag' | 'selection' | 'selectionAnchor' | 'toast' | 'dismissToast' | 'pushUndo' | 'undo' | 'consumeUndo' | 'setDraggingSection' | 'setDraggingTag' | 'setNesting' | 'setOutdenting' | 'setDraggingProject' | 'sidePanel' | 'openSidePanel' | 'closeSidePanel' | 'timeFilter' | 'setTimeFilter' | 'toggleSelection' | 'setSelectionAnchor' | 'selectRange' | 'clearSelection' | 'setDragging'>;

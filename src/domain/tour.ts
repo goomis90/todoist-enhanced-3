@@ -32,6 +32,7 @@ export const TOUR_STOPS: TourStop[] = [
   { target: 'dashboard', also: ['logbook'], since: '2.0.0', title: 'tour.dashboard', body: 'tour.dashboardBody' },
   { target: 'matrix', since: '1.9.0', title: 'tour.matrix', body: 'tour.matrixBody' },
   { target: 'notifications', since: '2.0.0', title: 'tour.notifications', body: 'tour.notificationsBody' },
+  { target: 'filters', since: '2.2.0', title: 'tour.filters', body: 'tour.filtersBody' },
 ];
 
 /**

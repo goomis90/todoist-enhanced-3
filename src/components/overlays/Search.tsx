@@ -90,6 +90,8 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
         }) },
       { key: 'go-labels', icon: 'tag', title: t('nav.labels'),
         run: go(() => navigate('labels')) },
+      { key: 'go-filters', icon: 'filter', title: t('nav.filters'),
+        run: go(() => navigate('filters')) },
       { key: 'go-dashboard', icon: 'trend', title: t('nav.dashboard'),
         run: go(() => navigate('insights')) },
       { key: 'go-logbook', icon: 'tasks', title: t('insights.logbook'),

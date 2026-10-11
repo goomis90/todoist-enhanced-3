@@ -20,6 +20,7 @@ test('a task with no section moves to another project from its row menu (#205)',
 
 test('a label with an emoji or an accent in its name opens its own page (#196)', async ({ demo: page }) => {
   await go(page, '#/labels');
+  await page.locator('.screen.active .phead').getByRole('button', { name: 'New tag' }).click();
   const input = page.getByPlaceholder('Name a new tag, e.g. errand');
   await input.fill('🏠Café');
   await input.press('Enter');

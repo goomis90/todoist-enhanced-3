@@ -1,3 +1,5 @@
+import { useFilterCounts } from '@/hooks/useFilterResult';
+import { FilterMark } from './FilterMark';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, type IconName } from './Icon';
@@ -144,8 +146,12 @@ export function Sidebar({
     const projects = Object.values(snapshot.projects)
       .filter((p) => p.is_favorite && !p.is_archived && !p.is_deleted)
       .sort(byChildOrder);
-    return { labels, projects };
-  }, [snapshot.labels, snapshot.projects]);
+    const filters = Object.values(snapshot.filters ?? {})
+      .filter((f) => f.is_favorite && !f.is_deleted)
+      .sort(byLabelOrder);
+    return { labels, projects, filters };
+  }, [snapshot.labels, snapshot.projects, snapshot.filters]);
+  const filterCounts = useFilterCounts(favourites.filters);
 
   /* A menu that only closes by pressing its own button is a menu that follows
      you around the app. Anywhere else, and Escape, put it away. */
@@ -188,7 +194,7 @@ export function Sidebar({
     const button = (isOver: boolean) => (
       <button
         className={`navitem${isOver ? ' dropping' : ''}`}
-        data-tour={view === 'week' ? 'week' : view === 'someday' ? 'someday' : view === 'review' ? 'review' : view === 'matrix' ? 'matrix' : labelKey === 'nav.dashboard' ? 'dashboard' : labelKey === 'insights.logbook' ? 'logbook' : undefined}
+        data-tour={view === 'week' ? 'week' : view === 'someday' ? 'someday' : view === 'review' ? 'review' : view === 'matrix' ? 'matrix' : view === 'filters' ? 'filters' : labelKey === 'nav.dashboard' ? 'dashboard' : labelKey === 'insights.logbook' ? 'logbook' : undefined}
         aria-current={(page ? page.current : route.view === view) ? 'page' : undefined}
         /* The key that gets here, once the pointer has actually rested on the
            row. Nobody goes looking for a shortcuts sheet, and a hint that
@@ -257,6 +263,9 @@ export function Sidebar({
           { id: 'logbook', current: insightsOnLogbook });
       case 'matrix': return navItem('matrix', 'dashboard', 'nav.matrix', 0);
       case 'labels': return navItem('labels', 'tag', 'nav.labels', 0);
+      case 'filters':
+        return navItem('filters', 'filter', 'nav.filters', 0, undefined,
+          { current: route.view === 'filters' || route.view === 'filter' });
     }
   };
   const navBlock = (ids: SidebarItemId[]) => ids.map((id) => <Fragment key={id}>{navEntry(id)}</Fragment>);
@@ -520,7 +529,7 @@ export function Sidebar({
           {navBlock(visibleNav.other)}
         </nav>
 
-        {(favourites.labels.length > 0 || favourites.projects.length > 0) && (
+        {(favourites.labels.length > 0 || favourites.projects.length > 0 || favourites.filters.length > 0) && (
           <SideGroup
             title={t('nav.favourites')}
             open={openGroups.favourites ?? true}
@@ -534,6 +543,20 @@ export function Sidebar({
               projectNode({ project: p, children: [] }, 'fav-'))}
             {favourites.labels.map((l) =>
               tagItem(l.name, l.color, roots.filter((i) => hasLabel(i, l.name)).length))}
+            {/* The count is Todoist's answer to the query, asked again when
+                the tasks change; it shows once Todoist has answered. */}
+            {favourites.filters.map((f) => (
+              <button
+                key={`filter-${f.id}`}
+                className="navitem tagitem"
+                aria-current={route.view === 'filter' && route.id === f.id ? 'page' : undefined}
+                onClick={() => navigate('filter', f.id)}
+              >
+                <FilterMark filter={f} className="taglabel" style={markerStyle(f.color, false)} />
+                <span className="label">{f.name}</span>
+                {showCounts && (filterCounts[f.id] ?? 0) > 0 && <span className="count">{filterCounts[f.id]}</span>}
+              </button>
+            ))}
           </SideGroup>
         )}
 

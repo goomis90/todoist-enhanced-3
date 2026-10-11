@@ -13,6 +13,18 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.2.0
+
+Your Todoist filters, and tags you can recolour.
+
+🆕 **Your Todoist filters are in the app.** A new Filters entry in the sidebar lists your saved filters with their number of tasks. Open one and you get exactly the list Todoist shows for it, in its language and with all its syntax; a filter with commas shows one list per part. Starred filters sit in the sidebar Favourites. You can hide the entry in Settings, Sidebar.
+
+🆕 **Create, edit and organise filters here.** "New filter" on the Filters page asks for a name, a query, a colour, an icon and the star. On a filter's page, rename it and edit its description in place, like a project. Drag filters to reorder them. The "⋯" menu edits, stars, copies a link or deletes. Every change reaches Todoist.
+
+🆕 **Change a tag's colour.** On the Tags page, "New tag" creates a tag with its colour and star, and each tag's "⋯" menu changes its colour, stars it, copies its link or deletes it.
+
+🎨 **The What's new window is narrower,** the same width as search.
+
 ## 2.1.1
 
 A fix for the “Move to project” menu.

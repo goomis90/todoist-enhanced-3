@@ -4,6 +4,7 @@ import type {
 } from '@/domain/types';
 import { emptySnapshot } from '@/domain/types';
 import type { Locale } from '@/i18n';
+import { demoFilterRecords } from './demoFilters';
 
 /**
  * A made-up account, so the product can be shown or tried without connecting
@@ -412,6 +413,7 @@ export function buildDemoSnapshot(locale: Locale = 'en', seed = 20260914): Snaps
     projects,
     sections,
     labels,
+    filters: demoFilterRecords(locale),
     workspaces,
     collaborators: {
       'demo-alex': { id: 'demo-alex', email: 'alex@demo.test', full_name: 'Alex Martin', image_id: null },

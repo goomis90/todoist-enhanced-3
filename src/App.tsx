@@ -22,6 +22,7 @@ import { UpcomingView } from './views/UpcomingView';
 import { SimpleListView } from './views/SimpleListView';
 import { ProjectView } from './views/ProjectView';
 import { LabelsView } from './views/LabelsView';
+import { FiltersView } from './views/FiltersView';
 import { InsightsView } from './views/InsightsView';
 import { ReviewView } from './views/ReviewView';
 import { SettingsView } from './views/SettingsView';
@@ -807,6 +808,10 @@ function AppShell({
             <SimpleListView kind="label" labelName={route.id} {...viewProps} />
           )}
           {route.view === 'labels' && <LabelsView />}
+          {route.view === 'filters' && <FiltersView />}
+          {route.view === 'filter' && route.id && (
+            <SimpleListView key={route.id} kind="filter" filterId={route.id} {...viewProps} />
+          )}
           {route.view === 'matrix' && (
             <EisenhowerView onOpen={openTask} onUnestimated={openUnestimated} />
           )}

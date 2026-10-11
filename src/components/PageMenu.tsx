@@ -8,6 +8,8 @@ export interface PageMenuItem {
   icon?: IconName;
   /** Drawn with a tick: the current choice among several. */
   checked?: boolean;
+  /** Drawn in the warning colour: it deletes something. */
+  danger?: boolean;
   onPick: () => void;
 }
 
@@ -51,7 +53,7 @@ export function PageMenu({ items, label }: { items: PageMenuItem[]; label?: stri
             <button
               key={item.key}
               type="button"
-              className="opt"
+              className={`opt${item.danger ? ' danger' : ''}`}
               role="menuitemradio"
               aria-checked={item.checked}
               onClick={() => { setOpen(false); item.onPick(); }}
