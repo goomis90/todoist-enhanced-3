@@ -598,7 +598,7 @@ export function TaskActions({ item, childrenOf, onOpen, onKeep }: TaskActionsPro
                     ) : (
                       <span className="hash" style={markerStyle(destination.colour)}>#</span>
                     )}
-                    {destination.label}
+                    <span className="movelabel" title={destination.label}>{destination.label}</span>
                   </span>
                   {/* Only while filtering: in the full list the section sits
                       under its project and saying so twice is noise. */}

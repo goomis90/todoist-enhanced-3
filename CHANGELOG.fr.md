@@ -8,6 +8,12 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.1.1
+
+Une correction du menu « Déplacer vers un projet ».
+
+🐛 **Le menu « Déplacer vers un projet » garde une largeur raisonnable.** Avec un nom de projet ou de section très long, le menu s'étirait sur toute la fenêtre. Il reste maintenant étroit, coupe le nom trop long avec « … » et l'affiche en entier au survol.
+
 ## 2.1.0
 
 Des corrections pour ce que vous avez signalé, une surbrillance plus claire à la saisie, et l'Inbox avec ses sections.
