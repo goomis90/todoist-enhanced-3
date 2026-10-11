@@ -1083,6 +1083,8 @@ export const fr: Record<TranslationKey, string> = {
 
   /* 1.1.1 */
   'nav.today': 'Aujourd\'hui',
+  'nav.weekHintUnified': 'Inclut les tâches du jour',
+  'nav.weekHintSplit': 'N’inclut pas les tâches du jour',
   'settings.weekLayout': 'Aujourd\'hui et Cette semaine',
   'settings.weekLayoutHint': 'Cette semaine réunit normalement aujourd\'hui et le reste de la semaine : décider de sa journée suppose de voir ce que la semaine doit encore. Séparez-les si vous préférez garder une page pour la journée.',
   'settings.weekLayout.unified': 'Ma semaine (fusionnée)',

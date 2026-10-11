@@ -158,7 +158,7 @@ function ProjectBody({
    * otherwise intact — see ReviewView's own DoneRow), which is what makes
    * this possible without a second fetch.
    */
-  const scoped = useMemo(() => {
+  const pool0 = useMemo(() => {
     const openRoots = rootItems(items).filter((i) => i.project_id === projectId);
     const roots = current.filters.showCompleted
       ? [
@@ -168,8 +168,12 @@ function ProjectBody({
           ),
         ]
       : openRoots;
-    return applyFilters(roots, current.filters, snapshot, childrenOf);
-  }, [items, projectId, current.filters, snapshot, childrenOf]);
+    return roots;
+  }, [items, projectId, current.filters.showCompleted, snapshot]);
+  const scoped = useMemo(
+    () => applyFilters(pool0, current.filters, snapshot, childrenOf),
+    [pool0, current.filters, snapshot, childrenOf],
+  );
 
   const load = useMemo(() => summariseLoad(scoped, childrenOf, null), [scoped, childrenOf]);
 
@@ -365,6 +369,7 @@ function ProjectBody({
           <>
             <DisplayMenu
               viewKey={viewKey}
+              pageItems={pool0}
               modes={['list', 'board']}
               groups={['none', 'scheduled', 'priority', 'label', 'estimate', 'day']}
               completedToggle

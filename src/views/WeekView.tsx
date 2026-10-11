@@ -79,7 +79,7 @@ function WeekBody({
   const viewKey = scope === 'today' ? 'today' : 'week';
   const current = viewPrefs(prefs, viewKey);
 
-  const scoped = useMemo(() => {
+  const pool = useMemo(() => {
     const roots = datedRoots(items, snapshot);
     const now = new Date();
     const inScope =
@@ -91,8 +91,12 @@ function WeekBody({
         : scope === 'anytime'
           ? anytimeItems(roots, now)
           : weekItems(roots, now);
-    return applyFilters(inScope, current.filters, snapshot, childrenOf);
-  }, [items, current.filters, snapshot, childrenOf, scope]);
+    return inScope;
+  }, [items, snapshot, scope]);
+  const scoped = useMemo(
+    () => applyFilters(pool, current.filters, snapshot, childrenOf),
+    [pool, current.filters, snapshot, childrenOf],
+  );
 
   const groups = useMemo(
     () => groupWeek(scoped, new Date(), prefs.showQuickGroup),
@@ -194,6 +198,7 @@ function WeekBody({
           <>
             <DisplayMenu
               viewKey={viewKey}
+              pageItems={pool}
               modes={['list', 'board']}
               groups={['none', 'project', 'priority', 'label', 'estimate']}
             />

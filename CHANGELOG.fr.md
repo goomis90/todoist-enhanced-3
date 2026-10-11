@@ -8,6 +8,24 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.1.0
+
+Des corrections pour ce que vous avez signalé, une surbrillance plus claire à la saisie, et l'Inbox avec ses sections.
+
+🎨 **Ce que l'app a compris se voit mieux quand vous écrivez une tâche.** Dans la fenêtre de nouvelle tâche, la date, le projet, le tag, la priorité et la durée reconnus sont maintenant nettement surlignés au lieu de l'être à peine, en clair comme en sombre, sans gêner la lecture du texte.
+
+🎨 **Les réglages de la barre latérale disent si Cette semaine contient les tâches du jour.** Dans Réglages, Barre latérale, et dans la configuration, la ligne « Cette semaine » indique « Inclut les tâches du jour » tant qu'Aujourd'hui est décoché, et « N'inclut pas les tâches du jour » une fois coché, pour savoir ce que change cette case.
+
+🎨 **Affichage ne propose que les tags de la page où vous êtes.** Au lieu de tous vos tags, le filtre par tag liste ceux que portent les tâches de la page (sous-tâches comprises), il ne devient donc plus une longue liste coupée. Un tag déjà choisi reste affiché pour pouvoir le retirer.
+
+🎨 **Les compteurs des tags favoris s'alignent avec les autres.** Dans la barre latérale, le chiffre d'un tag était plus à gauche que celui d'un projet ; ils finissent maintenant sur la même ligne.
+
+🐛 **L'Inbox affiche ses sections.** Les sections créées dans l'Inbox depuis Todoist apparaissent dans l'app, et vous pouvez les ajouter, les renommer et les replier comme dans n'importe quel projet.
+
+🐛 **« Déplacer vers un projet » fonctionne sur une tâche sans section.** Choisir un projet depuis le menu d'une tâche ne faisait rien pour les tâches hors section, comme la plupart des tâches rapides et celles de l'Inbox. Elles se déplacent maintenant, avec le message et Annuler.
+
+🐛 **Un tag avec un emoji ou un accent ouvre ses tâches.** Ouvrir un tag comme 🏠Maison affichait 0 tâche parce que son nom se perdait dans l'adresse. La page le retrouve maintenant, y compris après un rechargement, et les noms avec une barre oblique ou un point d'interrogation fonctionnent aussi.
+
 ## 2.0.0
 
 Un nouveau look, une configuration qui façonne la barre latérale et ce qu’affiche une tâche, un Tableau de bord et un Journal à part entière, et les premiers pas vers le travail à plusieurs.

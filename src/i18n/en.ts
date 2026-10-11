@@ -1081,6 +1081,8 @@ export const en = {
 
   /* 1.1.1 */
   'nav.today': 'Today',
+  'nav.weekHintUnified': 'Includes today’s tasks',
+  'nav.weekHintSplit': 'Does not include today’s tasks',
   'settings.weekLayout': 'Today and My week',
   'settings.weekLayoutHint': 'My week normally holds today and the rest of the week together, because deciding what today is means seeing what the week still owes. Separate them if you would rather keep a page for the day.',
   'settings.weekLayout.unified': 'My Week (merged)',

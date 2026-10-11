@@ -13,6 +13,24 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.1.0
+
+Fixes for what you reported, a clearer highlight while you type, and the Inbox with its sections.
+
+🎨 **What the app understood is easier to see while you type a task.** In the new task window, the date, project, tag, priority and duration it recognised are now highlighted clearly instead of faintly, in light and dark, with the text still easy to read.
+
+🎨 **The sidebar settings say whether My week holds today's tasks.** In Settings, Sidebar, and in the setup, the “My week” line now says “Includes today's tasks” while Today is unticked and “Does not include today's tasks” once you tick it, so you know what ticking Today changes.
+
+🎨 **Display only offers the tags of the page you are on.** Instead of every tag you own, the tag filter lists the ones the tasks of that page carry (subtasks included), so it no longer grows into a long list that gets cut off. A tag you already chose stays there so you can turn it off.
+
+🎨 **The counts of favourite tags line up with the others.** In the sidebar, the number next to a tag sat further left than the one next to a project; they now end on the same line.
+
+🐛 **The Inbox shows its sections.** The sections you create in the Inbox in Todoist now appear in the app, and you can add, rename and fold them like in any other project.
+
+🐛 **“Move to project” works on a task that has no section.** Choosing a project from a task's menu did nothing for tasks sitting outside a section, as most quick tasks and Inbox tasks do. They now move, with the message and Undo.
+
+🐛 **A tag with an emoji or an accent opens its tasks.** Opening a tag such as 🏠Home showed 0 tasks because its name was lost in the address. The page now finds it, also after a reload, and names with a slash or a question mark work too.
+
 ## 2.0.0
 
 A new look, a setup that shapes the sidebar and what a task shows, a Dashboard and a Logbook of their own, and the first steps towards working with others.

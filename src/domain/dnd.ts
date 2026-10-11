@@ -151,7 +151,14 @@ export function dropMutation(item: Item, target: DropTarget): DropMutation | nul
       return { move: { project_id: target.projectId } };
 
     case 'section':
-      if (item.section_id === target.sectionId && !item.parent_id) return null;
+      /* A project is a section destination with no section, so "already there"
+         has to mean the same project as well: a task with no section compared
+         only by section reads as already in every project (#205). */
+      if (
+        item.project_id === target.projectId
+        && (item.section_id ?? null) === (target.sectionId ?? null)
+        && !item.parent_id
+      ) return null;
       return { move: { project_id: target.projectId, section_id: target.sectionId } };
 
     case 'label': {

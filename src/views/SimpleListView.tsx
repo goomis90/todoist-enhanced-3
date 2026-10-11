@@ -63,7 +63,7 @@ function SimpleListBody({
   const viewKey = kind === 'label' ? `label:${labelName}` : kind;
   const current = viewPrefs(prefs, viewKey);
 
-  const scoped = useMemo(() => {
+  const pool0 = useMemo(() => {
     const roots = rootItems(items);
     let selection: Item[];
 
@@ -76,8 +76,12 @@ function SimpleListBody({
       selection = labelName ? roots.filter((i) => hasLabel(i, labelName)) : [];
     }
 
-    return applyFilters(selection, current.filters, snapshot, childrenOf);
-  }, [items, kind, labelName, current.filters, snapshot, childrenOf]);
+    return selection;
+  }, [items, kind, labelName, snapshot]);
+  const scoped = useMemo(
+    () => applyFilters(pool0, current.filters, snapshot, childrenOf),
+    [pool0, current.filters, snapshot, childrenOf],
+  );
 
   /* The one flat list is drawn straight rather than through `ModeSurface`, and
      `ModeSurface` is what used to do the sorting: the sort in the display menu
@@ -199,6 +203,7 @@ function SimpleListBody({
           <>
             <DisplayMenu
               viewKey={viewKey}
+              pageItems={pool0}
               modes={['list', 'board']}
               groups={['none', 'project', 'priority', 'label', 'estimate']}
             />

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon, type IconName } from './Icon';
 import { Select } from './Select';
 import { DetailsEditor } from './DetailsEditor';
 import { useT } from '@/hooks/useT';
+import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
 import { viewPrefs } from '@/store/prefs';
 import { countActiveFilters, PERSONAL_WORKSPACE } from '@/store/selectors';
@@ -11,6 +12,7 @@ import {
   type GroupKey, type SortKey,
 } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
+import type { Item } from '@/domain/types';
 import type { TranslationKey } from '@/i18n';
 
 interface DisplayMenuProps {
@@ -25,6 +27,12 @@ interface DisplayMenuProps {
    * narrow. Everywhere else draws from more than one project and keeps it.
    */
   showWorkspaces?: boolean;
+  /**
+   * The tasks this page draws before any display filter is applied. The tag
+   * filter offers the tags found on them, and nothing else: a tag no task here
+   * carries cannot narrow anything. Left out, every tag is offered.
+   */
+  pageItems?: Item[];
 }
 
 const MODE_ICON: Record<DisplayMode, IconName> = {
@@ -52,8 +60,9 @@ const SORT_ICON: Record<SortKey, IconName> = {
  * button says how many choices differ from the defaults.
  */
 export function DisplayMenu({
-  viewKey, modes, groups, completedToggle = false, showWorkspaces = true,
+  viewKey, modes, groups, completedToggle = false, showWorkspaces = true, pageItems,
 }: DisplayMenuProps) {
+  const { childrenOf } = useData();
   const { t } = useT();
   const prefs = useStore((s) => s.prefs);
   const setViewPrefs = useStore((s) => s.setViewPrefs);
@@ -96,7 +105,23 @@ export function DisplayMenu({
     (shownGroup !== base.group ? 1 : 0) +
     (current.sort !== base.sort ? 1 : 0);
 
-  const tags = Object.values(snapshot.labels).filter((l) => !l.name.startsWith('est-'));
+  /* The tags this page has: those on its tasks and on their subtasks, plus any
+     already chosen, so a filter that no longer matches anything can still be
+     turned off. */
+  const tags = useMemo(() => {
+    const all = Object.values(snapshot.labels).filter((l) => !l.name.startsWith('est-'));
+    if (!pageItems) return all;
+    const used = new Set<string>(current.filters.labels.map((name) => name.toLowerCase()));
+    const seen = new Set<string>();
+    const walk = (item: Item) => {
+      if (seen.has(item.id)) return;
+      seen.add(item.id);
+      for (const name of item.labels) used.add(name.toLowerCase());
+      for (const child of childrenOf(item.id)) walk(child);
+    };
+    pageItems.forEach(walk);
+    return all.filter((l) => used.has(l.name.toLowerCase()));
+  }, [snapshot.labels, pageItems, childrenOf, current.filters.labels]);
   const workspaces = Object.values(snapshot.workspaces);
 
   const toggleIn = <T,>(list: T[], value: T): T[] =>
@@ -277,8 +302,8 @@ export function DisplayMenu({
             </div>
           )}
 
-          <hr />
-          <>
+          {tags.length > 0 && <hr />}
+          {tags.length > 0 && <>
               <h5>{t('filter.labels')}</h5>
               <div className="chiprow scroll">
                 {tags.map((label) => (
@@ -293,7 +318,7 @@ export function DisplayMenu({
                   </button>
                 ))}
               </div>
-          </>
+          </>}
 
 
           <hr />
