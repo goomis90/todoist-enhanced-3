@@ -64,7 +64,8 @@ export function Composer({
   const [sectionId, setSectionId] = useState('');
   const [priority, setPriority] = useState<DisplayPriority>(4);
   const [date, setDate] = useState('');
-  const [recurrence, setRecurrence] = useState<Shorthand['recurrence']>(null);
+  /* `first`: the day a rule built in the date picker starts on, for its chip (#202). */
+  const [recurrence, setRecurrence] = useState<(Shorthand['recurrence'] & { first?: string }) | null>(null);
   const [deadline, setDeadline] = useState('');
   /** The tags picked by hand (or given by the page the composer opened on). */
   const [labels, setLabels] = useState<string[]>([]);
@@ -408,20 +409,21 @@ export function Composer({
           {/* A repeat answers the same question a date does, so it stands in
               the date's own place: a task cannot be both on Tuesday and every
               Monday. */}
-          {recurrence ? (
-            <button
-              type="button"
-              className="fselect-face chipface crepeat"
-              onClick={() => setRecurrence(null)}
-              title={t('composer.clearRepeat')}
-            >
-              <Icon name="repeat" size="sm" />
-              <span className="fselect-value">{recurrence.string}</span>
-              <Icon name="close" size="sm" />
-            </button>
-          ) : (
-            <DateField variant="chip" withTime value={date} onChange={setDate} label={t('composer.date')} />
-          )}
+          {/* The chip shows the rule when there is one, and opens the same
+              picker either way: Time and Repeat at its foot (#202), the cross
+              beside it to stop repeating. Picking a plain day replaces the
+              rule — a new task has no series to keep. */}
+          <DateField
+            variant="chip"
+            withTime
+            value={date}
+            onChange={(next) => { setDate(next); setRecurrence(null); }}
+            label={t('composer.date')}
+            recurrence={recurrence}
+            onRecurrence={setRecurrence}
+            onClearRecurrence={() => setRecurrence(null)}
+            duration={{ minutes, onChange: setMinutes }}
+          />
 
           <DateField
             variant="chip"

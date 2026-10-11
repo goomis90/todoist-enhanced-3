@@ -8,6 +8,20 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.3.0
+
+L'heure, la durée et la répétition, sans les taper.
+
+🆕 **Réglez l'heure, la durée et la répétition depuis le sélecteur de date.** Sous les raccourcis de date, trois lignes : Heure, Durée et Répéter. Tapez une heure (« 20h30 », « 8pm ») ou une durée (« 45 », « 1h30 ») et les valeurs qui correspondent s'affichent pendant la frappe. Répéter propose les règles habituelles de Todoist (chaque jour, chaque semaine le même jour, chaque jour ouvré, chaque mois, chaque année) et « Personnaliser… » pour le reste : depuis la date planifiée ou depuis l'achèvement, tous les N jours, jours ouvrés, semaines, mois ou ans, les jours de la semaine, le jour du mois et une date de fin. La règle est écrite dans votre langue, telle que Todoist la reçoit. Cela fonctionne dans la fenêtre de nouvelle tâche, le menu Planifier d'une tâche et la tâche ouverte.
+
+🎨 **Une tâche récurrente affiche son jour avec le signe de répétition.** Dans la fenêtre de nouvelle tâche et dans la tâche ouverte, une tâche qui se répète affiche « ↻ Demain 09:30 » plutôt que les mots de la règle, lisibles au survol. La tâche ouverte n'a plus de champ séparé pour taper la règle : tout est dans la date de début.
+
+🐛 **Changer de jour garde l'heure.** Une tâche réglée sur « aujourd'hui 12:00 » déplacée à demain reste à 12:00, et une heure choisie sans jour passe à demain quand elle est déjà passée aujourd'hui.
+
+🐛 **Donner une répétition à une tâche ne saute plus son premier jour.** « Chaque jour » donné à une tâche prévue aujourd'hui commence aujourd'hui, pas demain, et changer l'heure d'une tâche récurrente la garde le même jour.
+
+🐛 **Une répétition avec une fin tapée après une heure garde sa fin.** « Tous les lundis à 9h jusqu'au 31/12 » perdait « jusqu'au 31/12 ».
+
 ## 2.2.0
 
 Vos filtres Todoist, et des tags dont on peut changer la couleur.
