@@ -414,6 +414,18 @@ export function revertRefused(
       next.notifications = notifications;
       continue;
     }
+    /* Filters may be missing from an old snapshot, so they are put back on their own. */
+    if (cmd.type.startsWith('filter_')) {
+      const filters = { ...(next.filters ?? {}) };
+      if (cmd.temp_id) delete filters[cmd.temp_id];
+      for (const id of idsTouchedBy(cmd)) {
+        const was = before.filters?.[id];
+        if (was) filters[id] = was;
+        else delete filters[id];
+      }
+      next.filters = filters;
+      continue;
+    }
     const collection = collectionOf(cmd.type);
     if (!collection) continue;
     const target = next[collection] as Record<string, unknown>;

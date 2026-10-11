@@ -256,9 +256,11 @@ test.describe('the Eisenhower matrix and the tags (third pass)', () => {
     expect(await page.locator('.quadrant .gheadblock').first().evaluate((node) => getComputedStyle(node).borderBottomWidth)).toBe('0px');
   });
 
-  test('the new-tag field is a pill', async ({ demo: page }) => {
+  /* 2.2 (#214): the inline field became a "New tag" button in the header, like "New filter". */
+  test('a new tag starts from the header button', async ({ demo: page }) => {
     await go(page, '#/labels');
-    expect(await page.locator('.tagadd').evaluate((node) => getComputedStyle(node).borderRadius)).toBe('999px');
+    await expect(page.locator('.screen.active .phead').getByRole('button', { name: 'New tag' })).toBeVisible();
+    await expect(page.locator('.tagadd')).toHaveCount(0);
   });
 });
 

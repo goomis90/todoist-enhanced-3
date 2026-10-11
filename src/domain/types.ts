@@ -103,6 +103,29 @@ export interface Label {
   is_favorite: boolean;
 }
 
+/**
+ * A saved Todoist filter: a named query such as `today & p1`.
+ *
+ * The app never evaluates the query itself. Todoist does, through
+ * `GET /tasks/filter`, so every operator and every language Todoist accepts
+ * works here too.
+ */
+export interface Filter {
+  id: string;
+  name: string;
+  query: string;
+  /** Markdown; empty or absent when the filter has none. */
+  description?: string;
+  color: string;
+  item_order: number;
+  /** Fractional-indexing position among filters; null until migrated. */
+  order_key?: string | null;
+  is_deleted: boolean;
+  is_favorite: boolean;
+  /** Left over from a cancelled plan: Todoist refuses any change to it. */
+  is_frozen?: boolean;
+}
+
 export interface Workspace {
   id: string;
   name: string;
@@ -218,6 +241,8 @@ export interface Snapshot {
   projects: Record<string, Project>;
   sections: Record<string, Section>;
   labels: Record<string, Label>;
+  /** Absent in a snapshot saved before filters were read (2.2). */
+  filters?: Record<string, Filter>;
   workspaces: Record<string, Workspace>;
   collaborators: Record<string, Collaborator>;
   /** Absent in a snapshot saved before 2.0. */
@@ -317,6 +342,10 @@ export type ViewId =
   | 'project'
   | 'label'
   | 'labels'
+  /** One saved filter, by id. */
+  | 'filter'
+  /** Every saved filter, to open or star. */
+  | 'filters'
   | 'matrix'
   | 'insights';
 

@@ -131,7 +131,7 @@ export function WhatsNew({ scope, onClose, onShowMe }: WhatsNewProps) {
   };
 
   return (
-    <Overlay open={open} onClose={onClose} label={titleText} size="md">
+    <Overlay open={open} onClose={onClose} label={titleText} size="sm">
       <div className="whatsnew">
         <div className="sheet-head whatsnew-head">
           <h2>{titleText}</h2>

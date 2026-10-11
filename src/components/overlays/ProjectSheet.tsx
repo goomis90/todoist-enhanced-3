@@ -11,7 +11,7 @@ import { parentChoices } from '@/domain/projectParents';
 import type { TranslationKey } from '@/i18n';
 
 /** Todoist's own project palette, in Todoist's own order. */
-const CHOICES = [
+export const COLOUR_CHOICES = [
   'berry_red', 'red', 'orange', 'yellow', 'olive_green', 'lime_green',
   'green', 'mint_green', 'teal', 'sky_blue', 'light_blue', 'blue',
   'grape', 'violet', 'lavender', 'magenta', 'salmon', 'charcoal', 'grey', 'taupe',
@@ -262,7 +262,7 @@ export function ProjectSheet({ target, onClose }: ProjectSheetProps) {
             <b className="cname">{t(`colour.${color}` as TranslationKey)}</b>
           </span>
           <div className="swatches" role="radiogroup" aria-labelledby="project-colour">
-            {CHOICES.map((choice) => (
+            {COLOUR_CHOICES.map((choice) => (
               <button
                 key={choice}
                 type="button"

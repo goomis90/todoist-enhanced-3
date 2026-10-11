@@ -1,6 +1,6 @@
 import { request } from './client';
 import type {
-  Collaborator, CollaboratorState, Item, Label, LiveNotification, Note, Project, Reminder,
+  Collaborator, CollaboratorState, Filter, Item, Label, LiveNotification, Note, Project, Reminder,
   Section, Snapshot, TodoistUser, Workspace,
 } from '@/domain/types';
 
@@ -8,7 +8,7 @@ import type {
 export const SYNC_RESOURCE_TYPES = [
   'items', 'projects', 'sections', 'labels', 'notes', 'project_notes',
   'reminders', 'user', 'collaborators', 'workspaces', 'live_notifications',
-  'collaborator_states',
+  'collaborator_states', 'filters',
 ] as const;
 
 export interface SyncResponse {
@@ -18,6 +18,7 @@ export interface SyncResponse {
   projects?: Project[];
   sections?: Section[];
   labels?: Label[];
+  filters?: Filter[];
   notes?: Note[];
   /** Comments on projects rather than tasks; kept in the same collection as task comments. */
   project_notes?: Note[];
@@ -93,6 +94,7 @@ export function applySync(snapshot: Snapshot, response: SyncResponse): Snapshot 
     projects: mergeCollection(snapshot.projects, response.projects, full),
     sections: mergeCollection(snapshot.sections, response.sections, full),
     labels: mergeCollection(snapshot.labels, response.labels, full),
+    filters: mergeCollection(snapshot.filters ?? {}, response.filters, full),
     /* Task comments and project comments are one collection here, told apart
        by `item_id` / `project_id`. A full sync rebuilds it from both. */
     notes: mergeCollection(
@@ -160,6 +162,7 @@ export function resolveTempIds(snapshot: Snapshot, mapping: Record<string, strin
     return project === section.project_id ? section : { ...section, project_id: project };
   });
   const labels = settle(snapshot.labels, (label) => label);
+  const filters = snapshot.filters ? settle(snapshot.filters, (filter) => filter) : undefined;
   const notes = settle(snapshot.notes, (note) => {
     const item = real(note.item_id);
     const project = real(note.project_id);
@@ -168,7 +171,7 @@ export function resolveTempIds(snapshot: Snapshot, mapping: Record<string, strin
       : { ...note, item_id: item, project_id: project };
   });
 
-  return { ...snapshot, items, projects, sections, labels, notes };
+  return { ...snapshot, items, projects, sections, labels, notes, ...(filters ? { filters } : {}) };
 }
 
 /**

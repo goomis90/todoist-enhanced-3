@@ -3,7 +3,7 @@ import { command, type Command, moveItem, newUuid } from '@/api/commands';
 import type { Snapshot } from '@/domain/types';
 import { translate } from '@/i18n';
 import { patchParent } from '@/domain/order';
-import { byChildOrder, bySectionOrder, keyBetween, keysInOrder } from '@/domain/orderKey';
+import { byChildOrder, byLabelOrder, bySectionOrder, keyBetween, keysInOrder } from '@/domain/orderKey';
 import type { Slice, StructureSlice } from './types';
 
 /**
@@ -27,7 +27,7 @@ function placeSection<T extends { order_key?: string | null }>(
 }
 
 export const createStructureSlice: Slice<StructureSlice> = (_set, get) => ({
-  async createLabel(name, color = 'charcoal') {
+  async createLabel(name, color = 'charcoal', favourite = false) {
     const trimmed = name.trim();
     if (!trimmed) return;
 
@@ -41,14 +41,14 @@ export const createStructureSlice: Slice<StructureSlice> = (_set, get) => ({
     const tempId = newUuid();
     const order = Object.keys(get().snapshot.labels).length + 1;
     await get().apply(
-      [{ type: 'label_add', uuid: newUuid(), temp_id: tempId, args: { name: clean, color } }],
+      [{ type: 'label_add', uuid: newUuid(), temp_id: tempId, args: { name: clean, color, ...(favourite ? { is_favorite: true } : {}) } }],
       (snapshot) => ({
         ...snapshot,
         labels: {
           ...snapshot.labels,
           [tempId]: {
             id: tempId, name: clean, color,
-            item_order: order, is_favorite: false, is_deleted: false,
+            item_order: order, is_favorite: favourite, is_deleted: false,
           },
         },
       }),
@@ -66,6 +66,112 @@ export const createStructureSlice: Slice<StructureSlice> = (_set, get) => ({
         };
       },
     );
+  },
+  async setLabelColour(id, color) {
+    await get().apply(
+      [command('label_update', { id, color })],
+      (snapshot) => {
+        const label = snapshot.labels[id];
+        if (!label) return snapshot;
+        return { ...snapshot, labels: { ...snapshot.labels, [id]: { ...label, color } } };
+      },
+    );
+  },
+  async deleteLabel(id) {
+    const label = get().snapshot.labels[id];
+    if (!label) return;
+    const name = label.name.toLowerCase();
+    await get().apply(
+      [command('label_delete', { id })],
+      (snapshot) => {
+        const labels = { ...snapshot.labels };
+        delete labels[id];
+        /* Todoist takes the tag off every task too; doing the same here keeps
+           the rows from showing it until the next read. */
+        const items = { ...snapshot.items };
+        for (const [itemId, item] of Object.entries(items)) {
+          if (item.labels.some((l) => l.toLowerCase() === name)) {
+            items[itemId] = { ...item, labels: item.labels.filter((l) => l.toLowerCase() !== name) };
+          }
+        }
+        return { ...snapshot, labels, items };
+      },
+    );
+  },
+  async setFilterFavourite(id, favourite) {
+    await get().updateFilter(id, { is_favorite: favourite });
+  },
+  async createFilter(fields) {
+    const name = fields.name.trim();
+    const query = fields.query.trim();
+    if (!name || !query) return null;
+    const tempId = newUuid();
+    const existing = Object.values(get().snapshot.filters ?? {}).filter((f) => !f.is_deleted).sort(byLabelOrder);
+    const last = existing[existing.length - 1];
+    const args = {
+      name, query, color: fields.color, is_favorite: fields.is_favorite,
+      ...(fields.description ? { description: fields.description } : {}),
+    };
+    await get().apply(
+      [{ type: 'filter_add', uuid: newUuid(), temp_id: tempId, args }],
+      (snapshot) => ({
+        ...snapshot,
+        filters: {
+          ...snapshot.filters,
+          [tempId]: {
+            id: tempId, ...args, is_deleted: false,
+            item_order: (last?.item_order ?? 0) + 1,
+            /* Drawn last until Todoist sends the key it chose. */
+            order_key: last?.order_key ? keyBetween(last.order_key, null) : null,
+          },
+        },
+      }),
+    );
+    return tempId;
+  },
+  async updateFilter(id, fields) {
+    await get().apply(
+      [command('filter_update', { id, ...fields })],
+      (snapshot) => {
+        const filter = snapshot.filters?.[id];
+        if (!filter) return snapshot;
+        return { ...snapshot, filters: { ...snapshot.filters, [id]: { ...filter, ...fields } } };
+      },
+    );
+  },
+  async deleteFilter(id) {
+    await get().apply(
+      [command('filter_delete', { id })],
+      (snapshot) => {
+        const filters = { ...(snapshot.filters ?? {}) };
+        delete filters[id];
+        return { ...snapshot, filters };
+      },
+    );
+  },
+  async reorderFilters(ids, moved) {
+    const filters = get().snapshot.filters ?? {};
+    /* Todoist now orders filters by key and has deprecated rewriting the
+       whole list. An account not yet given keys still needs the old way. */
+    const keyed = ids.every((id) => filters[id]?.order_key);
+    if (!keyed) {
+      const order = Object.fromEntries(ids.map((id, index) => [id, index + 1]));
+      await get().apply(
+        [command('filter_update_orders', { id_order_mapping: order })],
+        (snapshot) => {
+          const next = { ...(snapshot.filters ?? {}) };
+          ids.forEach((id, index) => { if (next[id]) next[id] = { ...next[id], item_order: index + 1 }; });
+          return { ...snapshot, filters: next };
+        },
+      );
+      return;
+    }
+    /* Only the filter that moved gets a new key, between its new neighbours. */
+    const at = ids.indexOf(moved);
+    if (at < 0) return;
+    const prev = at > 0 ? filters[ids[at - 1]]?.order_key ?? null : null;
+    const next = at < ids.length - 1 ? filters[ids[at + 1]]?.order_key ?? null : null;
+    await get().updateFilter(moved, { order_key: keyBetween(prev, next) });
   },
   async reorderLabels(ids) {
     const order = Object.fromEntries(ids.map((id, index) => [id, index + 1]));

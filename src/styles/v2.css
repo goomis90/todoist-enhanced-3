@@ -1655,3 +1655,29 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .setup-controls .accentcard.selected{border:0;box-shadow:none;background:var(--accent);font-weight:600}
 .setup-controls .accentcard.selected .accentlabel{color:var(--on-accent,#fff)}
 .setup-controls .accentcard.selected .accentlabel::before{background:var(--on-accent,#fff);box-shadow:none}
+
+/* Filters (#201): the query under a filter's title, and Todoist's refusal of one. */
+.filterquery{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0 0 12px;color:var(--faint);font-size:var(--fs-12)}
+
+.filtercard-query{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filtererror{color:var(--late)}
+.filterform-query{display:block;min-height:76px;padding:10px 12px;resize:vertical;line-height:1.45;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-13, 13px)}
+.filterform .formfield .menuhint a{color:inherit;text-decoration:underline}
+.sheet-foot .filterform-delete{margin-right:auto}
+/* Tags and filters: the star says "favourite" without being a second button beside the menu. */
+.tagcard-fav{flex:none;color:var(--p2);fill:currentColor;margin-right:2px}
+.tagcard .pagemenu{flex:none;margin-right:6px}
+/* A tag has no icon to choose: its mark is not a button and carries no pencil. */
+.pcx-icon.static{cursor:default}
+.pcx-icon.static::after{display:none}
+.pcx-icon.static:hover{transform:none}
+/* The tag sheet's card: one line, so a smaller mark and a centred name. */
+.pcx-single{align-items:center}
+.pcx-single .pcx-main{align-content:center}
+.pcx-single .pcx-icon{width:40px;height:40px;border-radius:12px}
+.pcx-single .pcx-icon .hash .ic{width:20px;height:20px}
+.pcx-single .pcx-name{line-height:1.3}
+/* The slot for dropping a tag first lies over the top of the list rather than
+   in it, so the Tags list starts where the Filters list does. */
+.taglist{position:relative}
+.tagdrop-top{position:absolute;top:-10px;left:0;right:0;height:14px;margin:0}

@@ -286,7 +286,11 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
         stale = await flushQueue(get, set);
       }
 
-      const fromScratch = signedIn ? stale : (full || stale);
+      /* A snapshot saved before filters were read has none, and an
+         incremental read only carries what changed since: it would never
+         bring the filters that already existed. One full read fills them. */
+      const missingFilters = !get().snapshot.filters;
+      const fromScratch = signedIn ? stale : (full || stale || missingFilters);
       const token = fromScratch ? '*' : get().snapshot.syncToken;
       const response = await sync(token);
       const snapshot = applySync(fromScratch ? emptySnapshot() : get().snapshot, response);

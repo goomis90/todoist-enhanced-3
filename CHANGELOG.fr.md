@@ -8,6 +8,18 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.2.0
+
+Vos filtres Todoist, et des tags dont on peut changer la couleur.
+
+🆕 **Vos filtres Todoist sont dans l'app.** Une nouvelle entrée Filtres dans la barre latérale liste vos filtres enregistrés avec leur nombre de tâches. Ouvrez-en un : vous obtenez exactement la liste que Todoist affiche, dans votre langue et avec toute sa syntaxe ; un filtre avec des virgules affiche une liste par partie. Les filtres en favori apparaissent dans les Favoris de la barre latérale. L'entrée se masque dans Réglages, Barre latérale.
+
+🆕 **Créez, modifiez et organisez vos filtres ici.** « Nouveau filtre », sur la page Filtres, demande un nom, une requête, une couleur, une icône et l'étoile. Sur la page d'un filtre, renommez-le et modifiez sa description sur place, comme un projet. Glissez les filtres pour les réordonner. Le menu « ⋯ » modifie, met en favori, copie le lien ou supprime. Chaque changement arrive dans Todoist.
+
+🆕 **Changez la couleur d'un tag.** Sur la page Tags, « Nouveau tag » crée un tag avec sa couleur et son étoile, et le menu « ⋯ » de chaque tag change sa couleur, le met en favori, copie son lien ou le supprime.
+
+🎨 **La fenêtre Nouveautés est moins large,** de la même largeur que la recherche.
+
 ## 2.1.1
 
 Une correction du menu « Déplacer vers un projet ».
