@@ -574,13 +574,13 @@ test('#159 Show me, after an update, runs the tour over what the update brought'
   await expect(page.getByRole('dialog', { name: 'Setting up' })).toHaveCount(0);
 });
 
-test('#159 the history in Settings offers the whole tour, not Show me', async ({ demo: page }) => {
+test('#159 the history in Settings offers neither Show me nor a tour button; the tour has its own button there', async ({ demo: page }) => {
   await go(page, '#/settings');
   await page.evaluate(() => window.dispatchEvent(new Event('enhanced:changelog')));
   const dialog = page.getByRole('dialog', { name: 'Changelog' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Show me', exact: true })).toHaveCount(0);
-  await expect(dialog.getByRole('button', { name: 'Show me the tour' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Show me the tour' })).toHaveCount(0);
 });
 
 /* The list rows still open their task from the group, and the group completes. */

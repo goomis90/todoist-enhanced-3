@@ -8,6 +8,18 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.5.0
+
+Qui a accès à un projet, l'app Mac à portée de main, et une barre latérale qui défile jusqu'au bout.
+
+🆕 **Choisissez qui a accès à un projet.** Les fenêtres Nouveau projet et Modifier le projet ont un nouveau choix « Qui y a accès » : Restreint (seules les personnes que vous invitez), Équipe (toute l'équipe de l'espace de travail, pour les projets d'un espace de travail) et Public (toute personne qui a le lien peut le voir). Un nouveau projet reçoit le choix par défaut de son espace de travail, et un projet existant ne change que si vous changez ce choix. Todoist n'autorise pas Public sur tous les comptes : quand il refuse, vous en êtes informé et la modification n'est pas faite. Déplacer un projet vers un autre espace de travail lui donne le choix par défaut de cet espace.
+
+🆕 **Téléchargez l'app Mac depuis les Réglages.** L'app Mac met Enhanced for Todoist dans sa propre fenêtre et ouvre la fenêtre de nouvelle tâche par-dessus n'importe quelle app avec Option + Espace. Réglages, À propos a maintenant une carte « App Mac ». Son bouton « Télécharger pour Mac » ouvre un encart avec les trois étapes pour l'installer, y compris ce que macOS demande au premier lancement, et le téléchargement lui-même : le bon fichier pour votre Mac quand votre navigateur peut le dire, les deux (Apple silicon et Intel) quand il ne le peut pas. L'écran de connexion a une ligne discrète qui mène à la page de l'app. Ils n'apparaissent que sur un Mac, et jamais dans l'app Mac elle-même.
+
+🎨 **La fenêtre de mise à jour ne propose la visite que s'il y a du nouveau à montrer.** Après une mise à jour, « Me montrer » n'apparaît que si la version a ajouté quelque chose que la visite peut désigner. Sinon, pas de bouton de visite : la visite complète reste dans Réglages, À propos.
+
+🐛 **Tous les projets sont accessibles dans la barre latérale.** La zone « Ajouter une tâche » en bas grandit avec la ligne de synchronisation et les boutons qu'elle porte, et elle cachait les derniers projets de la liste, impossibles à faire défiler jusqu'à l'écran. La liste garde maintenant exactement la place que prend cette zone, quelle que soit la hauteur de la fenêtre.
+
 ## 2.4.0
 
 Des petits détails qui gênaient.

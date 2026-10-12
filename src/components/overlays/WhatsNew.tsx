@@ -201,18 +201,11 @@ export function WhatsNew({ scope, onClose, onShowMe }: WhatsNewProps) {
         </div>
 
         <div className="sheet-foot whatsnew-foot">
-          {showable ? (
+          {/* Only when this update changed what the tour shows. The whole tour is one click away in Settings. */}
+          {showable && (
             <button className="btn soft" onClick={() => onShowMe(scope.versions)}>
               <Icon name="week" size="sm" />
               {t('whatsNew.showMe')}
-            </button>
-          ) : (
-            <button
-              className="btn soft"
-              onClick={() => { onClose(); window.dispatchEvent(new Event('enhanced:tour')); }}
-            >
-              <Icon name="week" size="sm" />
-              {t('whatsNew.showTour')}
             </button>
           )}
           <span className="whatsnew-end">

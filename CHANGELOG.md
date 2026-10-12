@@ -13,6 +13,18 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.5.0
+
+Who can access a project, the Mac app within reach, and a sidebar that scrolls to the end.
+
+🆕 **Choose who can access a project.** The New project and Edit project windows have a new "Who can access" choice: Restricted (only the people you invite), Team (everyone in the workspace, for workspace projects) and Public (anyone with the link can see it). A new project gets its workspace's default, and an existing project only changes when you change the choice. Todoist does not allow Public on every account: when it refuses, you are told and the change is not made. Moving a project to another workspace gives it that workspace's default.
+
+🆕 **Get the Mac app from Settings.** The Mac app puts Enhanced for Todoist in its own window and opens the new task window over any app with Option + Space. Settings, About now has a "Mac app" card. Its "Download for Mac" button opens a call-out with the three steps to install it, including what macOS asks the first time you open it, and the download itself: the right file for your Mac when your browser can tell, both (Apple silicon and Intel) when it cannot. The sign-in screen has one quiet line that leads to the app's page. They only appear on a Mac, and never inside the Mac app itself.
+
+🎨 **The update window only offers the tour when it has something new to show.** After an update, "Show me" appears only if the release added something the tour can point at. Otherwise there is no tour button: the whole tour is still in Settings, About.
+
+🐛 **Every project can be reached in the sidebar.** The "Add task" area at the bottom grows with the sync line and the buttons it carries, and it was hiding the last projects of the list, which could not be scrolled into view. The list now keeps exactly as much room as that area takes, whatever the window height.
+
 ## 2.4.0
 
 Small things that were in the way.

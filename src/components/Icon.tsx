@@ -7,7 +7,7 @@ import {
   Kanban, Layers, LayoutDashboard, Lightbulb, Link, List, LogOut, Mail, Menu,
   MessageSquare, MoreHorizontal, PanelLeft, PanelTop, Pencil, Plus, Repeat,
   Search, Settings, SlidersHorizontal, Star, Tag, Target, TrendingUp,
-  TriangleAlert, Upload, X, ListChecks, Bold, Italic, Strikethrough, Heading1, Heading2, Quote, Code, ListOrdered,
+  TriangleAlert, Upload, X, Lock, Globe, ListChecks, Bold, Italic, Strikethrough, Heading1, Heading2, Quote, Code, ListOrdered,
   User, Eye, Sparkles, Info, Palette, Paperclip, SquareCheck, SmilePlus, Copy, Trash2, ArrowUp, FileText,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,7 +22,7 @@ export type IconName =
   | 'section' | 'sliders' | 'someday' | 'sort' | 'stack' | 'star' | 'subtask'
   | 'tag' | 'tasks' | 'user' | 'eye' | 'sparkles' | 'info' | 'palette'
   | 'checkbox' | 'paperclip' | 'react' | 'copy' | 'trash' | 'arrow-up' | 'file' | 'image'
-  | 'trend' | 'upcoming' | 'warning' | 'week'
+  | 'trend' | 'upcoming' | 'warning' | 'week' | 'lock' | 'globe'
   | 'bold' | 'italic' | 'strike' | 'heading1' | 'heading2' | 'quote' | 'code' | 'list-ordered';
 
 /** Lucide (MIT, lucide.dev) — chosen to replace the app's hand-drawn sprite. */
@@ -77,6 +77,8 @@ const ICONS: Record<IconName, LucideIcon> = {
   trend: TrendingUp,
   upcoming: CalendarClock,
   warning: TriangleAlert,
+  lock: Lock,
+  globe: Globe,
   week: CalendarDays,
 };
 

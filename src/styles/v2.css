@@ -266,7 +266,7 @@
 .sidebar .karmabar{height:3px;width:78px;background:var(--side-bar)}
 .sidebar .side-top .iconbtn{width:30px;height:30px;border-radius:50%}
 .sidebar .side-top .iconbtn:hover{background:var(--side-hover)}
-.sidebar .side-scroll{padding:0 10px 96px;scroll-padding-bottom:96px}
+.sidebar .side-scroll{padding:0 10px calc(var(--side-foot-h,96px) + 8px);scroll-padding-bottom:calc(var(--side-foot-h,96px) + 8px)}
 .sidebar .searchbtn{height:34px;min-height:34px;border-radius:999px;margin:2px 0 14px;padding:0 13px}
 .sidebar .navitem{height:32px;min-height:32px;gap:10px;padding-block:0;padding-left:10px;border-radius:12px;font-size:13.5px;font-weight:400}
 .sidebar .navitem:hover{background:var(--side-hover)}
