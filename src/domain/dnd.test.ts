@@ -247,9 +247,9 @@ describe('placementForPage: what Q opens the composer with', () => {
     expect(placementForPage({ view: 'inbox' }, 'inbox', now)).toEqual({ projectId: 'inbox' });
     expect(placementForPage({ view: 'today' }, 'inbox', now)).toEqual({ date: '2026-10-12' });
     expect(placementForPage({ view: 'label', id: 'waiting' }, 'inbox', now)).toEqual({ labels: ['waiting'] });
+    expect(placementForPage({ view: 'week' }, 'inbox', now)).toEqual({ labels: [weekLabel()] });
   });
   it('fixes nothing from a page that fixes nothing', () => {
-    expect(placementForPage({ view: 'week' }, 'inbox', now)).toEqual({});
     expect(placementForPage({ view: 'upcoming' }, 'inbox', now)).toEqual({});
     expect(placementForPage({ view: 'filter', id: 'f1' }, 'inbox', now)).toEqual({});
   });

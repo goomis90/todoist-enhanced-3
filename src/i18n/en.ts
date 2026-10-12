@@ -461,6 +461,7 @@ export const en = {
   'composer.placeholder': 'Task name — try "Review the brief tomorrow 2pm p1 #Work"',
   'composer.needsTitle': 'Add a title: everything typed was read as a date, a project or a tag.',
   'composer.add': 'Add task',
+  'composer.adding': 'Adding…',
   'composer.cancel': 'Cancel',
   'composer.date': 'Date',
   'composer.priority': 'Priority',

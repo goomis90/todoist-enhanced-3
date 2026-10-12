@@ -211,8 +211,8 @@ export function DateField({
   );
 
   /* The chip wears the colour the date will have on the task's row (#218); a
-     deadline keeps its own. */
-  const tone = chip && icon !== 'deadline' && value && !ruleFace
+     deadline wears the deadline's own. */
+  const tone = chip && icon === 'deadline' && value ? 'deadline' : chip && value && !ruleFace
     ? (() => {
       const day = parseISO(value.includes('T') ? value : `${value.slice(0, 10)}T00:00`);
       const late = value.includes('T') ? day < new Date() : differenceInCalendarDays(day, new Date()) < 0;

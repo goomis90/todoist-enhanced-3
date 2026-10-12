@@ -444,6 +444,7 @@ export function Composer({
             unset={priority === 4}
             unsetLabel={t('composer.priority')}
             chipIcon={<Icon name="flag" size="sm" style={{ color: `var(--p${priority})` }} />}
+            tint={`var(--p${priority})`}
             value={String(priority)}
             onChange={(next) => setPriority(Number(next) as DisplayPriority)}
             options={([1, 2, 3, 4] as const).map((p) => ({
@@ -622,7 +623,9 @@ export function Composer({
             aria-busy={saving}
             onClick={() => void submit()}
           >
-            {t('composer.add')}
+            {/* The window stays open while Todoist answers (#142): the button says
+                it is sending, rather than looking switched off. */}
+            {saving ? t('composer.adding') : t('composer.add')}
           </button>
         </div>
       </div>

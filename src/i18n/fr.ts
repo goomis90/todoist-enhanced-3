@@ -463,6 +463,7 @@ export const fr: Record<TranslationKey, string> = {
   'composer.placeholder': 'Nom de la tâche — essayez « Relire le brief demain 14h p1 #Travail »',
   'composer.needsTitle': 'Ajoutez un titre : tout ce qui est tapé a été lu comme une date, un projet ou une étiquette.',
   'composer.add': 'Ajouter la tâche',
+  'composer.adding': 'Ajout…',
   'composer.cancel': 'Annuler',
   'composer.date': 'Date',
   'composer.priority': 'Priorité',
