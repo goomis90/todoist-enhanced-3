@@ -1,3 +1,4 @@
+import { HireNote } from '@/components/HireNote';
 import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { SubtasksProvider } from '@/components/TaskRow';
@@ -144,6 +145,9 @@ function ProjectBody({
   };
   const viewKey = `project:${projectId}`;
   const current = viewPrefs(prefs, viewKey);
+  const hireNoteOpen = useStore((s) => s.hireNote);
+  /* A row of the project's own tasks (or of the Scheduled list), under Quick; elsewhere under the header. */
+  const hireInList = current.mode === 'list';
 
   const project = snapshot.projects[projectId];
 
@@ -300,6 +304,7 @@ function ProjectBody({
   return (
     <div className="page">
       <PageHeader
+        hireNote={!hireInList}
         title={
           <span className="ptitle-row">
             {/* The project's mark, in front of its name: pressing it opens the
@@ -330,6 +335,7 @@ function ProjectBody({
               {iconOpen && (
                 <div className="popover ptitle-icons" role="dialog" aria-label={t('project.icon')}>
                   <ProjectIconGrid
+                    focusSearch
                     value={readProjectIcon(project.description)}
                     onPick={(iconId) => {
                       void updateProjectFields(projectId, {
@@ -459,6 +465,7 @@ function ProjectBody({
               project, not in a section that happens to be called nothing. */}
           <TaskGroup
             items={looseItems}
+            lead={hireNoteOpen ? <HireNote /> : undefined}
             childrenOf={childrenOf}
             onOpen={onOpen}
             showProject={false}
@@ -510,6 +517,8 @@ function ProjectBody({
           {quickGroup}
           <TaskGroup
             title={t('section.scheduled')}
+            lead={hireNoteOpen ? <HireNote /> : undefined}
+            keepWhenEmpty={hireNoteOpen}
             items={sorted(pool.filter((i) => i.due !== null))}
             childrenOf={childrenOf}
             onOpen={onOpen}
@@ -530,6 +539,7 @@ function ProjectBody({
         <ModeSurface
           items={pool}
           lead={quickGroup}
+          firstGroupLead={hireNoteOpen ? <HireNote /> : undefined}
           childrenOf={childrenOf}
           mode={current.mode}
           viewKey={viewKey}

@@ -1680,3 +1680,9 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
    in it, so the Tags list starts where the Filters list does. */
 .taglist{position:relative}
 .tagdrop-top{position:absolute;top:-10px;left:0;right:0;height:14px;margin:0}
+
+/* The favourite star on a filter or tag card: always drawn, filled when on (#217). */
+.tagcard-star{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;border-radius:var(--r-sm);color:var(--faint)}
+.tagcard-star:hover{background:var(--hover);color:var(--text)}
+.tagcard-star.on{color:var(--p2)}
+.tagcard-star.on .ic{fill:currentColor}

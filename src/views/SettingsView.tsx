@@ -1,3 +1,4 @@
+import { HireNote } from '@/components/HireNote';
 import { EstimateConversion } from '@/components/overlays/EstimateConversion';
 import { canStoreDurations } from '@/domain/estimates';
 import { useEffect, useState } from 'react';
@@ -91,6 +92,7 @@ export function SettingsView() {
         </div>
 
       </div>
+      <HireNote />
 
       <div className="settings">
         {/* The menu navigates the page rather than replacing it, so these are
