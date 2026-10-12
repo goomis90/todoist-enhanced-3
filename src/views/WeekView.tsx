@@ -1,3 +1,4 @@
+import { HireNote } from '@/components/HireNote';
 import { useMemo } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { SubtasksProvider } from '@/components/TaskRow';
@@ -73,6 +74,7 @@ function WeekBody({
   const { snapshot, items, childrenOf } = useData();
   const prefs = useStore((s) => s.prefs);
   const updateMany = useStore((s) => s.updateMany);
+  const hireNoteOpen = useStore((s) => s.hireNote);
   const confirm = useConfirm();
   /* Two pages, two sets of display preferences: a filter set on Today has no
      business following you to the rest of the week. */
@@ -193,6 +195,7 @@ function WeekBody({
   return (
     <div className="page">
       <PageHeader
+        hireNote={current.mode === 'board'}
         title={t(scope === 'today' ? 'nav.today' : 'nav.week')}
         actions={
           <>
@@ -218,7 +221,6 @@ function WeekBody({
         onOpen={onOpen}
         onUnestimated={onUnestimated}
       />
-
 
       {current.mode === 'list' && current.group === 'none' ? (
         <div className="mode">
@@ -262,6 +264,8 @@ function WeekBody({
           <TaskGroup
             title={t('group.untimed')}
             items={sortedGroup(groups.untimed)}
+            lead={hireNoteOpen ? <HireNote /> : undefined}
+            keepWhenEmpty={hireNoteOpen}
             childrenOf={childrenOf}
             onOpen={onOpen}
             reorderable={byHand}
@@ -298,6 +302,7 @@ function WeekBody({
       ) : (
         <ModeSurface
           items={scoped}
+          firstGroupLead={hireNoteOpen ? <HireNote /> : undefined}
           childrenOf={childrenOf}
           mode={current.mode}
           group={current.group}

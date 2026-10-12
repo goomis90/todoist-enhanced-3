@@ -349,11 +349,13 @@ test('#140 every toast has a close button; closing one keeps its undo, and plain
 
 test('#130 follow-up: a task typed with "every day at 3pm" shows Today 15:00', async ({ demo: page }) => {
   await page.keyboard.press('q');
-  await page.locator('.composer-name').fill('Water the plants every day at 3pm');
+  /* Not "Water the plants": the demo seeds a task of that name, due today on a
+     Monday, and the row found first was that one rather than the new task. */
+  await page.locator('.composer-name').fill('Feed the cat every day at 3pm');
   await page.keyboard.press('ControlOrMeta+Enter');
   await expect(page.locator('.composerbox')).toHaveCount(0);
   await go(page, '#/week');
-  await expect(row(page, 'Water the plants')).toContainText('15:00');
+  await expect(row(page, 'Feed the cat')).toContainText('15:00');
 });
 
 test('#135 follow-up: @@link0@@ typed in the composer stays text, with no tag', async ({ demo: page }) => {

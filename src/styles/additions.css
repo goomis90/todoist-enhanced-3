@@ -1648,3 +1648,46 @@
 @media(max-width:480px){.estimate-toggle{flex-direction:column}.estimate-toggle button{min-height:56px}.conversion-list li{flex-wrap:wrap}.conversion-list li > small{margin-left:26px}}
 .estimate-recommended{display:inline-block;margin-left:6px;padding:2px 5px;border-radius:var(--r-sm);background:var(--accent-soft);color:var(--accent);font-size:var(--fs-11);font-weight:600}
 .create-tag-input{margin-top:8px}.create-tag-input .pickersearch{margin:0}
+
+/* ---------- A note for Todoist's own people (HireNote) ---------- */
+/* Laid out exactly like a task row: the tint reaches past the row's ends with
+   offset shadows, as a picked row does, so the check and the text stay on the
+   same lines as the tasks around it. */
+.task.hirenote{
+  background:var(--accent-soft);
+  border-bottom-color:transparent;
+  border-radius:var(--r-md,8px);
+  box-shadow:-10px 0 0 0 var(--accent-soft), 10px 0 0 0 var(--accent-soft);
+  cursor:pointer;
+}
+.task.hirenote:hover{background:var(--accent-soft)}
+.task.hirenote .ttitle{font-weight:600}
+.hiretag{
+  display:inline-flex;align-items:center;
+  padding:1px 7px;border-radius:var(--r-sm);
+  background:var(--surface);color:var(--accent);
+  font-size:var(--fs-11);white-space:nowrap;
+}
+.task.hirenote .trow-end{display:flex;align-items:center;gap:var(--s2,8px);visibility:visible}
+.hirecard{position:relative;border-radius:inherit;overflow:hidden;text-align:center}
+.hirecard-cover{height:96px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#000));position:relative}
+.hirecard-close{position:absolute;top:var(--s2,8px);right:var(--s2,8px);color:#fff}
+.hirecard-photo{display:block;width:88px;height:88px;border-radius:50%;object-fit:cover;margin:-44px auto 0;position:relative;border:4px solid var(--surface)}
+.hirecard-body{padding:var(--s3) var(--s5) var(--s5);display:grid;gap:var(--s2);justify-items:center}
+.hirecard-body h2{font-size:var(--fs-18,18px);font-weight:700;line-height:1.3}
+.hirecard-body p{color:var(--text);font-size:var(--fs-14);line-height:1.55;margin:var(--s2) 0;max-width:42ch;text-wrap:balance}
+.hirecard-links{display:flex;flex-wrap:wrap;gap:var(--s2);justify-content:center}
+.hirepill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:var(--hover);color:var(--muted);font-size:var(--fs-13);text-decoration:none}
+.hirepill-mail{gap:0}
+.hirepill a{display:inline-flex;align-items:center;gap:6px;color:inherit;text-decoration:none}
+.hirepill:hover{color:var(--text)}
+/* The copy button takes no room until the pill is hovered or focused. */
+.hirepill-copy{display:inline-flex;align-items:center;gap:4px;color:inherit;font-size:var(--fs-12,12px);overflow:hidden;max-width:0;padding:0;opacity:0;margin-left:0;transition:max-width .16s ease,opacity .16s ease,margin .16s ease,padding .16s ease}
+.hirepill-mail:hover .hirepill-copy,.hirepill-mail:has(:focus-visible) .hirepill-copy,.hirepill-copy.copied{max-width:90px;padding:2px 4px;opacity:1;margin-left:6px}
+@media (hover:none){.hirepill-copy{max-width:90px;padding:2px 4px;opacity:1;margin-left:6px}}
+@media (prefers-reduced-motion:reduce){.hirepill-copy{transition:none}}
+/* In a matrix quadrant a task is a card: the card carries the tint, the row does not paint past its ends. */
+.taskwrap > .task.hirenote,.taskwrap > .task.hirenote:hover{background:transparent;box-shadow:none;border-radius:0}
+
+/* In a matrix quadrant the card is white like the others, picked out by an accent edge: a tint would vanish on the quadrant's own colour. */
+.taskwrap:has(> .task.hirenote){background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent)}

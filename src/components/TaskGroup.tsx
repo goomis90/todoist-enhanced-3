@@ -35,6 +35,8 @@ interface TaskGroupProps {
   viewKey?: string;
   /** Stays on the page with nothing in it, so the line that fills it is there. */
   keepWhenEmpty?: boolean;
+  /** A row of the page's own that sits first in the group, before its tasks (the note for Todoist's people). */
+  lead?: React.ReactNode;
   /** An accent for the sections that carry meaning: late, quick, and gathering dust. */
   accent?: 'late' | 'quick' | 'dust';
   /** Said quietly after the title, as "over 3 months" is after Gathering dust. */
@@ -60,7 +62,7 @@ interface TaskGroupProps {
 export function TaskGroup({
   title, items, childrenOf, onOpen, tint, actions,
   showProject = true, showSection = false, defaultCollapsed = false, dropTarget, onAddTask, accent,
-  sectionId, projectId, onRename, onDelete, reorderable, viewKey, keepWhenEmpty = false, draggable = true,
+  sectionId, projectId, onRename, onDelete, reorderable, viewKey, keepWhenEmpty = false, lead, draggable = true,
   subtitle, dust = false, collapsible = true, cards = false,
 }: TaskGroupProps) {
   const { t, locale } = useT();
@@ -185,6 +187,8 @@ export function TaskGroup({
 
         </div>
       )}
+
+      {!collapsed && lead}
 
       {!collapsed &&
         items.map((item) => draggable ? (

@@ -8,6 +8,16 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.4.0
+
+Des petits détails qui gênaient.
+
+🆕 **Mettez un filtre ou un tag en favori depuis sa carte.** Sur les pages Filtres et Tags, chaque carte a une étoile à droite, toujours visible. Un clic l'ajoute aux favoris ou l'en retire, dans l'app et dans Todoist. Il fallait passer par le menu à trois points.
+
+🎨 **« Nouveautés » dit « depuis votre dernière visite ».** Après une mise à jour, le titre de la fenêtre ne porte plus le numéro de la dernière version, trompeur quand plusieurs versions sont listées. Chaque version garde son propre titre.
+
+🐛 **Vous pouvez taper dès l'ouverture du sélecteur d'icônes.** Sur un projet ou un filtre, cliquez l'icône à côté du titre et commencez à écrire : les icônes se filtrent, au lieu d'ouvrir la recherche de l'app.
+
 ## 2.3.0
 
 L'heure, la durée et la répétition, sans les taper.

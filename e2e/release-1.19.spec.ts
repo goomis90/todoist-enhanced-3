@@ -559,7 +559,7 @@ test('#159 Show me, after an update, runs the tour over what the update brought'
   await page.evaluate(() => window.dispatchEvent(
     new CustomEvent('enhanced:changelog', { detail: { versions: ['1.19.0'] } }),
   ));
-  const dialog = page.getByRole('dialog', { name: /What.s new in/ });
+  const dialog = page.getByRole('dialog', { name: /What.s new since/ });
   await expect(dialog.getByRole('button', { name: 'Show me' })).toBeVisible();
   await dialog.getByRole('button', { name: 'Show me' }).click();
 

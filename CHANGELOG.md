@@ -13,6 +13,16 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.4.0
+
+Small things that were in the way.
+
+🆕 **Star a filter or a tag from its card.** On the Filters and Tags pages, every card now has a star on its right, always visible. One click adds it to your favourites or removes it, in the app and in Todoist. It used to be only in the three-dot menu.
+
+🎨 **"What's new" says "since your last visit".** After an update, the window no longer carries the number of the latest release in its title, which was misleading when several releases were listed. Each release keeps its own version heading.
+
+🐛 **You can type right after opening the icon picker.** On a project or a filter, click the icon next to the title and start typing: the icons are filtered, instead of the search bar of the app opening.
+
 ## 2.3.0
 
 Time, duration and repeat, without typing them.
