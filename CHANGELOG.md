@@ -23,9 +23,9 @@ Quick finishes.
 
 🎨 **Long task titles wrap when adding a task.** The field grows with the title, and the date, #project and @tag stay highlighted.
 
-🎨 **Q adds the task where you are.** From Today it is due today, from a project it goes in that project, from a tag page it gets that tag.
+🎨 **Q adds the task where you are.** From Today it is due today, from My week it gets the week label, from a project it goes in that project, from a tag page it gets that tag.
 
-🎨 **Coloured chips when adding a task.** The date, the project and the tags show their own colour.
+🎨 **Coloured chips when adding a task.** The date, the deadline, the priority, the project and the tags show their own colour.
 
 🎨 **Neater task rows.** The checkbox lines up with the title, and the title is a little bolder.
 

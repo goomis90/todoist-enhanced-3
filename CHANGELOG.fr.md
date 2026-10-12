@@ -18,9 +18,9 @@ Finitions rapides.
 
 🎨 **Les titres de tâche longs passent à la ligne à l'ajout.** Le champ grandit avec le titre, et la date, le #projet et l'@étiquette restent surlignés.
 
-🎨 **Q ajoute la tâche là où vous êtes.** Depuis Aujourd'hui elle est pour aujourd'hui, depuis un projet elle va dans ce projet, depuis une page de tag elle reçoit ce tag.
+🎨 **Q ajoute la tâche là où vous êtes.** Depuis Aujourd'hui elle est pour aujourd'hui, depuis Ma semaine elle reçoit l’étiquette de la semaine, depuis un projet elle va dans ce projet, depuis une page de tag elle reçoit ce tag.
 
-🎨 **Des pastilles colorées à l'ajout d'une tâche.** La date, le projet et les tags prennent leur couleur.
+🎨 **Des pastilles colorées à l'ajout d'une tâche.** La date, l’échéance, la priorité, le projet et les tags prennent leur couleur.
 
 🎨 **Des lignes de tâche plus nettes.** La case est alignée sur le titre, et le titre est un peu plus marqué.
 
