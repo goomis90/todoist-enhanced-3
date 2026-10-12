@@ -162,6 +162,8 @@ export function WhatsNew({ scope, onClose, onShowMe }: WhatsNewProps) {
             >
               <h3>
                 {t('whatsNew.version', { version: release.version })}
+                {/* How much is in the release, before reading it. */}
+                <small className="whatsnew-count">{t('whatsNew.changes', { count: release.changes.length })}</small>
                 {release.untranslated && (
                   <small className="whatsnew-lang">{t('whatsNew.untranslated')}</small>
                 )}

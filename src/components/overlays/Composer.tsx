@@ -380,6 +380,10 @@ export function Composer({
           onPasteList={(lines, keepAsText) => void pasteList(lines, keepAsText)}
           placeholder={t('composer.namePlaceholder')}
           ariaLabel={t('composer.name')}
+          /* A long title wraps and the field grows, as the task panel's does (#247).
+             A wrapping field does not take the focus by itself. */
+          multiline
+          autoFocus
           snapshot={snapshot}
           naturalDates={naturalDates}
           refusals={refusals}
@@ -454,7 +458,9 @@ export function Composer({
               <button
                 key={label}
                 type="button"
-                className="fselect-face chipface tagchip"
+                /* In the tag's own colour, as the date and the project chips are. */
+                className={`fselect-face chipface tagchip${known?.color ? ' tinted' : ''}`}
+                style={known?.color ? markerStyle(known.color) : undefined}
                 title={t('composer.removeTag', { name: label })}
                 onClick={() => dropTag(label)}
               >
@@ -606,9 +612,13 @@ export function Composer({
             <kbd>⌘</kbd><kbd>↵</kbd> {t('composer.hintAdd')}
           </span>
           <button className="btn quiet" onClick={onClose}>{t('composer.cancel')}</button>
+          {/* Everything typed can be read as a date, a project or a tag, and then
+              there is no title left for Todoist: the button says so rather than
+              doing nothing when clicked. */}
           <button
             className="btn primary"
-            disabled={!name.trim() || saving}
+            disabled={!parsed.content.trim() || saving}
+            title={name.trim() && !parsed.content.trim() ? t('composer.needsTitle') : undefined}
             aria-busy={saving}
             onClick={() => void submit()}
           >

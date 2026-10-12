@@ -13,6 +13,30 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.6.0
+
+Quick finishes.
+
+🎨 **Dates in Todoist's colours.** Red when overdue, green for today, orange for tomorrow, purple for the next seven days, no colour after that.
+
+🎨 **Long section titles wrap.** A section name goes onto several lines instead of running off the page.
+
+🎨 **Long task titles wrap when adding a task.** The field grows with the title, and the date, #project and @tag stay highlighted.
+
+🎨 **Q adds the task where you are.** From Today it is due today, from a project it goes in that project, from a tag page it gets that tag.
+
+🎨 **Coloured chips when adding a task.** The date, the project and the tags show their own colour.
+
+🎨 **Neater task rows.** The checkbox lines up with the title, and the title is a little bolder.
+
+🎨 **LinkedIn, X and GitHub links in Settings, About.**
+
+🐛 **Coloured chips were grey.** With "Inherited" chips in Settings, dates, projects and tags now show their colour again.
+
+🐛 **Skipping the tour opened the Setup.** It no longer does.
+
+🐛 **"Add task" did nothing with no title.** When everything typed is read as a date, a project or a tag, the button is now greyed out and says why.
+
 ## 2.5.0
 
 Who can access a project, the Mac app within reach, and a sidebar that scrolls to the end.

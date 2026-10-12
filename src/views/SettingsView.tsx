@@ -3,7 +3,7 @@ import { MacAppCard } from '@/components/MacApp';
 import { EstimateConversion } from '@/components/overlays/EstimateConversion';
 import { canStoreDurations } from '@/domain/estimates';
 import { useEffect, useState } from 'react';
-import { Icon, type IconName } from '@/components/Icon';
+import { BrandIcon, Icon, type IconName } from '@/components/Icon';
 import { Select } from '@/components/Select';
 import { GroupOrderEditor, SidebarNavEditor } from '@/components/SidebarNavEditor';
 import { AccentChoice, BackgroundChoice, ThemeChoice, LayoutChoice, DensityChoice, EstimateStorageChoice, TaskChipsChoice, TaskOpenChoice } from '@/components/Choosers';
@@ -19,7 +19,7 @@ import { HOME_VIEWS, type HomeView } from '@/store/prefs';
 import { DEFAULT_WEEK_LABEL } from '@/domain/types';
 import { DUST_MONTHS, isDustMonths } from '@/domain/views';
 import type { Locale, TranslationKey } from '@/i18n';
-import { APP_NAME, AUTHOR, AUTHOR_AVATAR_URL, COFFEE_URL, GITHUB_URL, VERSION } from '@/app-info';
+import { APP_NAME, AUTHOR, AUTHOR_AVATAR_URL, AUTHOR_GITHUB_URL, COFFEE_URL, GITHUB_URL, LINKEDIN_URL, VERSION, X_URL } from '@/app-info';
 import { karmaStanding } from '@/domain/karma';
 import { projectTree } from '@/store/selectors';
 
@@ -520,26 +520,42 @@ export function SettingsView() {
             <Row title={t('settings.whatsNew')} hint={t('settings.whatsNewHint')}>
               <Switch checked={prefs.whatsNew} onChange={() => setPrefs({ whatsNew: !prefs.whatsNew })} label={t('settings.whatsNew')} />
             </Row>
+            {/* What the app can show you again, from the start of the journey to its history. */}
             <div className="alinks">
-              <button className="btn soft" onClick={() => window.dispatchEvent(new Event('enhanced:changelog'))}>
-                <Icon name="star" size="sm" />
-                {t('settings.changelogAction')}
+              <button className="btn soft" onClick={() => window.dispatchEvent(new Event('enhanced:replay-onboarding'))}>
+                <Icon name="sliders" size="sm" />
+                {t('settings.replayWalkthroughAction')}
               </button>
               <button className="btn soft" onClick={() => window.dispatchEvent(new Event('enhanced:tour'))}>
                 <Icon name="week" size="sm" />
                 {t('settings.startTour')}
               </button>
-              <button className="btn soft" onClick={() => window.dispatchEvent(new Event('enhanced:replay-onboarding'))}>
-                <Icon name="sliders" size="sm" />
-                {t('settings.replayWalkthroughAction')}
+              <button className="btn soft" onClick={() => window.dispatchEvent(new Event('enhanced:changelog'))}>
+                <Icon name="list" size="sm" />
+                {t('settings.changelogAction')}
               </button>
               <a className="btn soft" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
                 <Icon name="external" size="sm" />
                 {t('settings.aboutCode')}
               </a>
-              <a className="btn soft" href={COFFEE_URL} target="_blank" rel="noreferrer noopener">
+            </div>
+            {/* The author: supporting the project first, then where to follow the author, each in its network's colours (#231). */}
+            <div className="alinks social">
+              <a className="btn social coffee" href={COFFEE_URL} target="_blank" rel="noreferrer noopener">
                 <Icon name="coffee" size="sm" />
-                {t('settings.aboutCoffee')}
+                {t('settings.support')}
+              </a>
+              <a className="btn social github" href={AUTHOR_GITHUB_URL} target="_blank" rel="noreferrer noopener">
+                <BrandIcon name="github" />
+                GitHub
+              </a>
+              <a className="btn social linkedin" href={LINKEDIN_URL} target="_blank" rel="noreferrer noopener">
+                <BrandIcon name="linkedin" />
+                LinkedIn
+              </a>
+              <a className="btn social x" href={X_URL} target="_blank" rel="noreferrer noopener" aria-label="X @julesvbertolino">
+                <BrandIcon name="x" />
+                @julesvbertolino
               </a>
             </div>
             <p className="setlegal">

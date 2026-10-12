@@ -258,7 +258,8 @@ export function Select({
       <button
         type="button"
         ref={buttonRef}
-        className={`fselect-face${chip ? ' chipface' : ''}${chip && unset ? ' unset' : ''}${open ? ' open' : ''}${quiet ? ' quiet' : ''}`}
+        style={chip && !unset && current?.marker ? markerStyle(current.marker) : undefined}
+        className={`fselect-face${chip ? ' chipface' : ''}${chip && !unset && current?.marker ? ' tinted' : ''}${chip && unset ? ' unset' : ''}${open ? ' open' : ''}${quiet ? ' quiet' : ''}`}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel ?? label}

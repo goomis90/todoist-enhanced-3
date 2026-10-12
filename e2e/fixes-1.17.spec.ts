@@ -372,7 +372,7 @@ test('#135 follow-up: @@link0@@ typed in the composer stays text, with no tag', 
 test('the changelog lists every release\'s lines from the most visible to the least (#148)', async ({ demo: page }) => {
   await page.route('https://github.com/**', (route) => route.fulfill({ status: 204 }));
   await go(page, '#/settings');
-  await page.getByRole('button', { name: 'See the changes' }).click();
+  await page.getByRole('button', { name: 'Changelog' }).click();
   const dialog = page.getByRole('dialog', { name: 'Changelog' });
   const releases = dialog.locator('.whatsnew-release');
   await expect(releases.first()).toBeVisible();
