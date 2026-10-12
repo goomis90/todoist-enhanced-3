@@ -1,4 +1,5 @@
 import { HireNote } from '@/components/HireNote';
+import { MacAppCard } from '@/components/MacApp';
 import { EstimateConversion } from '@/components/overlays/EstimateConversion';
 import { canStoreDurations } from '@/domain/estimates';
 import { useEffect, useState } from 'react';
@@ -513,6 +514,8 @@ export function SettingsView() {
                 <span>{t('connect.version', { version: VERSION })}</span>
               </div>
             </div>
+
+            <MacAppCard />
 
             <Row title={t('settings.whatsNew')} hint={t('settings.whatsNewHint')}>
               <Switch checked={prefs.whatsNew} onChange={() => setPrefs({ whatsNew: !prefs.whatsNew })} label={t('settings.whatsNew')} />

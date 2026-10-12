@@ -1691,3 +1691,42 @@
 
 /* In a matrix quadrant the card is white like the others, picked out by an accent edge: a tint would vanish on the quadrant's own colour. */
 .taskwrap:has(> .task.hirenote){background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent)}
+
+/* The Mac app: a card in Settings, About, and one quiet line on the sign-in screen. */
+.macapp{display:grid;gap:var(--s2);padding:var(--s4) 0;border-top:1px solid var(--border)}
+.macapp-text strong{display:block;font-size:var(--fs-13);font-weight:600}
+.macapp-text span{display:block;margin-top:2px;max-width:60ch;color:var(--muted);font-size:var(--fs-12);line-height:1.5}
+.macapp-actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.macapp-help{margin:0;max-width:60ch;color:var(--muted);font-size:var(--fs-12);line-height:1.5}
+.macapp-help a,.macapp-line a{color:var(--accent);font-weight:600}
+.macapp-help a:hover,.macapp-line a:hover{text-decoration:underline}
+.macapp-line{margin:2px 0 0;text-align:center;color:var(--muted);font-size:var(--fs-12);line-height:1.5}
+html.desktop-app .macapp,html.desktop-app .macapp-line{display:none}
+.whatsnew-end{margin-left:auto}
+.macapp-steps{margin:0;padding-left:1.3em;max-width:60ch;color:var(--muted);font-size:var(--fs-12);line-height:1.55}
+.macapp-steps li{padding-left:2px}
+.macapp-steps li + li{margin-top:2px}
+
+/* Who can access a project: tall tiles, each with its icon, title and sentence (#194). */
+.accesschoice{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:8px}
+.accesstile{
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  min-height:112px;padding:12px;border:1px solid var(--border-strong);border-radius:var(--r-lg);
+  background:var(--surface);color:var(--text);text-align:left;cursor:pointer;
+}
+.accesstile:hover{background:var(--hover)}
+.accesstile strong{font-size:var(--fs-13);font-weight:600}
+.accesstile > span:last-child{color:var(--muted);font-size:var(--fs-12);line-height:1.4;text-wrap:pretty}
+.accesstile[aria-checked="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--accent-soft)}
+.accessmark{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-bottom:2px;color:var(--muted)}
+.accesstile[aria-checked="true"] .accessmark{color:var(--accent)}
+.accessmark img{width:24px;height:24px;border-radius:7px;object-fit:cover}
+
+/* The call-out under the Mac app button: it grows open like the icon picker does. */
+.macfold{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .38s cubic-bezier(.2,.8,.2,1),opacity .28s ease}
+.macfold.open{grid-template-rows:1fr;opacity:1}
+.macfold-in{overflow:hidden;min-height:0}
+.macfold:not(.open) .macfold-in{visibility:hidden;transition:visibility 0s .38s}
+.maccallout{display:grid;gap:var(--s3);margin-top:var(--s2);padding:var(--s4);border:1px solid var(--border-strong);border-radius:var(--r-lg);background:var(--subtle)}
+.maccallout > strong{font-size:var(--fs-13);font-weight:600}
+@media (prefers-reduced-motion:reduce){.macfold,.macfold-in{transition:none}}

@@ -296,7 +296,7 @@ export interface AppState {
     /** Places the new project next to an existing one instead of at the end. */
     anchor?: { siblingId: string; position: 'above' | 'below' } | null,
     /** The rest of what the sheet asks for, so creating and editing match. */
-    extra?: { description?: string; favourite?: boolean; parentId?: string | null; viewStyle?: 'list' | 'board' },
+    extra?: { description?: string; favourite?: boolean; parentId?: string | null; viewStyle?: 'list' | 'board'; access?: string },
   ) => Promise<string>;
   /** Puts a project out of sight without destroying it. Todoist keeps the tasks. */
   archiveProject: (id: string) => Promise<void>;
