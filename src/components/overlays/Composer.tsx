@@ -71,6 +71,21 @@ export function Composer({
   const [labels, setLabels] = useState<string[]>([]);
   const [minutes, setMinutes] = useState<number | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
+  /* The tag list and the button that opens it: a click anywhere else puts the
+     list away, as any other picker does, instead of leaving it open until the
+     button is found again. */
+  const tagPickerRef = useRef<HTMLDivElement | null>(null);
+  const tagButtonRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!tagsOpen) return;
+    const away = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (tagPickerRef.current?.contains(target) || tagButtonRef.current?.contains(target)) return;
+      setTagsOpen(false);
+    };
+    document.addEventListener('pointerdown', away, true);
+    return () => document.removeEventListener('pointerdown', away, true);
+  }, [tagsOpen]);
   /** The project sheet, opened from the project chip's "New project…". */
   const [newProject, setNewProject] = useState(false);
   const [tagQuery, setTagQuery] = useState('');
@@ -473,6 +488,7 @@ export function Composer({
           })}
 
           <button
+            ref={tagButtonRef}
             type="button"
             className="fselect-face chipface unset"
             aria-expanded={tagsOpen}
@@ -489,8 +505,19 @@ export function Composer({
             <div
               className="popover tagpicker"
               role="dialog"
+              /* Escape puts the list away, wherever the focus is in it, and
+                 leaves the task window open. */
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return;
+                event.stopPropagation();
+                setTagsOpen(false);
+                tagButtonRef.current?.focus();
+              }}
               aria-label={t('composer.labels')}
-              ref={(node) => node?.scrollIntoView({ block: 'nearest' })}
+              ref={(node) => {
+                tagPickerRef.current = node;
+                node?.scrollIntoView({ block: 'nearest' });
+              }}
             >
               <div className="pickersearch">
                 <Icon name="search" size="sm" />
