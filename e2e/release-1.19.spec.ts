@@ -118,7 +118,7 @@ test('#154 an empty section offers the add line in place, without saying nothing
   await go(page, '#/project/client-b');
   // A section made empty: a new one, as nothing is in it.
   await page.getByRole('button', { name: 'Add section' }).first().click();
-  const fresh = page.locator('.screen.active .group').filter({ has: page.locator('input.gnamefield') }).first();
+  const fresh = page.locator('.screen.active .group').filter({ has: page.locator('textarea.gnamefield') }).first();
   await expect(fresh.locator('.sectionadd')).toBeVisible();
   await expect(fresh.getByText('Nothing here.')).toHaveCount(0);
 });

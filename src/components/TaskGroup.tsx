@@ -312,7 +312,7 @@ function SectionDropSlots({ id }: { id: string }) {
  *
  * The field is sized from its own text rather than filling the row: a field
  * that stretches pushes the duration and the count halfway across the page for
- * no reason.
+ * no reason. A long name wraps inside the row.
  */
 export function SectionName({
   id, value, placeholder, label, onRename, wrap = false,
@@ -390,12 +390,19 @@ export function SectionName({
     );
   }
 
+  /* A list's section name wraps onto as many lines as it needs (#208). The box
+     takes its size from a hidden copy of the text laid over it, in the same
+     cell: the width follows the text up to the row's width, and the height
+     follows the lines, with no script and nothing scrolling inside. */
   return (
-    <input
-      {...common}
-      size={Math.max(placeholder.length, draft.length + 1)}
-      onChange={(e) => setDraft(e.target.value)}
-    />
+    <span className="gnamegrow" data-value={draft || placeholder}>
+      <textarea
+        {...common}
+        rows={1}
+        cols={1}
+        onChange={(e) => setDraft(e.target.value.replace(/\n/g, ' '))}
+      />
+    </span>
   );
 }
 

@@ -8,6 +8,30 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.6.0
+
+Finitions rapides.
+
+🎨 **Les dates aux couleurs de Todoist.** Rouge en retard, vert pour aujourd'hui, orange pour demain, violet pour les sept jours suivants, aucune couleur au-delà.
+
+🎨 **Les titres de section longs passent à la ligne.** Le nom d'une section s'étale sur plusieurs lignes au lieu de dépasser de la page.
+
+🎨 **Les titres de tâche longs passent à la ligne à l'ajout.** Le champ grandit avec le titre, et la date, le #projet et l'@étiquette restent surlignés.
+
+🎨 **Q ajoute la tâche là où vous êtes.** Depuis Aujourd'hui elle est pour aujourd'hui, depuis Ma semaine elle reçoit l’étiquette de la semaine, depuis un projet elle va dans ce projet, depuis une page de tag elle reçoit ce tag.
+
+🎨 **Des pastilles colorées à l'ajout d'une tâche.** La date, l’échéance, la priorité, le projet et les tags prennent leur couleur.
+
+🎨 **Des lignes de tâche plus nettes.** La case est alignée sur le titre, et le titre est un peu plus marqué.
+
+🎨 **Liens LinkedIn, X et GitHub dans Réglages, À propos.**
+
+🐛 **Les pastilles colorées étaient grises.** Avec les pastilles « héritées » dans les Réglages, dates, projets et tags retrouvent leur couleur.
+
+🐛 **Passer la visite ouvrait la configuration.** Ce n'est plus le cas.
+
+🐛 **« Ajouter la tâche » ne faisait rien sans titre.** Quand tout le texte est lu comme une date, un projet ou un tag, le bouton est grisé et explique pourquoi.
+
 ## 2.5.0
 
 Qui a accès à un projet, l'app Mac à portée de main, et une barre latérale qui défile jusqu'au bout.

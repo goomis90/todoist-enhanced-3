@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { endOfMonth } from 'date-fns';
+import { differenceInCalendarDays, endOfMonth, parseISO } from 'date-fns';
+import { toneOfDay } from '@/domain/dates';
 import { Icon, type IconName } from './Icon';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
@@ -209,12 +210,22 @@ export function DateField({
     </div>
   );
 
+  /* The chip wears the colour the date will have on the task's row (#218); a
+     deadline wears the deadline's own. */
+  const tone = chip && icon === 'deadline' && value ? 'deadline' : chip && value && !ruleFace
+    ? (() => {
+      const day = parseISO(value.includes('T') ? value : `${value.slice(0, 10)}T00:00`);
+      const late = value.includes('T') ? day < new Date() : differenceInCalendarDays(day, new Date()) < 0;
+      return late ? 'late' : toneOfDay(day);
+    })()
+    : null;
+
   return (
     <span className={`datefield${chip ? ' inchips' : ''}`}>
       <button
         type="button"
         ref={buttonRef}
-        className={`fselect-face${chip ? ' chipface' : ''}${chip && ruleFace ? ' crepeat' : ''}${chip && !value && !ruleFace ? ' unset' : ''}${open ? ' open' : ''}${value || ruleFace ? '' : ' empty'}`}
+        className={`fselect-face${chip ? ' chipface' : ''}${chip && tone ? ` tinted tone-${tone}` : ''}${chip && ruleFace ? ' crepeat' : ''}${chip && !value && !ruleFace ? ' unset' : ''}${open ? ' open' : ''}${value || ruleFace ? '' : ' empty'}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={ruleFace ? `${label}: ${ruleFace.string}` : label}

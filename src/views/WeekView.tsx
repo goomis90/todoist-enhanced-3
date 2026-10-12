@@ -192,6 +192,11 @@ function WeekBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- placementFor and onAddTaskTo are stable for a page.
   }, [groups, prefs.showQuickGroup, current.sort, childrenOf, snapshot, t, scope]);
 
+  /* Whether one of the groups below is drawn with its own "Add task" line. */
+  const hasAddLine = (scope !== 'anytime' && (
+    (prefs.showQuickGroup && groups.quick.length > 0) || groups.untimed.length > 0 || groups.timed.length > 0 || hireNoteOpen
+  )) || (scope !== 'today' && groups.anytime.length > 0);
+
   return (
     <div className="page">
       <PageHeader
@@ -297,7 +302,18 @@ function WeekBody({
             />
           )}
 
-          {scoped.length === 0 && <p className="empty">{t('task.noTasks')}</p>}
+          {/* A group is drawn only when it has tasks, and the line that adds one
+              comes with it: an empty page, or a Today with only overdue tasks,
+              still gets one, at the foot of the page. */}
+          {!hasAddLine && (
+            <button
+              className="addline sectionadd"
+              onClick={() => onAddTaskTo(placementFor({ kind: scope === 'today' ? 'today' : 'anytime' }))}
+            >
+              <Icon name="plus" size="sm" />
+              {t('nav.addTaskHere')}
+            </button>
+          )}
         </div>
       ) : (
         <ModeSurface

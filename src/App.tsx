@@ -46,6 +46,7 @@ import { useData } from './hooks/useData';
 import { navigate, useRoute, type Route } from './hooks/useRoute';
 import { rootItems } from './store/selectors';
 import { detectConflicts } from './domain/conflicts';
+import { placementForPage } from './domain/dnd';
 import { useParentEstimates } from './hooks/useParentEstimates';
 import { anytimeItems, bucketOf, hasLabel, somedayItems, upcomingItems, weekItems } from './domain/views';
 import { effectiveEstimate } from './domain/estimates';
@@ -228,7 +229,10 @@ export function App() {
   useEffect(() => {
     /* Not while the tour runs: it swaps in the demo's snapshot, whose user
        is nobody this browser has set up, and that looked like a first run (#4). */
-    if (!QUICK_ADD && !tourOpen && ready && (connected || demo) && !hasOnboarded(userId) && !onboardingStarted) {
+    /* The render that closes the tour still carries the demo's user, put back
+       by the time this runs: the store is asked, not the render (#212). */
+    const liveUserId = useStore.getState().snapshot.user?.id;
+    if (!QUICK_ADD && !tourOpen && ready && (connected || demo) && !hasOnboarded(liveUserId) && !onboardingStarted) {
       setOnboardingStarted(true);
       /* Somebody meeting the app for the first time is getting the tour; a
          list of what changed since a version they never used is not news. */
@@ -243,8 +247,12 @@ export function App() {
      ever has the first run, and not before the account's own settings have
      been read, or a second browser would ask what the first already did. */
   useEffect(() => {
-    if (QUICK_ADD || tourOpen || !ready || !connected || demo || !settled || !hasOnboarded(userId)) return;
-    if (setupDone || setupAsked.current) return;
+    /* Asked of the store, not the render: the render that closes the tour still
+       has the demo's user and the tour's settings, which looked like an account
+       that had never seen the Setup (#212). */
+    const live = useStore.getState();
+    if (QUICK_ADD || tourOpen || !ready || !connected || demo || !settled || !hasOnboarded(live.snapshot.user?.id)) return;
+    if (live.prefs.setupDone || setupAsked.current) return;
     setupAsked.current = true;
     setWalkthrough(true);
   }, [ready, connected, demo, settled, userId, tourOpen, setupDone, setWalkthrough]);
@@ -745,7 +753,7 @@ function AppShell({
 
   const openTask = (id: string) => setOpenTaskId(id);
   const addTask = () => {
-    setPlacement(route.view === 'project' && route.id ? { projectId: route.id } : {});
+    setPlacement(placementForPage(route, snapshot.user?.inbox_project_id));
     setComposerOpen(true);
   };
 

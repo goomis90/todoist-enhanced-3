@@ -510,7 +510,6 @@ function ProjectBody({
             slotId={String(sections.length)}
             onAdd={() => void addSection(sections.length)}
           />
-          {scoped.length === 0 && <p className="empty">{t('task.noTasks')}</p>}
         </div>
       ) : current.mode === 'list' && current.group === 'scheduled' ? (
         <div className="mode">
@@ -533,7 +532,13 @@ function ProjectBody({
             showProject={false}
             onAddTask={() => onAddTaskTo({ projectId })}
           />
-          {scoped.length === 0 && <p className="empty">{t('task.noTasks')}</p>}
+          {/* An empty project says so with the one thing to do about it. */}
+          {scoped.length === 0 && (
+            <button className="addline sectionadd" onClick={() => onAddTaskTo({ projectId })}>
+              <Icon name="plus" size="sm" />
+              {t('nav.addTaskHere')}
+            </button>
+          )}
         </div>
       ) : (
         <ModeSurface
