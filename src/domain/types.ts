@@ -60,6 +60,9 @@ export interface Item {
 }
 
 export interface Project {
+  is_shared?: boolean;
+  shared?: boolean;
+  can_assign_tasks?: boolean;
   id: string;
   name: string;
   description?: string;
@@ -141,6 +144,7 @@ export interface Workspace {
 
 /** Who a project is shared with, and whether they have said yes. */
 export interface CollaboratorState {
+  is_deleted?: boolean;
   project_id: string;
   user_id: string;
   /** `active` and `invited` are the ones that matter here; Todoist also reports who declined or left. */
@@ -228,6 +232,7 @@ export interface TodoistUser {
 
 /** A completed task as returned by the completed-tasks endpoints. */
 export interface CompletedItem {
+  responsible_uid?: string | null;
   id: string;
   task_id?: string;
   user_id: string;
@@ -359,6 +364,7 @@ export type ViewId =
 export type DisplayMode = 'list' | 'board' | 'focus';
 
 export type GroupKey =
+  | 'assignee'
   /** What the page groups by when the user has chosen nothing: sections in a
    *  project, the fixed week layout in My week, flat elsewhere. */
   | 'none'
@@ -374,6 +380,7 @@ export type GroupKey =
   | 'estimate';
 
 export type SortKey =
+  | 'assignee'
   | 'manual'
   | 'priority'
   | 'due'
@@ -385,6 +392,8 @@ export type SortKey =
   | 'label';
 
 export interface ViewFilters {
+  /** null = everyone, [] = nobody; @me and @unassigned are stable account-relative tokens. */
+  assignees?: string[] | null;
   workspaces: string[];
   projects: string[];
   labels: string[];
@@ -397,7 +406,9 @@ export interface ViewFilters {
   showCompleted: boolean;
 }
 
-export const defaultFilters = (): ViewFilters => ({
+export const defaultFilters = (viewKey?: string): ViewFilters => ({
+  assignees: viewKey && !viewKey.startsWith('project:') && !viewKey.startsWith('filter:')
+    ? ['@me', '@unassigned'] : null,
   workspaces: [],
   projects: [],
   labels: [],
@@ -448,5 +459,5 @@ export const defaultViewPrefs = (viewKey?: string): ViewPrefs => ({
   /* Upcoming is read in time order: by date (then Todoist's own order within
      a day) inside each day, week or month (#98). */
   sort: viewKey === 'upcoming' ? 'due' : 'priority',
-  filters: defaultFilters(),
+  filters: defaultFilters(viewKey),
 });

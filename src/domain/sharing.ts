@@ -21,7 +21,7 @@ export function projectPeople(snapshot: Snapshot, projectId: string): Person[] {
   const me = snapshot.user?.id;
   const people: Person[] = [];
   for (const state of snapshot.collaboratorStates ?? []) {
-    if (state.project_id !== projectId || state.user_id === me) continue;
+    if (state.project_id !== projectId || state.user_id === me || state.is_deleted) continue;
     if (state.state !== 'active' && state.state !== 'invited') continue;
     const who = snapshot.collaborators[state.user_id];
     people.push({
@@ -58,7 +58,7 @@ export function assignees(snapshot: Snapshot, projectId: string): Array<{ id: st
  */
 export function isSharedWithMe(snapshot: Snapshot, projectId: string): boolean {
   const me = snapshot.user?.id;
-  const states = (snapshot.collaboratorStates ?? []).filter((s) => s.project_id === projectId && s.state === 'active');
+  const states = (snapshot.collaboratorStates ?? []).filter((s) => s.project_id === projectId && s.state === 'active' && !s.is_deleted);
   if (!me || states.some((s) => s.user_id === me && s.role === 'CREATOR')) return false;
   return states.some((s) => s.user_id !== me && s.role === 'CREATOR')
     && states.some((s) => s.user_id === me);

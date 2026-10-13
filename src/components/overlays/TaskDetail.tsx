@@ -1,3 +1,6 @@
+import { useProjectPeople } from '@/hooks/useProjectPeople';
+import { AssigneeBadge } from '../AssigneeBadge';
+import { AssigneeField } from '../AssigneeField';
 import { useCreateTag } from '@/hooks/useCreateTag';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { copyText, isTemporaryId, todoistTaskUrl } from '@/api/links';
@@ -29,7 +32,6 @@ import { PlacementField } from '../PlacementField';
 import { CommentThread } from '../CommentThread';
 import { DateField } from '../DateField';
 import { markerStyle } from '@/domain/colors';
-import { Select } from '../Select';
 import { assignees } from '@/domain/sharing';
 import { displayTaskContent, isUncompletable, toDisplayPriority, toTodoistPriority, type Item } from '@/domain/types';
 import { matchesSearch } from '@/domain/search';
@@ -147,6 +149,7 @@ function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) 
         />
       ) : (
         <button className="subtasktitle" onClick={() => onOpen(child.id)}>
+          <AssigneeBadge id={child.responsible_uid} />
           <span>{plainTitle(displayTaskContent(child))}</span>
         </button>
       )}
@@ -237,6 +240,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const overlayId = useId();
 
   const item = taskId ? snapshot.items[taskId] : null;
+  useProjectPeople(item?.project_id);
   const loadTask = useStore((s) => s.loadTask);
   const logbookEntry = useStore((s) => s.logbookEntry);
   /* A task completed before the last sync is not in the snapshot: it is
@@ -1035,18 +1039,11 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
           {/* Only where somebody else is in the project: elsewhere there is
               nobody to give it to. */}
-          {assignees(snapshot, item.project_id).length > 0 && (
+          {(assignees(snapshot, item.project_id).length > 0 || item.responsible_uid) && (
             <div className="prop" data-prop="assignee">
               <span className="proplabel">{t('detail.assignee')}</span>
-              <Select
-                value={item.responsible_uid ?? ''}
-                ariaLabel={t('detail.assignee')}
-                onChange={(next) => void assignTask(item.id, next || null)}
-                options={[
-                  { value: '', label: t('detail.unassigned') },
-                  ...assignees(snapshot, item.project_id).map((person) => ({ value: person.id, label: person.name })),
-                ]}
-              />
+              <AssigneeField projectId={item.project_id} value={item.responsible_uid}
+                onChange={(next) => void assignTask(item.id, next)} />
             </div>
           )}
 

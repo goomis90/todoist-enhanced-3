@@ -1,4 +1,17 @@
 export const en = {
+  "upcoming.extend": "Show 15 more days",
+  "upcoming.visibleThrough": "Showing dates through {date}",
+
+  "assignee.everyone": "Everyone",
+  "assignee.nobody": "None selected",
+  "assignee.me": "Me",
+  "assignee.selected": "{count} selected",
+  "assignee.unavailable": "Unavailable person",
+  "assignee.cleared": "The assignee is not eligible in this project. The task is now unassigned.",
+  "assignee.invalid": "This person cannot be assigned tasks in this project.",
+  "group.assignee": "Assignee",
+  "sort.assignee": "Assignee",
+
   /* Estimate storage and conversion (#151). */
   'estimates.clearFailed': 'Todoist did not clear the duration. The existing duration was kept; estimates now use tags.',
   "estimates.tagPlans": "Free & Pro",

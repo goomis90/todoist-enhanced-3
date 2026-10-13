@@ -1,6 +1,19 @@
-import type {  TranslationKey } from './en';
+import type { TranslationKey } from './en';
 
 export const fr: Record<TranslationKey, string> = {
+  "upcoming.extend": "Afficher 15 jours de plus",
+  "upcoming.visibleThrough": "Dates affichées jusqu’au {date}",
+
+  "assignee.everyone": "Tout le monde",
+  "assignee.nobody": "Aucune sélection",
+  "assignee.me": "Moi",
+  "assignee.selected": "{count} sélectionnés",
+  "assignee.unavailable": "Personne indisponible",
+  "assignee.cleared": "Ce responsable ne peut pas être assigné dans ce projet. La tâche est maintenant non assignée.",
+  "assignee.invalid": "Cette personne ne peut pas être assignée dans ce projet.",
+  "group.assignee": "Responsable",
+  "sort.assignee": "Responsable",
+
   /* Estimate storage and conversion (#151). */
   'estimates.clearFailed': 'Todoist n’a pas effacé la durée. La durée existante est conservée ; les estimations utilisent désormais les étiquettes.',
   "estimates.tagPlans": "Free et Pro",

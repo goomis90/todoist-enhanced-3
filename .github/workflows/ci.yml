@@ -39,6 +39,12 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
+      # Shared-project fixtures use Vite source modules and do not call Todoist.
+      - name: Assignee scenarios
+        run: npx playwright test e2e/assignees.spec.ts
+        env:
+          PLAYWRIGHT_DEV: '1'
+          PLAYWRIGHT_PORT: '4174'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
