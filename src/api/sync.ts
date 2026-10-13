@@ -8,7 +8,7 @@ import type {
 export const SYNC_RESOURCE_TYPES = [
   'items', 'projects', 'sections', 'labels', 'notes', 'project_notes',
   'reminders', 'user', 'collaborators', 'workspaces', 'live_notifications',
-  'collaborator_states', 'filters',
+  'filters',
 ] as const;
 
 export interface SyncResponse {
@@ -27,6 +27,7 @@ export interface SyncResponse {
   workspaces?: Workspace[];
   live_notifications?: LiveNotification[];
   collaborator_states?: CollaboratorState[];
+  collaborators_states?: CollaboratorState[];
   user?: TodoistUser;
   temp_id_mapping?: Record<string, string>;
   sync_status?: Record<string, 'ok' | { error_code: number; error: string }>;
@@ -83,7 +84,10 @@ function mergeStates(
   if (!incoming) return fullSync ? [] : current;
   const key = (state: CollaboratorState) => `${state.project_id}:${state.user_id}`;
   const next = new Map((fullSync ? [] : current).map((state) => [key(state), state]));
-  for (const state of incoming) next.set(key(state), state);
+  for (const state of incoming) {
+    if (state.is_deleted) next.delete(key(state));
+    else next.set(key(state), state);
+  }
   return [...next.values()];
 }
 
@@ -106,7 +110,7 @@ export function applySync(snapshot: Snapshot, response: SyncResponse): Snapshot 
     collaborators: mergeCollection(snapshot.collaborators, response.collaborators, full),
     workspaces: mergeCollection(snapshot.workspaces, response.workspaces, full),
     notifications: mergeCollection(snapshot.notifications ?? {}, response.live_notifications, full),
-    collaboratorStates: mergeStates(snapshot.collaboratorStates ?? [], response.collaborator_states, full),
+    collaboratorStates: mergeStates(snapshot.collaboratorStates ?? [], response.collaborator_states ?? response.collaborators_states, full),
     user: response.user ?? snapshot.user,
     syncToken: response.sync_token,
     syncedAt: Date.now(),

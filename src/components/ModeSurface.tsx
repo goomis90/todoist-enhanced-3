@@ -93,6 +93,8 @@ function useGrouped(props: ModeSurfaceProps) {
       noSection: t('group.noSection'),
       noEstimate: t('metrics.noEstimates'),
       noLabel: t('common.none'),
+      unassigned: t('detail.unassigned'),
+      unavailable: t('assignee.unavailable'),
       priority: (p) => t(`common.p${p}` as TranslationKey),
       day: (d) => (d ? formatRelativeDay(d, locale) : t('common.none')),
       week: (monday) => {

@@ -1,3 +1,4 @@
+import { AssigneeBadge } from '../AssigneeBadge';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Overlay } from './Overlay';
 import { Icon, type IconName } from '../Icon';
@@ -33,6 +34,7 @@ interface Hit {
   marker?: ReactNode;
   title: string;
   detail?: string;
+  assigneeId?: string | null;
   run: () => void;
 }
 
@@ -166,6 +168,7 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
         score,
         hit: {
           key: `task-${item.id}`,
+          assigneeId: item.responsible_uid,
           /* The list row's own checkbox, priority colour and all, not clickable (#15). */
           marker: <span className={`check p${toDisplayPriority(item.priority)} search-check`} aria-hidden="true" />,
           title: item.content,
@@ -270,6 +273,7 @@ export function Search({ open, onClose, onOpen, seed = '' }: SearchProps) {
               <span>
                 <strong>{hit.title}</strong>
                 {hit.detail && <small>{hit.detail}</small>}
+                <AssigneeBadge id={hit.assigneeId ?? null} />
               </span>
             </button>
           </div>

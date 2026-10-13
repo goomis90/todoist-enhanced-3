@@ -1,3 +1,8 @@
+import { addDays, endOfDay } from 'date-fns';
+import { dueDate } from '@/domain/dates';
+import { viewPrefs } from '@/store/prefs';
+import { assigneeItems } from '@/domain/assignees';
+import { datedRoots, childIndex, makeChildrenOf, openItems, applyFilters } from '@/store/selectors';
 import { useFilterCounts } from '@/hooks/useFilterResult';
 import { FilterMark } from './FilterMark';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
@@ -84,6 +89,7 @@ export function Sidebar({
   }, []);
   const { t } = useT();
   const { snapshot, items } = useData();
+  const prefs = useStore((state) => state.prefs);
   const sheet = variant === 'sheet';
   const collapsed = useStore((s) => s.prefs.sidebarCollapsed) && !sheet;
   const setPrefs = useStore((s) => s.setPrefs);
@@ -138,20 +144,29 @@ export function Sidebar({
 
   const counts = useMemo(() => {
     const now = new Date();
+    const scope = (key: string) => {
+      const filters = viewPrefs(prefs, key).filters;
+      const scoped = { ...snapshot, items: assigneeItems(snapshot, filters.assignees) };
+      const list = ['today', 'week', 'upcoming'].includes(key) ? datedRoots(openItems(scoped), scoped) : rootItems(openItems(scoped));
+      return applyFilters(list, filters, snapshot, makeChildrenOf(childIndex(scoped)));
+    };
     return {
-      inbox: inboxId ? roots.filter((i) => i.project_id === inboxId).length : 0,
-      today: roots.filter((i) => {
+      inbox: inboxId ? scope('inbox').filter((i) => i.project_id === inboxId).length : 0,
+      today: scope('today').filter((i) => {
         const bucket = bucketOf(i, now);
         return bucket === 'overdue' || bucket === 'today';
       }).length,
       /* The count has to match the page. A "My week" that no longer contains
          today must not keep counting today's work. */
-      week: (weekLayout === 'split' ? anytimeItems(roots, now) : weekItems(roots, now)).length,
-      upcoming: upcomingItems(roots).length,
-      someday: somedayItems(roots).length,
+      week: (weekLayout === 'split' ? anytimeItems(scope('week'), now) : weekItems(scope('week'), now)).length,
+      upcoming: upcomingItems(scope('upcoming')).filter((item) => {
+        const date = dueDate(item);
+        return date !== null && date <= endOfDay(addDays(now, prefs.upcomingHorizonDays));
+      }).length,
+      someday: somedayItems(scope('someday')).length,
       byProject: projectCounts(roots),
     };
-  }, [roots, inboxId, weekLayout]);
+  }, [roots, inboxId, weekLayout, snapshot, prefs]);
 
   /** Favourites are Todoist's own star, not a separate list this app keeps. */
   const favourites = useMemo(() => {

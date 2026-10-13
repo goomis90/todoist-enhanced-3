@@ -1,3 +1,4 @@
+import { useProjectPeople } from '@/hooks/useProjectPeople';
 import { HireNote } from '@/components/HireNote';
 import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from 'react';
 import { PageHeader } from '@/components/PageHeader';
@@ -75,8 +76,9 @@ function ProjectBody({
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', escape); };
   }, [iconOpen]);
   const { t } = useT();
+  useProjectPeople(projectId);
   const timePill = useTimePill();
-  const { snapshot, items, childrenOf } = useData();
+  const { snapshot, items, childrenOf } = useData(`project:${projectId}`);
   const prefs = useStore((s) => s.prefs);
   const updateProjectFields = useStore((s) => s.updateProjectFields);
   const updateSectionFields = useStore((s) => s.updateSectionFields);
@@ -377,7 +379,7 @@ function ProjectBody({
               viewKey={viewKey}
               pageItems={pool0}
               modes={['list', 'board']}
-              groups={['none', 'scheduled', 'priority', 'label', 'estimate', 'day']}
+              groups={['none', 'assignee', 'scheduled', 'priority', 'label', 'estimate', 'day']}
               completedToggle
               showWorkspaces={false}
             />
@@ -445,6 +447,7 @@ function ProjectBody({
             ? (name) => { void createSection(projectId, sections.length, name); }
             : undefined}
           addToGroup={(key) => {
+            if (current.group === 'assignee') return () => onAddTaskTo({ projectId, responsibleUid: key === 'none' ? null : key });
             if (current.group === 'day' && key !== 'none') {
               return () => onAddTaskTo({ projectId, date: key });
             }
@@ -559,6 +562,7 @@ function ProjectBody({
              no sense on the one page where both halves of the answer are
              known. */
           addToGroup={(key) => {
+            if (current.group === 'assignee') return () => onAddTaskTo({ projectId, responsibleUid: key === 'none' ? null : key });
             if (current.group === 'day' && key !== 'none') {
               return () => onAddTaskTo({ projectId, date: key });
             }

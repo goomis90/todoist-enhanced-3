@@ -71,7 +71,7 @@ function WeekBody({
 }: WeekViewProps) {
   const { t } = useT();
   const timePill = useTimePill();
-  const { snapshot, items, childrenOf } = useData();
+  const { snapshot, items, childrenOf } = useData(scope === 'today' ? 'today' : 'week');
   const prefs = useStore((s) => s.prefs);
   const updateMany = useStore((s) => s.updateMany);
   const hireNoteOpen = useStore((s) => s.hireNote);

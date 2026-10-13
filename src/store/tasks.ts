@@ -1,3 +1,4 @@
+import { canAssign } from '@/domain/assignees';
 /** Tasks: creating, editing, ticking, recurring, deleting and restoring. */
 import { command, addItem, type Command, completeItem, deleteItem, newUuid, reorderItems, uncompleteItem, updateItem } from '@/api/commands';
 import * as idb from '@/db/idb';
@@ -105,6 +106,7 @@ function planTask(
         parent_id: tempId,
         content: String(child.args.content),
         description: '',
+        responsible_uid: null,
         priority: 1,
         due: null,
         deadline: null,
@@ -584,7 +586,7 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
     });
   },
   async createTask(args) {
-    await get().createTasks([args]);
+    return get().createTasks([args]);
   },
   /**
    * Several independent tasks, in one request (#152).
@@ -598,17 +600,24 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
   async createTasks(list) {
     const commands: Command[] = [];
     const created: Record<string, Item> = {};
+    const requested: string[] = [];
     for (const args of list) {
       const { snapshot } = get();
+      if (typeof args.responsible_uid === 'string' && !canAssign(snapshot, String(args.project_id ?? snapshot.user?.inbox_project_id ?? ''), args.responsible_uid)) {
+        get().toast(translate(get().prefs.locale, 'assignee.invalid'));
+        return false;
+      }
       const planned = planTask({ ...snapshot, items: { ...snapshot.items, ...created } }, args, get().prefs.estimateStorage === 'duration' && canStoreDurations(snapshot.user) ? 'duration' : 'tag');
+      requested.push(Object.keys(planned.items)[0]);
       commands.push(...planned.commands);
       Object.assign(created, planned.items);
     }
-    if (commands.length === 0) return;
-    await get().apply(commands, (current) => ({
+    if (commands.length === 0) return true;
+    const mapping = await get().apply(commands, (current) => ({
       ...current,
       items: { ...current.items, ...created },
     }));
+    return requested.some((id) => Boolean(get().snapshot.items[mapping[id] ?? id]));
   },
   async setTaskLabels(id, labels) {
     await get().updateTask(id, { labels });

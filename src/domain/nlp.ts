@@ -1,3 +1,4 @@
+import { addMonths } from 'date-fns';
 import { toApiDate, type DateFormat } from './dates';
 import { MONTH_WORDS } from './dateVocabulary';
 
@@ -198,11 +199,12 @@ export function readNaturalDate(
   }
 
   // "in 3 days" / "dans 2 semaines"
-  const relative = text.match(/\b(?:in|dans)\s+(\d{1,3})\s*(day|days|jour|jours|week|weeks|semaine|semaines)\b/);
+  const relative = text.match(/\b(?:in|dans)\s+(\d{1,3}|un|une|a|an|one)\s+(days?|jours?|weeks?|semaines?|months?|mois)\b/);
   if (relative) {
-    const count = Number(relative[1]);
+    const count = /^\d+$/.test(relative[1]) ? Number(relative[1]) : 1;
     const weeks = relative[2].startsWith('week') || relative[2].startsWith('semaine');
-    return found(addDays(today, count * (weeks ? 7 : 1)), relative);
+    const months = relative[2].startsWith('month') || relative[2] === 'mois';
+    return found(months ? addMonths(today, count) : addDays(today, count * (weeks ? 7 : 1)), relative);
   }
 
   // A weekday name, in either language: the next one that is not today.

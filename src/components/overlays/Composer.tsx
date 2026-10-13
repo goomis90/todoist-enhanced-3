@@ -1,3 +1,5 @@
+import { AssigneeField } from '../AssigneeField';
+import { canAssign } from '@/domain/assignees';
 import { DescriptionEditor } from '../Checklist';
 import { useCreateTag } from '@/hooks/useCreateTag';
 import { useEffect, useRef, useState } from 'react';
@@ -33,6 +35,7 @@ interface ComposerProps {
   /** Pre-filled tags, for a page that is one tag. */
   defaultLabels?: string[];
   defaultPriority?: DisplayPriority;
+  defaultResponsibleUid?: string | null;
 }
 
 /**
@@ -43,7 +46,7 @@ interface ComposerProps {
  * priority, tags and the estimate all sit on the row below.
  */
 export function Composer({
-  open, onClose, defaultProjectId, defaultSectionId, defaultDate, defaultLabels, defaultPriority,
+  open, onClose, defaultProjectId, defaultSectionId, defaultDate, defaultLabels, defaultPriority, defaultResponsibleUid,
 }: ComposerProps) {
   const { t } = useT();
   const snapshot = useStore((s) => s.snapshot);
@@ -61,6 +64,7 @@ export function Composer({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState('');
+  const [responsibleUid, setResponsibleUid] = useState<string | null>(null);
   const [sectionId, setSectionId] = useState('');
   const [priority, setPriority] = useState<DisplayPriority>(4);
   const [date, setDate] = useState('');
@@ -97,6 +101,7 @@ export function Composer({
 
   useEffect(() => {
     if (!open) return;
+    setResponsibleUid(defaultResponsibleUid ?? null);
     setName('');
     setDescription('');
     setPriority(4);
@@ -116,7 +121,13 @@ export function Composer({
     /* eslint-disable-next-line react-hooks/exhaustive-deps -- the array is
        built fresh by the caller on every render; its contents are the dep. */
   }, [open, defaultProjectId, defaultSectionId, defaultDate, defaultPriority, defaultLabels?.join('\u0000'),
-    inboxId]);
+    inboxId, defaultResponsibleUid]);
+
+  useEffect(() => {
+    if (!open || !projectId || !responsibleUid || canAssign(snapshot, projectId, responsibleUid)) return;
+    setResponsibleUid(null);
+    useStore.getState().toast(t('assignee.cleared'));
+  }, [open, projectId, responsibleUid, snapshot, t]);
 
   const tags = Object.values(snapshot.labels)
     .filter((l) => !l.is_deleted && !l.name.startsWith('est-'))
@@ -346,10 +357,11 @@ export function Composer({
       return { content: title, ...(estimate === null ? {} : { estimateMinutes: estimate }) };
     });
 
-    await createTask({
+    const saved = await createTask({
       content,
       description: description.trim() || undefined,
       project_id: targetProject,
+      responsible_uid: responsibleUid,
       section_id: sectionId || undefined,
       priority: toTodoistPriority(priority),
       labels: allLabels,
@@ -367,7 +379,7 @@ export function Composer({
       subtasks: allSubtasks,
     });
 
-    onClose();
+    if (saved) onClose();
   }
 
   return (
@@ -425,6 +437,7 @@ export function Composer({
             dashed "+ Deadline". Every chip is the same picker it always was;
             only its closed face changed. */}
         <div className="composer-chips composer-tags" role="group" aria-label={t('composer.planning')}>
+          <AssigneeField projectId={projectId || inboxId} value={responsibleUid} onChange={setResponsibleUid} chip />
           {/* A repeat answers the same question a date does, so it stands in
               the date's own place: a task cannot be both on Tuesday and every
               Monday. */}

@@ -38,7 +38,7 @@ const UPCOMING_GROUPS: GroupKey[] = ['day', 'week', 'month'];
  */
 function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: UpcomingViewProps) {
   const { t, locale } = useT();
-  const { snapshot, items, childrenOf } = useData();
+  const { snapshot, items, childrenOf } = useData('upcoming');
   const prefs = useStore((s) => s.prefs);
   const setPrefs = useStore((s) => s.setPrefs);
   const current = viewPrefs(prefs, 'upcoming');
@@ -65,6 +65,12 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
     () => applyFilters(pool, current.filters, snapshot, childrenOf),
     [pool, current.filters, snapshot, childrenOf],
   );
+
+  const hasMoreFuture = useMemo(() => {
+    const beyond = applyFilters(upcomingItems(datedRoots(items, snapshot)), current.filters, snapshot, childrenOf);
+    const limit = startOfDay(addDays(today, horizon));
+    return beyond.some((item) => { const day = dueDate(item); return day !== null && startOfDay(day) > limit; });
+  }, [items, snapshot, current.filters, childrenOf, today, horizon]);
 
   // Upcoming spans many days, so a single capacity percentage would be
   // meaningless here. The header shows counts and time only.
@@ -182,10 +188,19 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
       )}
 
       <div style={{ marginTop: 'var(--s5)', display: 'flex', justifyContent: 'center' }}>
-        <button className="btn" onClick={() => setHorizon((h) => h + 15)}>
-          <Icon name="caret" />
-          {t('nav.upcoming')} +15
-        </button>
+        <div className="upcoming-extend">
+          <p className="psub" aria-live="polite">{t('upcoming.visibleThrough', {
+            date: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(addDays(today, horizon)),
+          })}</p>
+          {hasMoreFuture && <button className="btn" onClick={() => {
+            const next = horizon + 15;
+            setHorizon(next);
+            setPrefs({ upcomingHorizonDays: next });
+          }}>
+            <Icon name="caret" />
+            {t('upcoming.extend')}
+          </button>}
+        </div>
       </div>
     </div>
   );

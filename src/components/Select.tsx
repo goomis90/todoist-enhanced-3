@@ -10,6 +10,7 @@ export interface SelectOption {
   label: string;
   /** A Todoist colour name, drawn as the project marker beside the label. */
   marker?: string;
+  visual?: ReactNode;
   /** Drawn in place of a marker, where the option is not a project. */
   icon?: IconName;
   /** Indented under the option above it, as a section is under its project. */
@@ -34,7 +35,7 @@ interface SelectProps {
    * How the closed control is drawn: a field (a labelled box with a caret),
    * or a chip in a row of them, the composer's planning line (#113).
    */
-  variant?: 'field' | 'chip';
+  variant?: 'field' | 'chip' | 'icon';
   /** A chip standing for nothing set yet: a dashed "+ label" rather than a value. */
   unset?: boolean;
   /** What an unset chip says. */
@@ -109,8 +110,11 @@ export function Select({
     const top = below + height > window.innerHeight - margin
       ? Math.max(margin, button.top - height - 4)
       : below;
-    setPosition({ top, left: button.left, width: button.width });
-  }, [open, filtered.length, searchable]);
+    const width = Math.min(button.width, window.innerWidth - margin * 2);
+    const popupWidth = matchWidth ? width : Math.max(width, listRef.current?.offsetWidth ?? width);
+    const left = Math.max(margin, Math.min(button.left, window.innerWidth - margin - popupWidth));
+    setPosition({ top, left, width });
+  }, [open, filtered.length, searchable, matchWidth]);
 
   useEffect(() => {
     if (!open) return;
@@ -210,6 +214,7 @@ export function Select({
         top: position?.top ?? -9999,
         left: position?.left ?? -9999,
         minWidth: position?.width,
+        maxWidth: 'calc(100vw - 16px)',
         ...(matchWidth ? { width: position?.width, maxWidth: position?.width } : {}),
         visibility: position ? undefined : 'hidden',
       }}
@@ -240,6 +245,7 @@ export function Select({
           onMouseEnter={() => setActive(at)}
           onMouseDown={(event) => { event.preventDefault(); choose(at); }}
         >
+          {option.visual}
           {option.icon && <Icon name={option.icon} size="sm" />}
           {option.marker !== undefined && (
             <span className="hash" style={markerStyle(option.marker)}>#</span>
@@ -253,10 +259,11 @@ export function Select({
   );
 
   const chip = variant === 'chip';
+  const compact = variant === 'icon';
 
   return (
-    <span className={`fselect${chip ? ' inchips' : ''}`}>
-      {label && !chip && <span className="fselect-label">{label}</span>}
+    <span className={`fselect${chip ? ' inchips' : ''}${compact ? ' as-icon' : ''}`}>
+      {label && !chip && !compact && <span className="fselect-label">{label}</span>}
       <button
         type="button"
         ref={buttonRef}
@@ -269,8 +276,10 @@ export function Select({
         onBlur={() => setQuiet(false)}
         onKeyDown={(event) => { setQuiet(false); onKeyDown(event); }}
       >
+        {compact ? chipIcon : <>
         {chip && chipIcon ? chipIcon : (
           <>
+            {current?.visual}
             {current?.icon && <Icon name={current.icon} size="sm" />}
             {current?.marker !== undefined && (
               <span className="hash" style={markerStyle(current.marker)}>#</span>
@@ -282,6 +291,7 @@ export function Select({
           {chip && unset ? (unsetLabel ?? label) : current?.face ?? current?.label ?? placeholder ?? ''}
         </span>
         {!chip && <Icon name="caret" size="sm" />}
+        </>}
       </button>
       {list && createPortal(list, document.body)}
     </span>

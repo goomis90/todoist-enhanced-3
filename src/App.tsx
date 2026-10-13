@@ -1,3 +1,4 @@
+import { openItems } from './store/selectors';
 import { seesHireNote } from '@/domain/hireNote';
 import { EstimateConversion } from '@/components/overlays/EstimateConversion';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -503,6 +504,7 @@ interface ShellProps {
 }
 
 export interface ComposerPlacement {
+  responsibleUid?: string | null;
   projectId?: string;
   sectionId?: string;
   date?: string;
@@ -620,7 +622,7 @@ function AppShell({
   placement, setPlacement,
 }: ShellProps) {
   const { t } = useT();
-  const { snapshot, items, childrenOf } = useData();
+  const { snapshot, items, childrenOf } = useData(route.view === 'project' ? `project:${route.id}` : route.view === 'label' ? `label:${route.id}` : route.view === 'filter' ? `filter:${route.id}` : route.view);
   const conflictSettings = useStore((s) => s.prefs.conflicts);
   const demo = useStore((s) => s.demo);
   const sidebarCollapsed = useStore((s) => s.prefs.sidebarCollapsed);
@@ -907,6 +909,7 @@ function AppShell({
         defaultDate={placement.date}
         defaultLabels={placement.labels}
         defaultPriority={placement.priority}
+        defaultResponsibleUid={placement.responsibleUid}
       />
       <TaskDetail
         taskId={openTaskId}
@@ -962,10 +965,12 @@ function AppShell({
       <BulkBar />
 
       <InsightsPanel
+        projectId={route.view === 'project' ? route.id : undefined}
+        viewKey={route.view === 'project' ? undefined : route.view === 'label' ? `label:${route.id}` : route.view === 'filter' ? `filter:${route.id}` : route.view}
         open={insightsOpen}
         onClose={() => setInsightsOpen(false)}
         contextLabel={contextLabel}
-        items={contextItems}
+        items={route.view === 'project' ? rootItems(openItems(snapshot)).filter((item) => item.project_id === route.id) : contextItems}
         onOpenTask={openTask}
       />
     </div>
