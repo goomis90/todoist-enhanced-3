@@ -13,6 +13,24 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.7.0
+
+Your tasks first, shared projects together.
+
+🆕 **Personal views show your work by default.** Today, My week, Upcoming, Someday, Review, the matrix, tags and the Dashboard show tasks assigned to you and unassigned tasks. Use Display to include colleagues or choose Everyone. Projects still show everyone, and search and saved filters keep their own scope.
+
+🆕 **Assign a task where you work.** Choose a person from the task row, the open task or the composer in a shared project. Group and sort a project by assignee; adding from a person's group prefills that person.
+
+🆕 **Choose several workspaces.** The Workspace dropdown can combine personal projects and team workspaces, with a clear Any reset. Its selection works alongside the assignee filter.
+
+🎨 **Recognise people at a glance.** Assigned tasks show a profile photo or initials, with the assignee menu before the three-dot menu. Workspace pictures fall back to a coloured initial, and dropdowns stay inside the screen without pushing content down.
+
+🎨 **Cleaner Review, Dashboard and task controls.** Review keeps its assignee filter beside Daily and Weekly. The Dashboard puts Edit layout, Display and Logbook together. Open-task fields use rounded controls and quieter hover states.
+
+🐛 **Upcoming only offers more days when there is more work.** The button disappears when no matching tasks lie beyond the visible dates.
+
+🐛 **A month in the title becomes a date.** Phrases such as “in a month”, “dans un mois” and “dans 2 mois” are recognised when adding a task, including from a dated section. Calendar months use the last valid day when necessary.
+
 ## 2.6.0
 
 Quick finishes.
