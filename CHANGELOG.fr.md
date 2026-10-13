@@ -8,6 +8,24 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.7.0
+
+Vos tâches d'abord, les projets partagés ensemble.
+
+🆕 **Les vues personnelles affichent votre travail par défaut.** Aujourd'hui, Ma semaine, Prochainement, Un jour, Revue, la matrice, les tags et le Dashboard affichent les tâches qui vous sont assignées et les tâches non assignées. Affichage permet d'inclure vos collègues ou de choisir Tout le monde. Les projets affichent toujours tout le monde ; la recherche et les filtres enregistrés gardent leur propre périmètre.
+
+🆕 **Assignez une tâche là où vous travaillez.** Choisissez une personne depuis la ligne de tâche, la tâche ouverte ou le composeur dans un projet partagé. Groupez et triez un projet par responsable ; l'ajout depuis un groupe de personnes préremplit le responsable.
+
+🆕 **Choisissez plusieurs espaces de travail.** Le menu Workspace permet de combiner projets personnels et espaces d'équipe, avec un retour clair à Tous. Cette sélection se combine avec le filtre Responsable.
+
+🎨 **Reconnaissez les personnes en un coup d'œil.** Les tâches assignées affichent une photo ou des initiales, avec le menu Responsable avant le menu à trois points. Sans photo, les espaces affichent une initiale colorée. Les menus restent dans l'écran sans pousser le contenu vers le bas.
+
+🎨 **Des contrôles plus nets dans Revue, Dashboard et les tâches.** Revue place son filtre Responsable à côté de Quotidienne et Hebdomadaire. Le Dashboard réunit Modifier la disposition, Affichage et Journal. Les champs d'une tâche ouverte sont arrondis, avec un survol plus discret.
+
+🐛 **Prochainement propose plus de jours seulement s'il reste du travail.** Le bouton disparaît lorsqu'aucune tâche correspondant aux filtres ne se trouve au-delà des dates visibles.
+
+🐛 **Un mois dans le titre devient une date.** « Dans un mois », « dans 2 mois » et « in a month » sont reconnus à l'ajout d'une tâche, même depuis une section datée. Les mois calendaires utilisent le dernier jour valide si nécessaire.
+
 ## 2.6.0
 
 Finitions rapides.

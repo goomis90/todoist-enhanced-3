@@ -37,10 +37,6 @@ The assignee popup must fit the viewport; avatars have a circular image or initi
 
 Upcoming hides its extension button when no more visible tasks exist. A task beyond the horizon restores the button. Contextual Add task prefills its date, but natural text such as `dans un mois` overrides it; calendar months clamp to the last valid day.
 
-## Draft release notes (version to be chosen when releasing)
+## Release
 
-EN: 🆕 Personal views now show tasks assigned to you and unassigned tasks by default. Use Display to include colleagues; projects continue to show everyone. Assign tasks from a row, an open task or the composer, and group/sort projects by assignee.
-
-FR: 🆕 Les vues personnelles affichent par défaut vos tâches et les tâches non assignées. Affichage permet d’inclure vos collègues ; les projets continuent d’afficher tout le monde. Assignez depuis une ligne, une tâche ouverte ou le composeur, puis groupez/triez les projets par responsable.
-
-Also include the workspace dropdowns, Dashboard controls, Upcoming extension visibility and relative calendar-month parsing in the final release notes. This PR does not publish a release or fix #229.
+Published changes are described in the 2.7.0 sections of CHANGELOG.md and CHANGELOG.fr.md. The completed-project-task issue #229 remains outside this release.
