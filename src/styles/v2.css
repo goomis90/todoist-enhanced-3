@@ -1378,7 +1378,8 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
   .side-sheet:has(.icard),.side-sheet:has(> .detail-top){top:0;right:0;bottom:auto}
 }
 .side-headbtn{display:inline-flex;align-items:center;gap:7px}
-.side-logo{width:16px;height:16px;border-radius:5px;object-fit:cover;flex:none}
+/* The workspace's picture, or its initial, sits in the same 20px marker slot as a project's hash, and the title starts where the project names do, so the icons share one vertical line (#262). */
+.workspace-avatar.small{width:18px;height:18px;font-size:10px;margin:0 2px 0 -7px}
 .chead-title .gnamefield{display:block;width:100%;max-width:100%;padding:0;border:0;background:transparent;font-size:14px;font-weight:700;color:inherit}
 .chead-title .gnamefield:focus{outline:none;box-shadow:none}
 
@@ -1816,3 +1817,22 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .composer-chips .tagpicker{width:min(260px,calc(100vw - 32px))}
 .popover.composer-place-menu{width:280px}
 .composer-chips .tagpicker .checkrow{padding-inline:8px}
+/* A task with no estimate is a conflict card like the others, with the estimate field where their buttons are (#267). */
+.conflict-open{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.conflict-open:hover{text-decoration:underline}
+.conflict-estimate{align-items:center}
+
+/* On a board a card's title keeps three lines and its description two, as a list row's does (#270). */
+.col .task .ttitle{-webkit-line-clamp:3;line-clamp:3}
+.col .task .tdesc{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;text-overflow:ellipsis}
+
+/* The share sheet (#253): who has access, each with a face, a role, and the way out. */
+.shareaccess{display:flex;align-items:center;gap:8px;margin:14px 0 4px;color:var(--muted);font-size:12.5px}
+.sharelist li{justify-content:flex-start}
+.sharelist li .sharewho{flex:1;min-width:0}
+.sharelist li .sharewho strong{overflow:hidden;text-overflow:ellipsis}
+.sharelist li .sharewho em{font-style:normal;color:var(--muted);font-weight:400}
+.sharelist li > :last-child{flex:none}
+.sharefoot{display:flex;justify-content:flex-end}
+.sharefoot .btn{display:inline-flex;align-items:center;gap:6px}
+.opt.danger,.opt.danger.active{color:var(--accent-dark)}

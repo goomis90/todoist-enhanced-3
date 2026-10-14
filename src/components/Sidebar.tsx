@@ -8,6 +8,7 @@ import { FilterMark } from './FilterMark';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, type IconName } from './Icon';
+import { WorkspaceAvatar } from './WorkspaceFilter';
 import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
 import { useStore } from '@/store/store';
@@ -603,6 +604,7 @@ export function Sidebar({
               key={key}
               title={workspace.name ?? t('nav.myProjects')}
               logo={workspace.workspaceId ? snapshot.workspaces[workspace.workspaceId]?.logo_big ?? null : null}
+              workspaceId={workspace.workspaceId}
               open={openGroups[key] ?? true}
               onToggle={() => toggleGroup(key)}
               onAdd={() => onProjectSheet({
@@ -662,11 +664,12 @@ export function Sidebar({
  * resting sidebar stays quiet.
  */
 function SideGroup({
-  title, logo, open, onToggle, onAdd, addLabel, dropTarget, children,
+  title, logo, workspaceId, open, onToggle, onAdd, addLabel, dropTarget, children,
 }: {
   title: string;
-  /** A workspace's own picture, when Todoist has one. */
+  /** A workspace's own picture, when Todoist has one; its initial stands in when it has not. */
   logo?: string | null;
+  workspaceId?: string | null;
   open: boolean;
   onToggle: () => void;
   onAdd?: () => void;
@@ -678,7 +681,7 @@ function SideGroup({
   const head = () => (
     <div className="side-head">
         <button className="side-headbtn" aria-expanded={open} onClick={onToggle}>
-          {logo && <img className="side-logo" src={logo} alt="" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+          {workspaceId && <WorkspaceAvatar small id={workspaceId} name={title} logo={logo} />}
           <span>{title}</span>
         </button>
         {onAdd && (

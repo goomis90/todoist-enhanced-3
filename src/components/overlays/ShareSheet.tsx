@@ -5,7 +5,9 @@ import { Icon } from '../Icon';
 import { Select } from '../Select';
 import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
-import { projectPeople, ROLES } from '@/domain/sharing';
+import { PersonAvatar } from '../PersonAvatar';
+import { copyText, todoistProjectUrl } from '@/api/links';
+import { isSharedWithMe, projectPeople, ROLES } from '@/domain/sharing';
 import type { TranslationKey } from '@/i18n';
 
 const LOOKS_LIKE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,6 +25,9 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   const snapshot = useStore((s) => s.snapshot);
   const shareProject = useStore((s) => s.shareProject);
   const removeCollaborator = useStore((s) => s.removeCollaborator);
+  const changeRole = useStore((s) => s.changeRole);
+  const leaveProject = useStore((s) => s.leaveProject);
+  const toast = useStore((s) => s.toast);
   const project = projectId ? snapshot.projects[projectId] : undefined;
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<string>('');
@@ -42,6 +47,14 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
     [snapshot, projectId],
   );
   const inWorkspace = Boolean(project?.workspace_id);
+  const me = snapshot.user;
+  const canLeave = Boolean(projectId && isSharedWithMe(snapshot, projectId));
+  const REMOVE = '__remove__';
+
+  const copyLink = () => {
+    if (!projectId) return;
+    void copyText(todoistProjectUrl(projectId)).then((ok) => toast(t(ok ? 'task.linkCopied' : 'task.linkNotCopied')));
+  };
 
   async function invite() {
     const address = email.trim();
@@ -87,29 +100,64 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
           <p className="sharesent" role="status"><Icon name="check" size="sm" />{t('share.sent', { email: sent })}</p>
         )}
 
+        {/* How the project is reached, said before who is in it. */}
+        <p className="shareaccess"><Icon name="lock" size="sm" />{t('share.access')}</p>
+
         <h3 className="setsubhead">{t('share.people')}</h3>
-        {people.length === 0 ? (
-          <p className="menuhint">{t('share.nobody')}</p>
-        ) : (
-          <ul className="sharelist">
-            {people.map((person) => (
-              <li key={person.id}>
-                <span>
-                  <strong>{person.name}</strong>
-                  <small>{person.email}{person.state === 'invited' ? ` · ${t('share.pending')}` : ''}</small>
-                </span>
-                {person.email && (
-                  <button
-                    className="btn quiet"
-                    onClick={() => projectId && void removeCollaborator(projectId, person.email)}
-                  >
-                    {t('share.remove')}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="sharelist">
+          {me && (
+            <li key="me">
+              <PersonAvatar id={me.id} decorative />
+              <span className="sharewho">
+                <strong>{me.full_name} <em>({t('assignee.me')})</em></strong>
+                <small>{me.email}</small>
+              </span>
+              {canLeave && (
+                <button className="btn quiet" onClick={() => { if (projectId) { void leaveProject(projectId); onClose(); } }}>
+                  {t('share.leave')}
+                </button>
+              )}
+            </li>
+          )}
+          {people.map((person) => (
+            <li key={person.id}>
+              <PersonAvatar id={person.id} decorative />
+              <span className="sharewho">
+                <strong>{person.name}</strong>
+                <small>{person.email}{person.state === 'invited' ? ` · ${t('share.pending')}` : ''}</small>
+              </span>
+              {inWorkspace && person.state === 'active' ? (
+                /* The role is what a workspace project reads; removing is the
+                   last entry of the same list, in red. */
+                <Select
+                  value={person.role ?? ''}
+                  ariaLabel={t('share.role')}
+                  onChange={(value) => {
+                    if (!projectId) return;
+                    if (value === REMOVE) void removeCollaborator(projectId, person.email);
+                    else void changeRole(projectId, person.id, value);
+                  }}
+                  placeholder={t('share.roleDefault')}
+                  options={[
+                    ...ROLES.map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey) })),
+                    { value: REMOVE, label: t('share.removeFromProject'), danger: true },
+                  ]}
+                />
+              ) : person.email && (
+                <button
+                  className="btn quiet"
+                  onClick={() => projectId && void removeCollaborator(projectId, person.email)}
+                >
+                  {t('share.remove')}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {people.length === 0 && <p className="menuhint">{t('share.nobody')}</p>}
+      </div>
+      <div className="sheet-foot sharefoot">
+        <button className="btn" onClick={copyLink}><Icon name="link" size="sm" />{t('share.copyLink')}</button>
       </div>
     </Overlay>
   );

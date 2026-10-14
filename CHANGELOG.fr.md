@@ -8,6 +8,24 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.9.0
+
+🆕 **Assignez une tâche en tapant `+`.** Dans un projet partagé, `+` dans le titre du composeur liste les personnes du projet, avec leur photo. `+Anne` donne la tâche à Anne, la marque dans le titre et remplit la puce d’assignation.
+
+🆕 **Écrivez vos sous-tâches comme vos tâches.** Dans le panneau d’une tâche et dans le composeur, une ligne de sous-tâche comprend les dates, les répétitions, `p1`, les `@tags` et les durées comme `pendant 1h`. Un `#projet` reste du texte, car une sous-tâche vit toujours dans le projet de sa tâche parente. Modifier une sous-tâche existante les lit aussi.
+
+🆕 **Une fenêtre de partage plus complète.** Elle dit comment le projet est accessible, vous liste en premier, puis chacun avec photo, nom et e-mail. Dans un projet d’espace de travail, chaque membre a un menu de rôle, avec « Retirer du projet » en dernière entrée. « Copier le lien » copie l’adresse du projet.
+
+🎨 **Renseignez les estimations manquantes depuis leur carte.** Dans Notifications, Conflits, une tâche sans estimation est une carte comme les autres, avec le champ Estimation à la place des boutons. L’estimation est enregistrée dès que vous la saisissez.
+
+🎨 **Des titres plus longs sur les cartes du tableau.** Une carte affiche jusqu’à trois lignes de titre et deux de description, comme la liste.
+
+🎨 **Les espaces de travail s’alignent dans la barre latérale.** L’image d’un espace de travail est dans la même colonne que les icônes de ses projets, et un espace sans image affiche son initiale.
+
+🐛 **Les tâches terminées s’affichent de nouveau dans un projet.** Avec « Afficher les tâches terminées », la page d’un projet liste ce que vous avez terminé depuis un an, et plus seulement ce que vous avez coché pendant la session.
+
+🐛 **Les tags qui commencent par un emoji sont appliqués.** `@🏡maison` dans un titre est marqué, appliqué et retiré du titre, comme n’importe quel autre tag.
+
 ## 2.8.0
 
 🆕 **Voyez les prochaines répétitions dans Upcoming.** Les tâches récurrentes affichent leurs dates prévues et leur charge estimée. Les cases pointillées distinguent les prévisions ; un clic ouvre la tâche d’origine.

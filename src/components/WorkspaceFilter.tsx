@@ -5,11 +5,11 @@ import { viewPrefs } from '@/store/prefs';
 import { PERSONAL_WORKSPACE } from '@/store/selectors';
 import { useT } from '@/hooks/useT';
 
-function WorkspaceAvatar({ logo, name, id }: { logo?: string | null; name: string; id: string }) {
+export function WorkspaceAvatar({ logo, name, id, small = false }: { logo?: string | null; name: string; id: string; small?: boolean }) {
   const [failed, setFailed] = useState<string | null>(null);
   const hash = Array.from(id).reduce((value, char) => (value * 31 + char.codePointAt(0)!) >>> 0, 0);
   const background = `hsl(${hash % 360} 45% 32%)`;
-  return <span className="workspace-avatar" aria-hidden="true" style={{ background }}>{logo && failed !== logo
+  return <span className={`workspace-avatar${small ? ' small' : ''}`} aria-hidden="true" style={{ background }}>{logo && failed !== logo
     ? <img src={logo} alt="" referrerPolicy="no-referrer" onError={() => setFailed(logo)} />
     : Array.from(name.trim())[0]?.toLocaleUpperCase() ?? '?'}</span>;
 }

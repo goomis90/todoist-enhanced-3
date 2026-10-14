@@ -147,6 +147,8 @@ export interface AppState {
   /** Invites by e-mail; `role` only means something in a team workspace. */
   shareProject: (projectId: string, email: string, role?: string) => Promise<void>;
   removeCollaborator: (projectId: string, email: string) => Promise<void>;
+  /** Changes what a member may do in a workspace project. */
+  changeRole: (projectId: string, userId: string, role: string) => Promise<void>;
   /** Leaves a project somebody else shared: drops it from the snapshot once Todoist agrees. */
   leaveProject: (projectId: string) => Promise<void>;
   /** Assigns a task to a collaborator of its project, or to nobody. */
@@ -390,7 +392,7 @@ export interface AppState {
 export type Slice<T> = StateCreator<AppState, [], [], T>;
 
 export type SyncSlice = Pick<AppState, 'ready' | 'connected' | 'snapshot' | 'syncState' | 'syncError' | 'pendingCount' | 'demo' | 'resolvedIds' | 'signInError' | 'init' | 'connect' | 'startDemo' | 'disconnect' | 'refresh' | 'startPolling' | 'apply'>;
-export type CollabSlice = Pick<AppState, 'markNotifications' | 'answerInvitation' | 'shareProject' | 'removeCollaborator' | 'leaveProject' | 'assignTask' | 'loadProjectPeople'>;
+export type CollabSlice = Pick<AppState, 'markNotifications' | 'answerInvitation' | 'shareProject' | 'removeCollaborator' | 'changeRole' | 'leaveProject' | 'assignTask' | 'loadProjectPeople'>;
 export type DustSlice = Pick<AppState, 'dustKept' | 'keepInSomeday'>;
 export type PreferencesSlice = Pick<AppState, 'prefs' | 'walkthrough' | 'setPrefs' | 'setViewPrefs' | 'setLocale' | 'ensurePreferencesTask' | 'beginTourPreview' | 'endTourPreview' | 'setWalkthrough'>;
 export type TasksSlice = Pick<AppState, 'logbookEntry' | 'setLogbookEntry' | 'loadTask' | 'updateTask' | 'addComment' | 'updateComment' | 'deleteComment' | 'toggleReaction' | 'duplicateTask' | 'setRecurrence' | 'setEstimates' | 'toggleTask' | 'completeTasks' | 'removeTask' | 'removeTasks' | 'restoreTasks' | 'createTask' | 'createTasks' | 'setTaskLabels' | 'setTaskPriority' | 'skipOccurrence' | 'skipOccurrences' | 'reorderSubtasks'>;

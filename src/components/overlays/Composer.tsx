@@ -1,5 +1,6 @@
 import { AssigneeField } from '../AssigneeField';
 import { canAssign } from '@/domain/assignees';
+import { assignees } from '@/domain/sharing';
 import { DescriptionEditor } from '../Checklist';
 import { useCreateTag } from '@/hooks/useCreateTag';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -18,7 +19,7 @@ import { formatDuration } from '@/domain/estimates';
 import { markerStyle } from '@/domain/colors';
 import { toTodoistPriority, type DisplayPriority } from '@/domain/types';
 import {
-  parseShorthand, splitTrailingEstimate, type HighlightKind, type Shorthand, type TextRange,
+  parseShorthand, type HighlightKind, type Shorthand, type TextRange,
 } from '@/domain/shorthand';
 import { matchesSearch } from '@/domain/search';
 import { byLabelOrder } from '@/domain/orderKey';
@@ -102,6 +103,13 @@ export function Composer({
   const newTag = useCreateTag(tagQuery);
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [subtaskDraft, setSubtaskDraft] = useState('');
+  /** What each subtask line has turned down, by line; and the line being typed. */
+  const [subtaskRefusals, setSubtaskRefusals] = useState<Record<number, TextRange[]>>({});
+  const [draftRefusals, setDraftRefusals] = useState<TextRange[]>([]);
+  /** A line leaves: the ones after it move up, and so do what they turned down. */
+  const forgetRefusals = (index: number) => setSubtaskRefusals((prev) => Object.fromEntries(
+    Object.entries(prev).filter(([key]) => Number(key) !== index)
+      .map(([key, value]) => [Number(key) > index ? Number(key) - 1 : Number(key), value])));
   /** The readings of the name that have been turned down, by position in it. */
   const [refusals, setRefusals] = useState<TextRange[]>([]);
 
@@ -118,6 +126,8 @@ export function Composer({
     setTagQuery('');
     setSubtasks([]);
     setSubtaskDraft('');
+    setSubtaskRefusals({});
+    setDraftRefusals([]);
     setRefusals([]);
     setProjectId(defaultProjectId || inboxId);
     setSectionId(defaultSectionId ?? '');
@@ -140,7 +150,14 @@ export function Composer({
     .sort(byLabelOrder);
   const filteredTags = tags.filter((label) => matchesSearch(label.name, tagQuery));
 
-  const parsed = parseShorthand(name, snapshot, naturalDates, refusals, dateFormat);
+  /* Who `+name` can give the task to: the people of the project the name has
+     settled on, or of the one chosen so far. Nobody in the Inbox or in a
+     project that is not shared, where `+` stays a plain character. */
+  const peopleOf = (named: string | null) => {
+    const target = named || projectId || inboxId;
+    return target && snapshot.projects[target]?.can_assign_tasks !== false ? assignees(snapshot, target) : [];
+  };
+  const parsed = parseShorthand(name, snapshot, naturalDates, refusals, dateFormat, peopleOf);
 
   /*
    * The task's tags: the ones picked by hand, and the ones the name says right
@@ -195,6 +212,7 @@ export function Composer({
     if (reading === 'recurrence') setRecurrence(null);
     if (reading === 'priority') setPriority(4);
     if (reading === 'duration') setMinutes(null);
+    if (reading === 'assignee') setResponsibleUid(defaultResponsibleUid ?? null);
     if (reading === 'project') { setProjectId(fallbackProject); setSectionId(''); }
     /* A tag read from the name needs nothing here: it is read again from the
        name every time, so refusing it is enough to take it off. */
@@ -213,7 +231,7 @@ export function Composer({
    * afterwards stays changed until the name says something new.
    */
   const { date: readDate, projectId: readProject, sectionId: readSection,
-    priority: readPriority, minutes: readMinutes, recurrence: readRepeat } = parsed;
+    priority: readPriority, minutes: readMinutes, recurrence: readRepeat, assigneeId: readAssignee } = parsed;
 
   /*
    * Each of these also watches `refusals`, whose identity changes only when a
@@ -264,6 +282,15 @@ export function Composer({
     if (readProject) setSectionId(readSection ?? '');
   }, [readProject, readSection, refusals]);
   useEffect(() => { if (readPriority) setPriority(readPriority); }, [readPriority, refusals]);
+  /* The person follows the name the same way, and lets go of them when the
+     words are deleted — unless the chip was changed by hand since. */
+  const wasAssignee = useRef<string | null>(null);
+  useEffect(() => {
+    if (readAssignee) setResponsibleUid(readAssignee);
+    else if (wasAssignee.current) setResponsibleUid((now) => (now === wasAssignee.current ? (defaultResponsibleUid ?? null) : now));
+    wasAssignee.current = readAssignee ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the reading itself.
+  }, [readAssignee, refusals]);
   useEffect(() => {
     if (readMinutes !== null) setMinutes(readMinutes);
   }, [readMinutes, refusals]);
@@ -356,13 +383,25 @@ export function Composer({
     const dueDate = date;
     const repeat = recurrence;
     const pending = subtaskDraft.trim();
-    /* A subtask can end with its own estimate, read the way the name's is and
-       written the same way (#163). */
-    const allSubtasks = (pending ? [...subtasks, pending] : subtasks).map((line) => {
-      const { content: title, minutes: estimate } = splitTrailingEstimate(line);
-      return { content: title, ...(estimate === null ? {} : { estimateMinutes: estimate }) };
+    /* Each line is read as the task's own title is (#264): a date, a repeat,
+       `p1`, `@tag` and `(25)` apply to that subtask. A `#project` stays text:
+       a subtask lives in its parent's project. */
+    const lines = (pending ? [...subtasks, pending] : subtasks).map((line, index) => {
+      const turnedDown = index < subtasks.length ? subtaskRefusals[index] ?? [] : draftRefusals;
+      const first = parseShorthand(line, snapshot, naturalDates, turnedDown, dateFormat);
+      const asText = first.ranges.filter((r) => r.kind === 'project').map(({ start, end }) => ({ start, end }));
+      const read = asText.length > 0
+        ? parseShorthand(line, snapshot, naturalDates, [...turnedDown, ...asText], dateFormat) : first;
+      return {
+        content: read.content.trim() || line,
+        ...(read.priority ? { priority: toTodoistPriority(read.priority) } : {}),
+        ...(read.labels.length > 0 ? { labels: read.labels } : {}),
+        ...(read.minutes === null ? {} : { estimateMinutes: read.minutes }),
+        ...(read.recurrence
+          ? { due: { string: read.recurrence.string, lang: read.recurrence.lang, is_recurring: true } }
+          : read.date ? { due: { date: read.date, timezone: null, string: read.date, lang: 'en' as const, is_recurring: false } } : {}),
+      };
     });
-
     const saved = await createTask({
       content,
       description: description.trim() || undefined,
@@ -382,7 +421,7 @@ export function Composer({
           ? { date: dueDate, timezone: null, string: dueDate, lang: 'en', is_recurring: false }
           : undefined,
       deadline: deadline ? { date: deadline, lang: 'en' } : undefined,
-      subtasks: allSubtasks,
+      subtasks: lines,
     });
 
     if (saved) onClose();
@@ -419,6 +458,7 @@ export function Composer({
           autoFocus
           snapshot={snapshot}
           naturalDates={naturalDates}
+          peopleOf={peopleOf}
           refusals={refusals}
           onRefusals={(next, change) => {
             setRefusals(next);
@@ -612,28 +652,27 @@ export function Composer({
             <div className="composer-sub" key={index}>
               <span className="check p4" aria-hidden="true" />
               <TaskNameField
-                estimateOnly
                 autoFocus={false}
                 fieldClassName="subtaskfield"
                 value={content}
                 onChange={(value) => setSubtasks((prev) => prev.map((s, i) => (i === index ? value : s)))}
                 onBlur={() => setSubtasks((prev) => {
                   const trimmed = prev[index]?.trim();
-                  if (!trimmed) return prev.filter((_, i) => i !== index);
+                  if (!trimmed) { forgetRefusals(index); return prev.filter((_, i) => i !== index); }
                   return trimmed === prev[index] ? prev : prev.map((s, i) => (i === index ? trimmed : s));
                 })}
                 onSubmit={() => (document.activeElement as HTMLElement | null)?.blur()}
                 placeholder=""
                 ariaLabel={t('detail.subtasks')}
                 snapshot={snapshot}
-                naturalDates={false}
-                refusals={[]}
-                onRefusals={() => {}}
+                naturalDates={naturalDates}
+                refusals={subtaskRefusals[index] ?? []}
+                onRefusals={(next) => setSubtaskRefusals((prev) => ({ ...prev, [index]: next }))}
               />
               <button
                 className="iconbtn"
                 aria-label={t('common.cancel')}
-                onClick={() => setSubtasks((prev) => prev.filter((_, i) => i !== index))}
+                onClick={() => { forgetRefusals(index); setSubtasks((prev) => prev.filter((_, i) => i !== index)); }}
               >
                 <Icon name="close" size="sm" />
               </button>
@@ -642,7 +681,6 @@ export function Composer({
           <div className="composer-sub adding">
             <span className="check p4" aria-hidden="true" />
             <TaskNameField
-              estimateOnly
               autoFocus={false}
               fieldClassName="subtaskfield"
               value={subtaskDraft}
@@ -651,14 +689,16 @@ export function Composer({
                 const value = subtaskDraft.trim();
                 if (!value) return;
                 setSubtasks((prev) => [...prev, value]);
+                setSubtaskRefusals((prev) => ({ ...prev, [subtasks.length]: draftRefusals }));
                 setSubtaskDraft('');
+                setDraftRefusals([]);
               }}
               placeholder={t('composer.subtaskPlaceholder')}
               ariaLabel={t('detail.addSubtask')}
               snapshot={snapshot}
-              naturalDates={false}
-              refusals={[]}
-              onRefusals={() => {}}
+              naturalDates={naturalDates}
+              refusals={draftRefusals}
+              onRefusals={setDraftRefusals}
             />
           </div>
         </div>

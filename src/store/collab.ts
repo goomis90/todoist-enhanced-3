@@ -95,6 +95,14 @@ export const createCollabSlice: Slice<CollabSlice> = (set, get) => ({
     await get().loadProjectPeople(projectId, true);
   },
 
+  async changeRole(projectId, userId, role) {
+    await get().apply(
+      [command('project_change_role', { id: projectId, user_id: userId, role })],
+      (snapshot) => snapshot,
+    );
+    await get().loadProjectPeople(projectId, true);
+  },
+
   async removeCollaborator(projectId, email) {
     await get().apply(
       [command('delete_collaborator', { project_id: projectId, email })],

@@ -17,6 +17,8 @@ export interface SelectOption {
   sub?: boolean;
   /** What the face says once this is chosen, when the label alone would not place it. */
   face?: string;
+  /** A destructive entry, drawn in red ("Remove from project"). */
+  danger?: boolean;
 }
 
 interface SelectProps {
@@ -243,7 +245,7 @@ export function Select({
           role="option"
           aria-selected={option.value === value}
           data-active={at === active || undefined}
-          className={`opt${at === active ? ' active' : ''}${option.sub ? ' sectionopt' : ''}`}
+          className={`opt${at === active ? ' active' : ''}${option.sub ? ' sectionopt' : ''}${option.danger ? ' danger' : ''}`}
           onMouseEnter={() => setActive(at)}
           onMouseDown={(event) => { event.preventDefault(); choose(at); }}
         >

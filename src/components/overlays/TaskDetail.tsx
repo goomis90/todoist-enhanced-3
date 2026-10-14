@@ -24,7 +24,7 @@ import {
   deadlineDate, dueDate, formatRelativeDay, hasTime, toApiDate, toApiDateTime,
 } from '@/domain/dates';
 import { plainTitle, renderTitle, titleLinks } from '@/domain/markdown';
-import { parseShorthand, savedRefusals, splitTrailingEstimate, type TextRange } from '@/domain/shorthand';
+import { parseShorthand, savedRefusals, type TextRange } from '@/domain/shorthand';
 import { dueForDate } from '@/domain/recurrence';
 import { EstimateField } from '../EstimateField';
 import { TaskNameField } from '../TaskNameField';
@@ -79,13 +79,23 @@ function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) 
   const toggleTask = useStore((s) => s.toggleTask);
   const removeTask = useStore((s) => s.removeTask);
   const confirm = useConfirm();
+  const setRecurrence = useStore((s) => s.setRecurrence);
+  const snapshot = useStore((s) => s.snapshot);
+  const naturalDates = useStore((s) => s.prefs.naturalDates);
+  const dateFormat = useStore((s) => s.prefs.dateFormat);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(child.content);
+  /* The words the title already had are not read again as an order (#117). */
+  const [refusals, setRefusals] = useState<TextRange[]>([]);
   const editRef = useRef<HTMLButtonElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
-    if (!editing) setDraft(child.content);
+    if (!editing) {
+      setDraft(child.content);
+      setRefusals(savedRefusals(child.content, snapshot, naturalDates, dateFormat));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-read only when the title or the mode changes.
   }, [child.content, editing]);
 
   const stopEditing = () => {
@@ -93,9 +103,23 @@ function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) 
     requestAnimationFrame(() => editRef.current?.focus());
   };
   const save = () => {
-    const content = draft.trim();
+    /* Read as a title is (#264): a date, a repeat, `p1`, `@tag` and an
+       estimate apply to the subtask. A `#project` stays text, since a subtask
+       cannot live outside its parent's project. */
+    const first = parseShorthand(draft, snapshot, naturalDates, refusals, dateFormat);
+    const asText = first.ranges.filter((r) => r.kind === 'project').map(({ start, end }) => ({ start, end }));
+    const read = asText.length > 0
+      ? parseShorthand(draft, snapshot, naturalDates, [...refusals, ...asText], dateFormat) : first;
+    const content = read.content.trim();
     if (!content) { inputRef.current?.focus(); return; }
-    if (content !== child.content) void updateTask(child.id, { content });
+    const fields: Record<string, unknown> = {};
+    if (content !== child.content) fields.content = content;
+    if (read.date) fields.due = dueForDate(child.due, read.date);
+    if (read.priority) fields.priority = toTodoistPriority(read.priority);
+    if (read.labels.length > 0) fields.labels = [...new Set([...child.labels, ...read.labels])];
+    if (read.minutes !== null) fields.estimateMinutes = read.minutes;
+    if (Object.keys(fields).length > 0) void updateTask(child.id, fields);
+    if (read.recurrence) void setRecurrence(child.id, read.recurrence);
     stopEditing();
   };
   const deleteSubtask = async () => {
@@ -134,18 +158,20 @@ function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) 
         ><Icon name="check" /></span>
       )}
       {editing ? (
-        <input
-          ref={inputRef}
-          className="textfield subtaskedit"
+        <TaskNameField
+          fieldRef={inputRef}
+          fieldClassName="textfield subtaskedit"
           autoFocus
           value={draft}
-          aria-label={t('detail.editSubtask')}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            event.stopPropagation();
-            if (event.key === 'Enter') { event.preventDefault(); save(); }
-            if (event.key === 'Escape') { event.preventDefault(); stopEditing(); }
-          }}
+          placeholder=""
+          ariaLabel={t('detail.editSubtask')}
+          onChange={setDraft}
+          onSubmit={save}
+          onCancel={stopEditing}
+          snapshot={snapshot}
+          naturalDates={naturalDates}
+          refusals={refusals}
+          onRefusals={setRefusals}
         />
       ) : (
         <button className="subtasktitle" onClick={() => onOpen(child.id)}>
@@ -288,6 +314,7 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
   const [subtaskDraft, setSubtaskDraft] = useState('');
   /** Readings of the title turned down while editing it. */
   const [refusals, setRefusals] = useState<TextRange[]>([]);
+  const [subtaskRefusals, setSubtaskRefusals] = useState<TextRange[]>([]);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
@@ -581,15 +608,29 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
       setAddingSubtask(false);
       return;
     }
-    /* An estimate that ends the line is read the way the composer reads it
-       (#163): `Draft outline (5)` is a subtask of 5 minutes. */
-    const { content: title, minutes: estimate } = splitTrailingEstimate(content);
+    /* Read the way the composer reads a title (#264): a date, a repeat, `p1`,
+       `@tag` and `(25)` in the line apply to the subtask. A `#project` does
+       not: a subtask lives in its parent's project, so that word stays text. */
+    const first = parseShorthand(content, snapshot, naturalDates, subtaskRefusals, dateFormat);
+    const keepAsText = first.ranges.filter((r) => r.kind === 'project').map(({ start, end }) => ({ start, end }));
+    const read = keepAsText.length > 0
+      ? parseShorthand(content, snapshot, naturalDates, [...subtaskRefusals, ...keepAsText], dateFormat)
+      : first;
+    const title = read.content.trim() || content;
     void createTask({
       content: title,
       project_id: item!.project_id,
       parent_id: item!.id,
-      ...(estimate === null ? {} : { estimateMinutes: estimate }),
+      ...(read.priority ? { priority: toTodoistPriority(read.priority) } : {}),
+      ...(read.labels.length > 0 ? { labels: read.labels } : {}),
+      ...(read.minutes === null ? {} : { estimateMinutes: read.minutes }),
+      ...(read.recurrence
+        ? { due: { string: read.recurrence.string, lang: read.recurrence.lang, is_recurring: true } }
+        : read.date
+          ? { due: { date: read.date, timezone: null, string: read.date, lang: 'en', is_recurring: false } }
+          : {}),
     });
+    setSubtaskRefusals([]);
     setSubtaskDraft('');
   }
 
@@ -897,7 +938,6 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
 
             {addingSubtask ? (
               <TaskNameField
-                estimateOnly
                 autoFocus
                 fieldClassName="textfield subtaskfield"
                 placeholder={t('detail.addSubtask')}
@@ -911,9 +951,9 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                   setAddingSubtask(false);
                 }}
                 snapshot={snapshot}
-                naturalDates={false}
-                refusals={[]}
-                onRefusals={() => {}}
+                naturalDates={naturalDates}
+                refusals={subtaskRefusals}
+                onRefusals={setSubtaskRefusals}
               />
             ) : (
               <button className="addline" onClick={() => setAddingSubtask(true)}>
