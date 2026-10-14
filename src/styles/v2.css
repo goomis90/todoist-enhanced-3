@@ -1871,4 +1871,6 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 
 .shareform .fselect-face.rowface:hover,.shareform .fselect-face.rowface.open{border-color:transparent}
 
-.sharerole.readonly{padding:0 14px;color:var(--faint);font-size:13.5px;cursor:default}
+
+.fselect-face:disabled{opacity:.5;cursor:default;pointer-events:auto}
+.shareform .fselect-face:disabled:hover{background:transparent;box-shadow:none}

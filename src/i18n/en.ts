@@ -266,6 +266,8 @@ export const en = {
   'share.role.EDIT_ONLY.hint': "Edits, comments on and completes tasks.",
   'share.role.COMPLETE_ONLY.hint': "Todoist refuses most changes to this role.",
   'share.adminsOnly': "Only the project’s admins can change this.",
+  'share.role.CREATOR': "Owner",
+  'share.role.CREATOR.hint': "Created the project and cannot be changed.",
   'share.role': 'Role',
   'share.roleDefault': 'Workspace default',
   'share.role.READ_WRITE': "Collaborator",

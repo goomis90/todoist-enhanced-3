@@ -60,8 +60,8 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
      so they only show for somebody who already has one. */
   const memberRoles = (current: string | null) => [
     ...OFFERED_ROLES,
-    ...(current === 'EDIT_ONLY' || current === 'COMPLETE_ONLY' ? [current] : []),
-  ] as Array<(typeof ROLES)[number]>;
+    ...(current === 'EDIT_ONLY' || current === 'COMPLETE_ONLY' || current === 'CREATOR' ? [current] : []),
+  ] as Array<(typeof ROLES)[number] | 'CREATOR'>;
   const COLLABORATOR = '__collaborator__';
   /** The round mark of a level: its icon, or the workspace's own picture for Team. */
   const levelMark = (level: string) => (
@@ -180,13 +180,7 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
                 <strong>{person.name}</strong>
                 <small>{person.email}{person.state === 'invited' ? ` · ${t('share.pending')}` : ''}</small>
               </span>
-              {person.state === 'active' && inWorkspace && !canManage ? (
-                /* Only a project's admin changes who is what: for anybody else the
-                   role is read, and greyed rather than refused on click. */
-                <span className="sharerole readonly" title={t('share.adminsOnly')}>
-                  {person.role ? t(`share.role.${person.role}` as TranslationKey) : t('share.roleDefault')}
-                </span>
-              ) : person.state === 'active' ? (
+              {person.state === 'active' ? (
                 /* The role is what a workspace project reads; removing is the
                    last entry of the same list, in red. */
                 <Select
@@ -199,6 +193,10 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
                   }}
                   placeholder={t('share.roleDefault')}
                   maxPopupWidth={300}
+                  /* Only a project's admin changes who is what, and nobody changes the owner:
+                     the control stays as it is, greyed, rather than answering with an error. */
+                  disabled={inWorkspace ? !canManage || person.role === 'CREATOR' : false}
+                  title={inWorkspace && !canManage ? t('share.adminsOnly') : undefined}
                   options={[
                     /* A personal project has no roles to choose from: its members are collaborators. */
                     ...(inWorkspace

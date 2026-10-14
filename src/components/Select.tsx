@@ -52,6 +52,10 @@ interface SelectProps {
   matchWidth?: boolean;
   maxPopupWidth?: number;
   popupClassName?: string;
+  /** Drawn as it is but greyed, and it does not open: the value can be read, not changed. */
+  disabled?: boolean;
+  /** What a greyed control says when pointed at. */
+  title?: string;
 }
 
 /**
@@ -69,7 +73,7 @@ interface SelectProps {
  */
 export function Select({
   label, value, options, onChange, ariaLabel, placeholder, searchable: searchableProp,
-  variant = 'field', unset = false, unsetLabel, chipIcon, tint, matchWidth = false, maxPopupWidth, popupClassName,
+  variant = 'field', unset = false, unsetLabel, chipIcon, tint, matchWidth = false, maxPopupWidth, popupClassName, disabled = false, title,
 }: SelectProps) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
@@ -280,6 +284,8 @@ export function Select({
         className={`fselect-face${chip ? ' chipface' : ''}${row ? ' rowface' : ''}${chip && !unset && (tint || current?.marker) ? ' tinted' : ''}${chip && unset ? ' unset' : ''}${open ? ' open' : ''}${quiet ? ' quiet' : ''}`}
         aria-haspopup="listbox"
         aria-expanded={open}
+        disabled={disabled}
+        title={title}
         aria-label={ariaLabel ?? label}
         onClick={() => setOpen((v) => !v)}
         onBlur={() => setQuiet(false)}
