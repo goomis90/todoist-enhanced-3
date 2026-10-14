@@ -1837,11 +1837,14 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .accessrow small{display:block;margin-top:2px;color:var(--muted);font-size:12.5px;line-height:1.4}
 .accesslist{display:grid;gap:6px;margin-top:6px}
 .accesslist .accessrow[aria-selected="true"]{border-color:var(--accent)}
-.sharelist li{justify-content:flex-start}
-.sharelist li .sharewho{flex:1;min-width:0}
-.sharelist li .sharewho strong{overflow:hidden;text-overflow:ellipsis}
+/* One grid for every row, so the faces, the names and the controls share their columns whatever a row holds. */
+.sharelist li{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;column-gap:12px;padding:12px 2px}
+.sharelist li .person-avatar{width:32px;height:32px;font-size:12px}
+.sharelist li .sharewho{min-width:0;line-height:1.35}
+.sharelist li .sharewho strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.sharelist li .sharewho small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;font-size:12.5px}
 .sharelist li .sharewho em{font-style:normal;color:var(--muted);font-weight:400}
-.sharelist li > :last-child{flex:none}
+.sharelist li > :last-child{justify-self:end}
 .sharefoot{display:flex;justify-content:flex-end}
 .sharefoot .btn{display:inline-flex;align-items:center;gap:6px}
 .opt.danger,.opt.danger.active{color:var(--accent-dark)}
