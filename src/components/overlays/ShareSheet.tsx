@@ -9,7 +9,7 @@ import { PersonAvatar } from '../PersonAvatar';
 import { WorkspaceAvatar } from '../WorkspaceFilter';
 import { copyText, todoistProjectUrl } from '@/api/links';
 import { accessChoices, accessOf, isAccessLevel } from '@/domain/projectAccess';
-import { isSharedWithMe, projectPeople, ROLES } from '@/domain/sharing';
+import { isSharedWithMe, OFFERED_ROLES, projectPeople, ROLES } from '@/domain/sharing';
 import type { TranslationKey } from '@/i18n';
 
 const LOOKS_LIKE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,8 +53,14 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   const me = snapshot.user;
   const canLeave = Boolean(projectId && isSharedWithMe(snapshot, projectId));
   const REMOVE = '__remove__';
-  /* Every role Todoist names is offered while they are being tried against a real account. */
-  const memberRoles = (_current: string | null) => [...ROLES];
+  /* Two roles are offered: a collaborator and the project's admin. Tried on a
+     real account, the other two did not behave like roles of their own — one
+     could do what a collaborator can, the other was refused almost everything —
+     so they only show for somebody who already has one. */
+  const memberRoles = (current: string | null) => [
+    ...OFFERED_ROLES,
+    ...(current === 'EDIT_ONLY' || current === 'COMPLETE_ONLY' ? [current] : []),
+  ] as Array<(typeof ROLES)[number]>;
   const COLLABORATOR = '__collaborator__';
   /** The round mark of a level: its icon, or the workspace's own picture for Team. */
   const levelMark = (level: string) => (
@@ -110,8 +116,9 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
               onChange={setRole}
               options={[
                 { value: '', label: t('share.roleDefault'), hint: t('share.roleDefault.hint') },
-                ...ROLES.map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey), hint: t(`share.role.${r}.hint` as TranslationKey) })),
+                ...OFFERED_ROLES.map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey), hint: t(`share.role.${r}.hint` as TranslationKey) })),
               ]}
+              maxPopupWidth={300}
             />
           )}
           <button className="btn primary" onClick={() => void invite()}>{t('share.invite')}</button>
@@ -184,6 +191,7 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
                     else void changeRole(projectId, person.id, value);
                   }}
                   placeholder={t('share.roleDefault')}
+                  maxPopupWidth={300}
                   options={[
                     /* A personal project has no roles to choose from: its members are collaborators. */
                     ...(inWorkspace
