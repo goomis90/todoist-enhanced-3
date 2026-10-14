@@ -1839,8 +1839,11 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .rowtext strong{display:block;font-size:13.5px}
 .rowtext small{display:block;margin-top:1px;color:var(--muted);font-size:12.5px}
 .popover.accesspopup{min-width:320px}
-.popover .opt .listbox-text{display:grid;gap:2px;min-width:0;text-align:left}
-.popover .opt .listbox-text small{color:var(--muted);font-size:12.5px;line-height:1.4;white-space:normal}
+.popover .opt .listbox-text{display:grid;flex:1;gap:2px;min-width:0;text-align:left;font-weight:400}
+.popover .opt .listbox-text .listbox-label{font-weight:600;color:var(--text)}
+.popover .opt:has(.listbox-text){justify-content:flex-start;gap:12px}
+.popover .opt:has(.listbox-text) > .ic:last-child{flex:none;margin-left:auto}
+.popover .opt .listbox-text small{font-weight:400;color:var(--muted);font-size:12.5px;line-height:1.4;white-space:normal}
 .popover .opt:has(.listbox-text){align-items:flex-start;padding-block:10px}
 .popover .opt .accessmark{flex:none}
 /* One grid for every row, so the faces, the names and the controls share their columns whatever a row holds. */
