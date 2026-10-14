@@ -266,7 +266,7 @@ export const fr: Record<TranslationKey, string> = {
   'share.role.READ_WRITE': 'Peut modifier et commenter',
   'share.role.EDIT_ONLY': 'Peut modifier',
   'share.role.COMPLETE_ONLY': 'Peut terminer des tâches',
-  'share.role.ADMIN': 'Administrateur',
+  'share.role.ADMIN': 'Administrateur du projet',
   'project.share': 'Partager…',
   'detail.assignee': 'Assignée à',
   'detail.unassigned': 'Personne',

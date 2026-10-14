@@ -264,7 +264,7 @@ export const en = {
   'share.role.READ_WRITE': 'Can edit and comment',
   'share.role.EDIT_ONLY': 'Can edit',
   'share.role.COMPLETE_ONLY': 'Can complete tasks',
-  'share.role.ADMIN': 'Admin',
+  'share.role.ADMIN': 'Project admin',
   'project.share': 'Share…',
   'detail.assignee': 'Assigned to',
   'detail.unassigned': 'Nobody',
