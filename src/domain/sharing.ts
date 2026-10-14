@@ -11,6 +11,8 @@ export interface Person {
 
 /** The roles a team workspace gives a collaborator; the creator cannot be given. */
 export const ROLES = ['READ_WRITE', 'EDIT_ONLY', 'COMPLETE_ONLY', 'ADMIN'] as const;
+/** What is offered when choosing one: a collaborator, or the project's admin (see the share window). */
+export const OFFERED_ROLES = ['READ_WRITE', 'ADMIN'] as const;
 
 /**
  * Who a project is shared with: people who said yes, then people still

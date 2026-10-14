@@ -13,6 +13,24 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.9.0
+
+🆕 **Assign a task by typing `+`.** In a shared project, `+` in the composer title lists the people of the project, with their photo. `+Anne` gives the task to Anne, marks her in the title and fills the assignee chip.
+
+🆕 **Write subtasks the way you write tasks.** In a task's panel and in the composer, a subtask line understands dates, repeats, `p1`, `@tags` and durations such as `pendant 1h`. A `#project` stays text, since a subtask always lives in its parent's project. Editing an existing subtask reads them too.
+
+🆕 **A fuller Share window.** It says how the project is reached, lists you first, then everyone with a photo, name and e-mail. In a workspace project, a project admin gives each member the role of collaborator or project admin, or removes them from the project; everyone else sees the roles greyed out. The access level (restricted, team or public) opens as a menu, with the workspace's picture for Team. "Copy link" copies the project's address.
+
+🎨 **Fill in missing estimates from their card.** In Notifications, Conflicts, a task without an estimate is a card like the others, with the Estimate field where the buttons are. The estimate is saved as you enter it.
+
+🎨 **Longer titles on board cards.** A card shows up to three lines of its title and two of its description, as the list does.
+
+🎨 **Workspaces line up in the sidebar.** A workspace's picture sits in the same column as the icons of its projects, and a workspace without a picture shows its initial.
+
+🐛 **Completed tasks show again in a project.** With "Show completed tasks" on, a project page lists what you completed in the past year, not only what you ticked in the current session.
+
+🐛 **Tags starting with an emoji are applied.** `@🏡home` in a title is marked, applied and removed from the title, like any other tag.
+
 ## 2.8.0
 
 🆕 **See future repeats in Upcoming.** Recurring tasks show their forecast dates and estimated load. Dotted checkboxes distinguish forecasts; click one to open the original task.

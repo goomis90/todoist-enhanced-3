@@ -31,7 +31,7 @@ import type { DisplayPriority, Snapshot } from './types';
  */
 
 export type HighlightKind =
-  'date' | 'recurrence' | 'project' | 'priority' | 'label' | 'duration' | 'link';
+  'date' | 'recurrence' | 'project' | 'priority' | 'label' | 'duration' | 'link' | 'assignee';
 
 export interface Highlight {
   start: number;
@@ -65,6 +65,8 @@ export interface Shorthand {
   sectionId: string | null;
   priority: DisplayPriority | null;
   labels: string[];
+  /** Who `+name` gave the task to, when the project has such a person. */
+  assigneeId: string | null;
   /** `yyyy-MM-dd`, or with a time when one was given. */
   date: string | null;
   /**
@@ -105,6 +107,8 @@ function readName<T>(text: string, find: (name: string) => T | undefined): { fou
 export function parseShorthand(
   raw: string, snapshot: Snapshot, naturalDates: boolean, refused: TextRange[] = [],
   dateFormat: DateFormat = 'dmy',
+  /** Who a task of this project can be given to, for `+name`. Asked once the project is known. */
+  peopleOf?: (projectId: string | null) => Array<{ id: string; name: string }>,
 ): Shorthand {
   const ranges: Highlight[] = [];
   const claim = (start: number, length: number, kind: HighlightKind, tone?: string, keep?: boolean) =>
@@ -197,13 +201,29 @@ export function parseShorthand(
   /* A tag starts a word: `@work` after a space or at the start. Glued to
      something, it is not one: `@@link0@@` is text, and so is the `@example` of
      an address like `me@example.com`, which used to make a tag out of it. */
-  for (const label of raw.matchAll(/(?<=^|\s)@([\p{L}\p{N}_-]+)/gu)) {
+  for (const label of raw.matchAll(/(?<=^|\s)@((?:[\p{L}\p{N}\p{Extended_Pictographic}_-]|\u200d|\ufe0f)+)/gu)) {
     if (isOff(label.index!, label[0].length)) continue;
     labels.push(label[1]);
     const tag = Object.values(snapshot.labels).find(
       (l) => !l.is_deleted && fold(l.name) === fold(label[1]),
     );
     claim(label.index!, label[0].length, 'label', tag ? colorValue(tag.color) : undefined);
+  }
+
+  /* `+Anne` gives the task to a person of the project, the way Todoist does:
+     the first name, or the whole name run together. Only a person who exists
+     is read, so `1 +1` and `a + b` stay what they are. */
+  let assigneeId: string | null = null;
+  const candidates = peopleOf ? peopleOf(projectId) : [];
+  if (candidates.length > 0) {
+    for (const mention of raw.matchAll(/(?<=^|\s)\+([\p{L}\p{N}_.-]+)/gu)) {
+      if (isOff(mention.index!, mention[0].length)) continue;
+      const word = fold(mention[1]);
+      const person = candidates.find((c) => fold(c.name) === word || fold(c.name.split(/\s+/)[0]) === word);
+      if (!person) continue;
+      assigneeId = person.id;
+      claim(mention.index!, mention[0].length, 'assignee');
+    }
   }
 
   /* An estimate in brackets. Anything `parseDurationInput` understands goes
@@ -297,7 +317,7 @@ export function parseShorthand(
   const clean = dedupe(ranges);
   return {
     content: strip(raw, clean),
-    projectId, sectionId, priority, labels, date, recurrence, minutes,
+    projectId, sectionId, priority, labels, assigneeId, date, recurrence, minutes,
     ranges: clean,
   };
 }
