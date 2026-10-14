@@ -37,7 +37,7 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   /** Who was just invited, said for a few seconds so an invitation never looks like nothing happened. */
   const [sent, setSent] = useState<string | null>(null);
 
-  useEffect(() => { if (projectId) { setEmail(''); setRole(''); setInvalid(false); setSent(null); } }, [projectId]);
+  useEffect(() => { if (projectId) { setEmail(''); setRole(''); setInvalid(false); setSent(null); setAccessOpen(false); } }, [projectId]);
   useEffect(() => {
     if (!sent) return;
     const timer = window.setTimeout(() => setSent(null), 5000);
@@ -53,6 +53,9 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   const canLeave = Boolean(projectId && isSharedWithMe(snapshot, projectId));
   const REMOVE = '__remove__';
   const COLLABORATOR = '__collaborator__';
+  const [accessOpen, setAccessOpen] = useState(false);
+  const levelIcon = (level: string) => (level === 'public' ? 'globe' : level === 'team' ? 'group' : 'lock') as 'globe' | 'group' | 'lock';
+  const levelName = (level: string) => (isAccessLevel(level) ? t(`access.${level}` as TranslationKey) : level);
   const workspace = project?.workspace_id ? snapshot.workspaces[project.workspace_id] ?? null : null;
   /** How the project is reached now, as Todoist has it. */
   const access = accessOf(project, workspace);
@@ -109,23 +112,46 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
         )}
 
         {/* How the project is reached, said before who is in it. */}
+        {/* One wide control: what the access is, said in full on the left, and
+            a click opens the choices, each with its own sentence. */}
         <div className="shareaccess">
-          <Icon name={access === 'public' ? 'globe' : access === 'team' ? 'group' : 'lock'} size="sm" />
-          <span>
-            <strong>{isAccessLevel(access) ? t(`access.${access}` as TranslationKey) : access}</strong>
-            {isAccessLevel(access) && <small>{t(`access.${access}.hint` as TranslationKey)}</small>}
-          </span>
-          {canSetAccess && (
-            <Select
-              value={access}
-              ariaLabel={t('share.accessLevel')}
-              onChange={(level) => { if (projectId && level !== access) void updateProjectFields(projectId, { access: { visibility: level } }); }}
-              options={accessLevels.map((level) => ({
-                value: level,
-                label: isAccessLevel(level) ? t(`access.${level}` as TranslationKey) : level,
-                icon: level === 'public' ? 'globe' as const : level === 'team' ? 'group' as const : 'lock' as const,
-              }))}
-            />
+          <button
+            type="button"
+            className="accessrow"
+            aria-expanded={accessOpen}
+            disabled={!canSetAccess}
+            onClick={() => setAccessOpen((open) => !open)}
+          >
+            <span className="accessmark" aria-hidden="true"><Icon name={levelIcon(access)} /></span>
+            <span className="accesstext">
+              <strong>{levelName(access)}</strong>
+              {isAccessLevel(access) && <small>{t(`access.${access}.hint` as TranslationKey)}</small>}
+            </span>
+            {canSetAccess && <Icon name={accessOpen ? 'caret-up' : 'caret'} size="sm" />}
+          </button>
+          {accessOpen && (
+            <div className="accesslist" role="listbox" aria-label={t('share.accessLevel')}>
+              {accessLevels.map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  role="option"
+                  aria-selected={level === access}
+                  className="accessrow"
+                  onClick={() => {
+                    setAccessOpen(false);
+                    if (projectId && level !== access) void updateProjectFields(projectId, { access: { visibility: level } });
+                  }}
+                >
+                  <span className="accessmark" aria-hidden="true"><Icon name={levelIcon(level)} /></span>
+                  <span className="accesstext">
+                    <strong>{levelName(level)}</strong>
+                    {isAccessLevel(level) && <small>{t(`access.${level}.hint` as TranslationKey)}</small>}
+                  </span>
+                  {level === access && <Icon name="check" size="sm" />}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
