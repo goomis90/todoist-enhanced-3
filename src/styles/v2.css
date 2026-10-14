@@ -1832,7 +1832,9 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .shareaccess .fselect.as-row{display:block;width:100%}
 .fselect-face.rowface,.accessstatic{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;column-gap:12px;width:100%;min-height:0;height:auto;padding:12px 2px;border:0;border-radius:0;background:transparent;color:var(--text);text-align:left}
 .accessstatic{grid-template-columns:32px minmax(0,1fr)}
-.fselect-face.rowface:hover{background:var(--hover)}
+.fselect .fselect-face.rowface{border:1px solid transparent;border-radius:14px;margin:0 -10px;width:calc(100% + 20px);padding:12px 10px}
+.fselect .fselect-face.rowface:hover,.fselect .fselect-face.rowface.open{background:var(--hover);border-color:transparent}
+.fselect .fselect-face.rowface:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .accessmark{display:grid;place-items:center;width:32px;height:32px;margin:0;border-radius:50%;background:var(--subtle);color:var(--muted);overflow:hidden}
 .accessmark .workspace-avatar{width:32px;height:32px;border-radius:0}
 .rowtext{min-width:0;line-height:1.35}

@@ -53,6 +53,13 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   const me = snapshot.user;
   const canLeave = Boolean(projectId && isSharedWithMe(snapshot, projectId));
   const REMOVE = '__remove__';
+  /* Two roles are told apart on a real invitation: the project's admin, and
+     everyone else. The other two Todoist names are shown only when somebody
+     already has one, so the list never offers what has not been seen to differ. */
+  const memberRoles = (current: string | null) => [
+    'ADMIN', 'READ_WRITE',
+    ...(current === 'EDIT_ONLY' || current === 'COMPLETE_ONLY' ? [current] : []),
+  ] as Array<(typeof ROLES)[number]>;
   const COLLABORATOR = '__collaborator__';
   /** The round mark of a level: its icon, or the workspace's own picture for Team. */
   const levelMark = (level: string) => (
@@ -108,7 +115,7 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
               onChange={setRole}
               options={[
                 { value: '', label: t('share.roleDefault'), hint: t('share.roleDefault.hint') },
-                ...ROLES.map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey), hint: t(`share.role.${r}.hint` as TranslationKey) })),
+                { value: 'ADMIN', label: t('share.role.ADMIN'), hint: t('share.role.ADMIN.hint') },
               ]}
             />
           )}
@@ -185,7 +192,7 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
                   options={[
                     /* A personal project has no roles to choose from: its members are collaborators. */
                     ...(inWorkspace
-                      ? ROLES.map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey), hint: t(`share.role.${r}.hint` as TranslationKey) }))
+                      ? memberRoles(person.role).map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey), hint: t(`share.role.${r}.hint` as TranslationKey) }))
                       : [{ value: COLLABORATOR, label: t('share.collaborator') }]),
                     { value: REMOVE, label: t('share.removeFromProject'), danger: true },
                   ]}
