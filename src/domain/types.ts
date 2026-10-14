@@ -95,6 +95,8 @@ export interface Project {
    * as far as Todoist documents it; any other value is kept and shown as it comes.
    */
   access?: { visibility?: string; configuration?: Record<string, unknown> } | null;
+  /** What the signed-in user is in this project: `CREATOR`, `ADMIN`, `READ_WRITE`… */
+  role?: string;
   folder_id?: string | null;
   /** Legacy/demo folder represented as a project. */
   is_folder?: boolean;

@@ -7,6 +7,7 @@ import { useT } from '@/hooks/useT';
 import { useStore } from '@/store/store';
 import { PersonAvatar } from '../PersonAvatar';
 import { copyText, todoistProjectUrl } from '@/api/links';
+import { accessChoices, accessOf, isAccessLevel } from '@/domain/projectAccess';
 import { isSharedWithMe, projectPeople, ROLES } from '@/domain/sharing';
 import type { TranslationKey } from '@/i18n';
 
@@ -28,6 +29,7 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   const changeRole = useStore((s) => s.changeRole);
   const leaveProject = useStore((s) => s.leaveProject);
   const toast = useStore((s) => s.toast);
+  const updateProjectFields = useStore((s) => s.updateProjectFields);
   const project = projectId ? snapshot.projects[projectId] : undefined;
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<string>('');
@@ -50,6 +52,12 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   const me = snapshot.user;
   const canLeave = Boolean(projectId && isSharedWithMe(snapshot, projectId));
   const REMOVE = '__remove__';
+  const COLLABORATOR = '__collaborator__';
+  const workspace = project?.workspace_id ? snapshot.workspaces[project.workspace_id] ?? null : null;
+  /** How the project is reached now, as Todoist has it. */
+  const access = accessOf(project, workspace);
+  const canSetAccess = project?.role === 'CREATOR' || project?.role === 'ADMIN';
+  const accessLevels = accessChoices(inWorkspace).includes(access as never) ? accessChoices(inWorkspace) : [...accessChoices(inWorkspace), access];
 
   const copyLink = () => {
     if (!projectId) return;
@@ -101,7 +109,25 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
         )}
 
         {/* How the project is reached, said before who is in it. */}
-        <p className="shareaccess"><Icon name="lock" size="sm" />{t('share.access')}</p>
+        <div className="shareaccess">
+          <Icon name={access === 'public' ? 'globe' : access === 'team' ? 'group' : 'lock'} size="sm" />
+          <span>
+            <strong>{isAccessLevel(access) ? t(`access.${access}` as TranslationKey) : access}</strong>
+            {isAccessLevel(access) && <small>{t(`access.${access}.hint` as TranslationKey)}</small>}
+          </span>
+          {canSetAccess && (
+            <Select
+              value={access}
+              ariaLabel={t('share.accessLevel')}
+              onChange={(level) => { if (projectId && level !== access) void updateProjectFields(projectId, { access: { visibility: level } }); }}
+              options={accessLevels.map((level) => ({
+                value: level,
+                label: isAccessLevel(level) ? t(`access.${level}` as TranslationKey) : level,
+                icon: level === 'public' ? 'globe' as const : level === 'team' ? 'group' as const : 'lock' as const,
+              }))}
+            />
+          )}
+        </div>
 
         <h3 className="setsubhead">{t('share.people')}</h3>
         <ul className="sharelist">
@@ -126,20 +152,23 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
                 <strong>{person.name}</strong>
                 <small>{person.email}{person.state === 'invited' ? ` · ${t('share.pending')}` : ''}</small>
               </span>
-              {inWorkspace && person.state === 'active' ? (
+              {person.state === 'active' ? (
                 /* The role is what a workspace project reads; removing is the
                    last entry of the same list, in red. */
                 <Select
-                  value={person.role ?? ''}
+                  value={inWorkspace ? person.role ?? '' : COLLABORATOR}
                   ariaLabel={t('share.role')}
                   onChange={(value) => {
-                    if (!projectId) return;
+                    if (!projectId || value === COLLABORATOR) return;
                     if (value === REMOVE) void removeCollaborator(projectId, person.email);
                     else void changeRole(projectId, person.id, value);
                   }}
                   placeholder={t('share.roleDefault')}
                   options={[
-                    ...ROLES.map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey) })),
+                    /* A personal project has no roles to choose from: its members are collaborators. */
+                    ...(inWorkspace
+                      ? ROLES.map((r) => ({ value: r, label: t(`share.role.${r}` as TranslationKey) }))
+                      : [{ value: COLLABORATOR, label: t('share.collaborator') }]),
                     { value: REMOVE, label: t('share.removeFromProject'), danger: true },
                   ]}
                 />

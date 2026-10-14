@@ -1827,7 +1827,10 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .col .task .tdesc{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;text-overflow:ellipsis}
 
 /* The share sheet (#253): who has access, each with a face, a role, and the way out. */
-.shareaccess{display:flex;align-items:center;gap:8px;margin:14px 0 4px;color:var(--muted);font-size:12.5px}
+.shareaccess{display:flex;align-items:center;gap:12px;margin:6px 0 4px;color:var(--muted);font-size:12.5px}
+.shareaccess > span{flex:1;min-width:0}
+.shareaccess strong{display:block;color:var(--text);font-size:13.5px}
+.shareaccess small{display:block;color:var(--muted)}
 .sharelist li{justify-content:flex-start}
 .sharelist li .sharewho{flex:1;min-width:0}
 .sharelist li .sharewho strong{overflow:hidden;text-overflow:ellipsis}
