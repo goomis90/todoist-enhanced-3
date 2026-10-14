@@ -261,7 +261,7 @@ export const en = {
   'share.collaborator': "Collaborator",
   'share.accessTitle': "Access",
   'share.roleDefault.hint': "What the workspace gives new members.",
-  'share.role.ADMIN.hint': "Manages the project and who is in it.",
+  'share.role.ADMIN.hint': "Manages this project and its members. Does not open the rest of the workspace.",
   'share.role.READ_WRITE.hint': "Adds, edits and comments on tasks.",
   'share.role.EDIT_ONLY.hint': "Edits tasks.",
   'share.role.COMPLETE_ONLY.hint': "Completes tasks.",

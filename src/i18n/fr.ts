@@ -263,7 +263,7 @@ export const fr: Record<TranslationKey, string> = {
   'share.collaborator': "Collaborateur",
   'share.accessTitle': "Accès",
   'share.roleDefault.hint': "Ce que l’espace donne aux nouveaux membres.",
-  'share.role.ADMIN.hint': "Gère le projet et ses membres.",
+  'share.role.ADMIN.hint': "Gère ce projet et ses membres. N’ouvre pas le reste de l’espace.",
   'share.role.READ_WRITE.hint': "Ajoute, modifie et commente des tâches.",
   'share.role.EDIT_ONLY.hint': "Modifie des tâches.",
   'share.role.COMPLETE_ONLY.hint': "Termine des tâches.",
