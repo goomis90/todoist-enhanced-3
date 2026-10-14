@@ -17,6 +17,8 @@ export interface SelectOption {
   sub?: boolean;
   /** What the face says once this is chosen, when the label alone would not place it. */
   face?: string;
+  /** A sentence under the label, in the list and, in a `row`, on the closed control too. */
+  hint?: string;
   /** A destructive entry, drawn in red ("Remove from project"). */
   danger?: boolean;
 }
@@ -37,7 +39,7 @@ interface SelectProps {
    * How the closed control is drawn: a field (a labelled box with a caret),
    * or a chip in a row of them, the composer's planning line (#113).
    */
-  variant?: 'field' | 'chip' | 'icon';
+  variant?: 'field' | 'chip' | 'icon' | 'row';
   /** A chip standing for nothing set yet: a dashed "+ label" rather than a value. */
   unset?: boolean;
   /** What an unset chip says. */
@@ -254,7 +256,9 @@ export function Select({
           {option.marker !== undefined && (
             <span className="hash" style={markerStyle(option.marker)}>#</span>
           )}
-          <span className="listbox-label">{option.label}</span>
+          {option.hint
+            ? <span className="listbox-text"><span className="listbox-label">{option.label}</span><small>{option.hint}</small></span>
+            : <span className="listbox-label">{option.label}</span>}
           {option.value === value && <Icon name="check" size="sm" />}
         </button>
       ))}
@@ -264,15 +268,16 @@ export function Select({
 
   const chip = variant === 'chip';
   const compact = variant === 'icon';
+  const row = variant === 'row';
 
   return (
-    <span className={`fselect${chip ? ' inchips' : ''}${compact ? ' as-icon' : ''}`}>
+    <span className={`fselect${chip ? ' inchips' : ''}${compact ? ' as-icon' : ''}${row ? ' as-row' : ''}`}>
       {label && !chip && !compact && <span className="fselect-label">{label}</span>}
       <button
         type="button"
         ref={buttonRef}
         style={chip && !unset ? (tint ? ({ '--marker': tint } as React.CSSProperties) : current?.marker ? markerStyle(current.marker) : undefined) : undefined}
-        className={`fselect-face${chip ? ' chipface' : ''}${chip && !unset && (tint || current?.marker) ? ' tinted' : ''}${chip && unset ? ' unset' : ''}${open ? ' open' : ''}${quiet ? ' quiet' : ''}`}
+        className={`fselect-face${chip ? ' chipface' : ''}${row ? ' rowface' : ''}${chip && !unset && (tint || current?.marker) ? ' tinted' : ''}${chip && unset ? ' unset' : ''}${open ? ' open' : ''}${quiet ? ' quiet' : ''}`}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel ?? label}
@@ -291,9 +296,16 @@ export function Select({
           </>
         )}
         {/* Cut with an ellipsis when it is long; the whole of it on hover. */}
+        {row && current ? (
+          <span className="fselect-value rowtext">
+            <strong>{current.label}</strong>
+            {current.hint && <small>{current.hint}</small>}
+          </span>
+        ) : (
         <span className="fselect-value" title={current?.face ?? current?.label}>
           {chip && unset ? (unsetLabel ?? label) : current?.face ?? current?.label ?? placeholder ?? ''}
         </span>
+        )}
         {!chip && <Icon name="caret" size="sm" />}
         </>}
       </button>
