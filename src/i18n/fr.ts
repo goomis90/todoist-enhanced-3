@@ -267,6 +267,7 @@ export const fr: Record<TranslationKey, string> = {
   'share.role.READ_WRITE.hint': "Voit, ajoute, modifie, commente et termine des tâches. Ne gère pas le partage.",
   'share.role.EDIT_ONLY.hint': "Modifie, commente et termine des tâches.",
   'share.role.COMPLETE_ONLY.hint': "Todoist refuse la plupart des changements pour ce rôle.",
+  'share.adminsOnly': "Seuls les administrateurs du projet peuvent changer cela.",
   'share.role': 'Rôle',
   'share.roleDefault': 'Par défaut de l’espace',
   'share.role.READ_WRITE': "Collaborateur",

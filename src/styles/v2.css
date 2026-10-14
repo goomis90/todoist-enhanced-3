@@ -1858,7 +1858,8 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .sharelist li > .fselect,.sharelist li > button{justify-self:end}
 .sharefoot{display:flex;justify-content:flex-end}
 .sharefoot .btn{display:inline-flex;align-items:center;gap:6px}
-.opt.danger,.opt.danger.active{color:var(--accent-dark)}
+.popover .opt.danger,.popover .opt.danger.active{color:var(--late-dark);font-weight:700}
+.popover .opt.danger:hover,.popover .opt.danger.active{background:var(--late-wash)}
 
 /* The role menus of the share window: a quiet hover, no dark border, and the role next to the e-mail field no wider than its words. */
 .shareform .fselect-face:hover,.shareform .fselect-face.open{border-color:var(--border);box-shadow:none;background:var(--hover)}
@@ -1869,3 +1870,5 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 .sharefoot .btn:hover{border-color:transparent;background:var(--btn-soft-hover)}
 
 .shareform .fselect-face.rowface:hover,.shareform .fselect-face.rowface.open{border-color:transparent}
+
+.sharerole.readonly{padding:0 14px;color:var(--faint);font-size:13.5px;cursor:default}

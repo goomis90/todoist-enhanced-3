@@ -51,6 +51,7 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
   );
   const inWorkspace = Boolean(project?.workspace_id);
   const me = snapshot.user;
+  const canManage = project?.role === 'CREATOR' || project?.role === 'ADMIN';
   const canLeave = Boolean(projectId && isSharedWithMe(snapshot, projectId));
   const REMOVE = '__remove__';
   /* Two roles are offered: a collaborator and the project's admin. Tried on a
@@ -179,7 +180,13 @@ export function ShareSheet({ projectId, onClose }: { projectId: string | null; o
                 <strong>{person.name}</strong>
                 <small>{person.email}{person.state === 'invited' ? ` · ${t('share.pending')}` : ''}</small>
               </span>
-              {person.state === 'active' ? (
+              {person.state === 'active' && inWorkspace && !canManage ? (
+                /* Only a project's admin changes who is what: for anybody else the
+                   role is read, and greyed rather than refused on click. */
+                <span className="sharerole readonly" title={t('share.adminsOnly')}>
+                  {person.role ? t(`share.role.${person.role}` as TranslationKey) : t('share.roleDefault')}
+                </span>
+              ) : person.state === 'active' ? (
                 /* The role is what a workspace project reads; removing is the
                    last entry of the same list, in red. */
                 <Select
