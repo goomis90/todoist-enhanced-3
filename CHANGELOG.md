@@ -19,7 +19,7 @@ French translation lives in CHANGELOG.fr.md.
 
 🆕 **Write subtasks the way you write tasks.** In a task's panel and in the composer, a subtask line understands dates, repeats, `p1`, `@tags` and durations such as `pendant 1h`. A `#project` stays text, since a subtask always lives in its parent's project. Editing an existing subtask reads them too.
 
-🆕 **A fuller Share window.** It says how the project is reached, lists you first, then everyone with a photo, name and e-mail. In a workspace project each member has a role menu, with "Remove from project" as its last entry. "Copy link" copies the project's address.
+🆕 **A fuller Share window.** It says how the project is reached, lists you first, then everyone with a photo, name and e-mail. In a workspace project, a project admin gives each member the role of collaborator or project admin, or removes them from the project; everyone else sees the roles greyed out. The access level (restricted, team or public) opens as a menu, with the workspace's picture for Team. "Copy link" copies the project's address.
 
 🎨 **Fill in missing estimates from their card.** In Notifications, Conflicts, a task without an estimate is a card like the others, with the Estimate field where the buttons are. The estimate is saved as you enter it.
 

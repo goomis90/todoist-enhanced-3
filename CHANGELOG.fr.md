@@ -14,7 +14,7 @@ Chaque ligne est marquée :
 
 🆕 **Écrivez vos sous-tâches comme vos tâches.** Dans le panneau d’une tâche et dans le composeur, une ligne de sous-tâche comprend les dates, les répétitions, `p1`, les `@tags` et les durées comme `pendant 1h`. Un `#projet` reste du texte, car une sous-tâche vit toujours dans le projet de sa tâche parente. Modifier une sous-tâche existante les lit aussi.
 
-🆕 **Une fenêtre de partage plus complète.** Elle dit comment le projet est accessible, vous liste en premier, puis chacun avec photo, nom et e-mail. Dans un projet d’espace de travail, chaque membre a un menu de rôle, avec « Retirer du projet » en dernière entrée. « Copier le lien » copie l’adresse du projet.
+🆕 **Une fenêtre de partage plus complète.** Elle dit comment le projet est accessible, vous liste en premier, puis chacun avec photo, nom et e-mail. Dans un projet d’espace de travail, un administrateur du projet donne à chaque membre le rôle de collaborateur ou d’administrateur du projet, ou le retire du projet ; pour les autres, les rôles sont grisés. Le niveau d’accès (restreint, équipe ou public) s’ouvre en menu, avec l’image de l’espace pour Équipe. « Copier le lien » copie l’adresse du projet.
 
 🎨 **Renseignez les estimations manquantes depuis leur carte.** Dans Notifications, Conflits, une tâche sans estimation est une carte comme les autres, avec le champ Estimation à la place des boutons. L’estimation est enregistrée dès que vous la saisissez.
 
