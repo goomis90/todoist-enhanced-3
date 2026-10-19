@@ -9,6 +9,12 @@
  * release, a short paragraph saying what the release is about, then one
  * paragraph per change, each opening with 🆕 (new), 🎨 (redesigned or
  * reworded) or 🐛 (fixed) and a bold title.
+ *
+ * How an entry is written lives in CHANGELOG.md ("How to write an entry"), so
+ * that it is read where entries are written. In short: only what changed since
+ * the previous public release; improvements to a feature of an earlier release
+ * are one 🎨 line titled "<Feature> refinements"; the bold lead is a title in
+ * sentence case; a picture shows the idea and carries no caption of its own.
  */
 
 export type ChangeKind = 'new' | 'design' | 'fix';

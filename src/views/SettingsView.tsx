@@ -326,6 +326,13 @@ export function SettingsView() {
               />
             </Row>
             <GroupPreview kind="quick" />
+            <Row title={t('settings.listCards')} hint={t('settings.listCardsHint')}>
+              <Switch
+                checked={prefs.listCards}
+                onChange={() => setPrefs({ listCards: !prefs.listCards })}
+                label={t('settings.listCards')}
+              />
+            </Row>
             {/* The tag is a name on the user's own board, not a setting this
                 app invented, so it is typed rather than chosen from a list:
                 the tag it should read may not exist here yet. */}

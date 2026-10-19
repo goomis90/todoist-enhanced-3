@@ -1,4 +1,5 @@
 import { TableSurface } from '@/components/TableSurface';
+import { pageClass } from '@/domain/pageLayout';
 import { CalendarSurface } from '@/components/CalendarSurface';
 import { useProjectPeople } from '@/hooks/useProjectPeople';
 import { useProjectCompleted } from '@/hooks/useProjectCompleted';
@@ -307,7 +308,7 @@ function ProjectBody({
   ) : undefined;
 
   return (
-    <div className="page">
+    <div className={pageClass(current, prefs.listCards)}>
       <PageHeader
         hireNote={!hireInList}
         title={

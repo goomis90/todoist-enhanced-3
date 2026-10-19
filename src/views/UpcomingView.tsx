@@ -1,4 +1,5 @@
 import { CalendarSurface } from '@/components/CalendarSurface';
+import { pageClass } from '@/domain/pageLayout';
 import { InsightsButton } from '@/components/InsightsButton';
 import { HireNote } from '@/components/HireNote';
 import { useMemo, useState } from 'react';
@@ -109,7 +110,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
   const hireInList = current.mode === 'list' && (group !== 'day' || columns.length > 0);
 
   return (
-    <div className="page">
+    <div className={pageClass(current, prefs.listCards)}>
       <PageHeader
         hireNote={!hireInList}
         title={t('nav.upcoming')}

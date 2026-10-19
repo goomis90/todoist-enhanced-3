@@ -65,3 +65,11 @@
 .cv-image-thumbnail{display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
 .cv-image-attachment>span:nth-child(2){flex:1;min-width:0;font-size:10px}.cv-image-attachment small{display:block;font-size:9px;color:var(--muted);margin-top:2px}
 .cv-image-attachment>.ic{color:var(--muted);flex:none}
+.cv-modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:4px;background:var(--hover);border-radius:12px}
+.cv-modes span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:58px;padding:6px 2px;border-radius:9px;color:var(--muted)}
+.cv-modes span.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px #0000001a}
+.cv-modes small{font-size:9px}
+.cv-cards{display:grid;gap:7px}
+.cv-cards>div{padding:2px 14px;background:color-mix(in srgb,var(--text) 4%,var(--surface));border-radius:18px}
+.cv-cards .cv-row{padding:6px 0;border:0}
+.cv-cards .cv-indent{margin-left:14px;border-top:1px solid color-mix(in srgb,var(--text) 8%,transparent)}

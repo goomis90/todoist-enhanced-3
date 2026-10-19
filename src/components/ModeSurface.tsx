@@ -120,6 +120,15 @@ function useGrouped(props: ModeSurfaceProps) {
 
 function GroupedTable(props: ModeSurfaceProps) {
   const groups = useGrouped(props);
+  /* A page that has buckets of its own (My week's late, quick, today and
+     anytime) draws them in a table as it does in a board, when nothing else
+     was asked for. */
+  if (props.boardColumns && props.group === 'none') {
+    return <TableSurface viewKey={props.viewKey ?? 'table'} childrenOf={props.childrenOf} onOpen={props.onOpen}
+      groups={props.boardColumns.map((column) => ({ title: column.title, items: column.items,
+        childrenOf: props.childrenOf, onOpen: props.onOpen, onAddTask: column.onAddTask ?? props.addToGroup?.(column.id),
+        actions: column.action, reorderable: props.order }))} />;
+  }
   return <TableSurface viewKey={props.viewKey ?? 'table'} childrenOf={props.childrenOf} onOpen={props.onOpen}
     groups={groups.length ? groups.map((group) => ({ title: group.title || undefined, items: group.items,
       childrenOf: props.childrenOf, onOpen: props.onOpen, onAddTask: props.addToGroup?.(group.key),
@@ -155,11 +164,11 @@ function ListSurface(props: ModeSurfaceProps) {
   );
 }
 
-/** A board column is never narrower than 320px (v2): wide enough to read a title. */
-const COLUMN_MIN = 320;
+/** A board column is never narrower than 272px, Todoist's own width, so a wide screen shows as many columns as Todoist does (#279). */
+const COLUMN_MIN = 272;
 /** Nor wider than this, past which a column stops reading as a column. They
  *  stretch between the two so that a whole number of them fills the page (#99). */
-const COLUMN_MAX = 480;
+const COLUMN_MAX = 340;
 /** How close to the board's edge a held card has to be to turn the page. */
 const EDGE_ZONE = 48;
 /** How long it is held there before the first turn, and between the next ones. */

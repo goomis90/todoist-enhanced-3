@@ -186,13 +186,15 @@ export function WhatsNew({ scope, onClose, onShowMe, onSeeChangelog }: WhatsNewP
                   <li className={`whatsnew-change ${change.kind}${changelogVisual(release.version, at) ? ' whatsnew-illustrated' : ''}`} key={at}>
                     <div className="whatsnew-copy">
                     <span className="whatsnew-mark" hidden>{change.mark}</span>
-                    <span className="whatsnew-badge">{t(KIND_LABEL[change.kind])}</span>
                     {/* A bold lead is the title; what follows it is the one paragraph that explains.
                         The file is ours, and the renderer escapes it before adding the few inline tags it knows. */}
                     {(() => {
                       const { title, description } = changePresentation(change.text);
                       return <span className="whatsnew-text">
-                        <strong className="whatsnew-title" dangerouslySetInnerHTML={{ __html: renderTitle(title) }} />
+                        <span className="whatsnew-titleline">
+                          <span className="whatsnew-badge">{t(KIND_LABEL[change.kind])}</span>
+                          <strong className="whatsnew-title" dangerouslySetInnerHTML={{ __html: renderTitle(title) }} />
+                        </span>
                         {description && <span className="whatsnew-para" dangerouslySetInnerHTML={{ __html: renderTitle(description) }} />}
                       </span>;
                     })()}

@@ -13,6 +13,40 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+**How to write an entry**
+
+- A release lists only what changed since the previous public release. Work
+  done during development on something new in the same release belongs in
+  that feature's line, never in a line of its own.
+- Improvements to a feature that shipped in an earlier release are redesigns
+  (🎨), not new things, and every improvement to the same feature goes into
+  ONE line titled "<Feature> refinements", not one line each.
+- The bold lead is the title: a short phrase that says what the person can do
+  or see ("Resize your sidebar"), in sentence case, ending with a full stop.
+  What follows is one paragraph that says where it is and what it does for them.
+- A picture is added only when it helps to understand the idea. It shows the
+  thing itself and carries no title, caption or hint of its own: the entry
+  already says what it is.
+- An entry, title included, is at most 350 characters. A title is understood
+  at a glance, by someone who does not know the feature: "Choose the width of
+  your lists", not "Comfortable width".
+- Only what a person using the app can see or do. No technical work, no
+  intermediate states of the same release.
+
+## 2.13.0
+
+🆕 **Show tasks as cards in list view.** In Settings, "Tasks as cards in lists" puts each task and its subtasks on a soft card, as a board does. Lists stay as they are until you turn it on.
+
+🎨 **Table view refinements.** The headers stay in view while you scroll. Drag the columns in Display to reorder them. Dates, deadlines, priorities and durations sit in pills, tags fit on one line and the row buttons are gone. In My week, the table groups by late, quick, today and anytime.
+
+🎨 **Choose the width of your lists.** Lists now sit in a centred column. Turn on "Full width" in Display to use the whole page; the page glides from one width to the other.
+
+🎨 **View more boards in the board view.** Columns are as wide as Todoist's, so a wide screen shows one more.
+
+🎨 **No more banner in the demo.** The strip at the top is gone; "Leave demo" is in the account menu.
+
+🎨 **A clearer What's new window.** The badge comes first, titles stand out and pictures carry no captions.
+
 ## 2.12.0
 
 🆕 **A better mobile version.** On a phone the pages use the full width, fields no longer zoom the page when you tap them, screens fit above the browser toolbar, and the menu, search, review, logbook and table are easier to use with a finger. The setup keeps its preview and keeps Back and Continue in reach.
@@ -21,21 +55,19 @@ French translation lives in CHANGELOG.fr.md.
 
 ## 2.11.0
 
-🆕 **Table view.** Compare tasks in columns for dates, deadlines, priorities, durations and tags. Choose visible columns, sort from their headers, edit values in cells and colour rows by priority, date or project.
+🆕 **Table view for your lists.** Compare tasks in columns for dates, deadlines, priorities, durations and tags. Choose visible columns, sort from their headers, edit values in cells and colour rows by priority, date or project. Subtasks are indented and priorities carry coloured flags.
 
-🆕 **A sidebar at your width.** Drag its right edge to read longer project names. The width is kept on this device; double-click to restore the default. The handle also works from the keyboard.
+🆕 **Resize your sidebar.** Drag its right edge to read longer project names. The width is kept on this device; double-click to restore the default. The handle also works from the keyboard.
 
-🎨 **Images in the composer.** Paste an image to see its preview and filename before adding the task. Remove it if needed; when you add the task, the image is attached as a comment. The composer and Quick Add window share this behaviour.
+🎨 **Paste images right from the composer.** Paste an image to see its preview and filename before adding the task. Remove it if needed; when you add the task, the image is attached as a comment. The composer and Quick Add window share this behaviour.
 
 🎨 **Clearer view choices.** In Display, the four views show their icon above their name in rounded rectangular buttons.
-
-🎨 **Clearer cues in Table.** Subtasks are indented, priorities carry coloured flags and the drag handle leaves more room beside the checkbox.
 
 🐛 **Filters keep tasks in the right list.** A subtask no longer disappears from one list because its parent matches another. When a filter is grouped by date, overdue tasks share one group and day headings show the correct date.
 
 ## 2.10.0
 
-🆕 **Calendar view.** Plan your tasks across 3 days, a week or a month. Drag undated tasks onto a time slot, move or resize blocks, and create a task directly in the calendar. Choose colours, recurring forecasts and completed tasks in Display.
+🆕 **Calendar view for your lists.** Plan your tasks across 3 days, a week or a month. Drag undated tasks onto a time slot, move or resize blocks, and create a task directly in the calendar. Choose colours, recurring forecasts and completed tasks in Display.
 
 ## 2.9.0
 

@@ -1,4 +1,4 @@
-import { TABLE_COLUMNS, tableColumns, tableColumnLabel } from '@/domain/table';
+import { TableColumnEditor } from './TableColumnEditor';
 import { ME, UNASSIGNED } from '@/domain/assignees';
 import { AssigneeFilter } from './AssigneeFilter';
 import { WorkspaceFilter } from './WorkspaceFilter';
@@ -190,13 +190,15 @@ export function DisplayMenu({
             ))}
           </div>
 
+          {current.mode === 'list' && <div className="panelrow display-fullwidth">
+            <span>{t('toolbar.fullWidth')}</span>
+            <button className="switch" role="switch" aria-checked={current.fullWidth === true} aria-label={t('toolbar.fullWidth')}
+              onClick={() => setViewPrefs(viewKey, { fullWidth: current.fullWidth !== true })} />
+          </div>}
+
           {current.mode === 'table' && <div className="table-column-options">
             <h5>{t('table.columns')}</h5>
-            <div className="chipgroup">{TABLE_COLUMNS.filter((column) => column !== 'title').map((column) => <button key={column}
-              className="btn" aria-pressed={tableColumns(current).includes(column)}
-              onClick={() => setViewPrefs(viewKey, { tableColumns: tableColumns(current).includes(column)
-                ? tableColumns(current).filter((value) => value !== column) : [...tableColumns(current), column] })}>
-              {t(tableColumnLabel[column])}</button>)}</div>
+            <TableColumnEditor current={current} onChange={(columns) => setViewPrefs(viewKey, { tableColumns: columns })} />
             <Select label={t('table.coloration')} value={current.tableColoration ?? 'none'}
               options={(['none', 'priority', 'date', 'project'] as const).map((value) => ({ value, label: t(`table.color.${value}`) }))}
               onChange={(value) => setViewPrefs(viewKey, { tableColoration: value as NonNullable<typeof current.tableColoration> })} />

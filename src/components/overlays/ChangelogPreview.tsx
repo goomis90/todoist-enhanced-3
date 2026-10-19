@@ -26,6 +26,15 @@ export function ChangelogPreview({ kind, locale }: { kind: ChangelogVisual | nul
         <div className="cv-image-attachment"><span className="cv-image-thumbnail"><Icon name="image" /></span><span>{say('Screenshot.png', 'Capture.png')}<small>{say('Image attached', 'Image jointe')}</small></span><Icon name="close" size="sm" /></div>
         <div className="cv-chips">{chip(say('Today', 'Aujourd’hui'), 'green')}{chip(say('Add task', 'Ajouter une tâche'), 'accent')}</div>
         <div className="cv-footnote">{say('Paste an image · Preview · Add it as a comment', 'Coller une image · Vérifier l’aperçu · Joindre en commentaire')}</div></>; break;
+    case 'listCards':
+      content = <div className="cv-cards">
+        <div>{row(task)}</div>
+        <div>{row(review)}<div className="cv-indent">{row(say('Choose photos', 'Choisir les photos'))}{row(say('Write the captions', 'Écrire les légendes'))}</div></div>
+        <div>{row(say('Publish the page', 'Publier la page'))}</div>
+      </div>; break;
+    case 'viewChoices':
+      content = <div className="cv-modes">{([['list', say('List', 'Liste'), false], ['board', say('Board', 'Tableau'), false], ['table', 'Table', true], ['calendar', say('Calendar', 'Calendrier'), false]] as Array<[IconName, string, boolean]>)
+        .map(([icon, label, on]) => <span key={label} className={on ? 'on' : ''}><Icon name={icon} size="sm" /><small>{label}</small></span>)}</div>; break;
     case 'table':
       content = <>{title(say('Table view', 'Vue Table'))}<div className="cv-task-table">
         <div className="cv-table-heading"><b>{say('Task', 'Tâche')}</b><b>{say('Date', 'Date')} ↑</b><b>{say('Priority', 'Priorité')}</b></div>

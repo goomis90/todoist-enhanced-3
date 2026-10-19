@@ -308,6 +308,8 @@ export interface Preferences {
   dailyCapacity: DailyCapacity;
   weeklyCapacityOverride: number | null;
   showQuickGroup: boolean;
+  /** Each task of a list drawn on a soft card, as a board does. Off by default; found in Settings. */
+  listCards: boolean;
   /** The Gathering dust group at the top of Someday (#161). */
   showDustGroup: boolean;
   /** How many months a task sits in Someday before it is said to gather dust. */
@@ -423,6 +425,7 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
   dailyCapacity: defaultCapacity(),
   weeklyCapacityOverride: null,
   showQuickGroup: true,
+  listCards: false,
   showDustGroup: true,
   dustAfterMonths: DEFAULT_DUST_MONTHS,
   conflicts: defaultConflictSettings(),
