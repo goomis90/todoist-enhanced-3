@@ -1,3 +1,4 @@
+import { CalendarSurface } from '@/components/CalendarSurface';
 import { useProjectPeople } from '@/hooks/useProjectPeople';
 import { useProjectCompleted } from '@/hooks/useProjectCompleted';
 import { InsightsButton } from '@/components/InsightsButton';
@@ -379,7 +380,7 @@ function ProjectBody({
             <DisplayMenu
               viewKey={viewKey}
               pageItems={pool0}
-              modes={['list', 'board']}
+              modes={['list', 'board', 'calendar']}
               groups={['none', 'assignee', 'scheduled', 'priority', 'label', 'estimate', 'day']}
               completedToggle
               showWorkspaces={false}
@@ -420,15 +421,17 @@ function ProjectBody({
         onOpenUnestimated={load.unestimatedCount > 0 ? onUnestimated : undefined}
         time={timePill}
       />
-      <TimePanel
+      {current.mode !== 'calendar' && <TimePanel
         pageItems={scoped}
         pageLabel={project.name}
         onOpen={onOpen}
         onUnestimated={onUnestimated}
-      />
+      />}
 
 
-      {current.mode === 'board' ? (
+      {current.mode === 'calendar' ? (
+        <CalendarSurface key={viewKey} viewKey={viewKey} items={pool0} onOpen={onOpen} onAddTaskTo={onAddTaskTo} />
+      ) : current.mode === 'board' ? (
         <ModeSurface
           items={scoped}
           childrenOf={childrenOf}

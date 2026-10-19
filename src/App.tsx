@@ -420,6 +420,10 @@ export function App() {
       />
       <WhatsNew
         scope={whatsNew}
+        onSeeChangelog={() => {
+          setPrefs({ seenVersion: VERSION });
+          setWhatsNew('all');
+        }}
         onClose={() => {
           if (whatsNew !== 'all') setPrefs({ seenVersion: VERSION });
           setWhatsNew(null);
@@ -507,6 +511,7 @@ interface ShellProps {
 }
 
 export interface ComposerPlacement {
+  minutes?: number;
   responsibleUid?: string | null;
   projectId?: string;
   sectionId?: string;
@@ -910,6 +915,7 @@ function AppShell({
         defaultProjectId={placement.projectId}
         defaultSectionId={placement.sectionId}
         defaultDate={placement.date}
+        defaultMinutes={placement.minutes}
         defaultLabels={placement.labels}
         defaultPriority={placement.priority}
         defaultResponsibleUid={placement.responsibleUid}

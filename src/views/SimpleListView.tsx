@@ -1,3 +1,4 @@
+import { CalendarSurface } from '@/components/CalendarSurface';
 import { InsightsButton } from '@/components/InsightsButton';
 import { LabelTitle } from '@/components/LabelTitle';
 import { HireNote } from '@/components/HireNote';
@@ -260,7 +261,7 @@ function SimpleListBody({
             <DisplayMenu
               viewKey={viewKey}
               pageItems={pool0}
-              modes={['list', 'board']}
+              modes={['list', 'board', 'calendar']}
               groups={['none', 'project', 'priority', 'label', 'estimate']}
             />
             <InsightsButton onClick={onInsights} />
@@ -297,12 +298,12 @@ function SimpleListBody({
         onOpenUnestimated={load.unestimatedCount > 0 ? onUnestimated : undefined}
         time={timePill}
       />
-      <TimePanel
+      {current.mode !== 'calendar' && <TimePanel
         pageItems={scoped}
         pageLabel={title}
         onOpen={onOpen}
         onUnestimated={onUnestimated}
-      />
+      />}
 
 
       {/* The query itself is in the edit sheet, not on the page, as in Todoist. */}
@@ -319,7 +320,9 @@ function SimpleListBody({
       {/* A query with commas is several lists, one under the other, each
           headed by its part of the query, as Todoist draws it. Grouping or a
           board from the Display menu takes over from these. */}
-      {kind === 'filter' && (filterResult.parts?.length ?? 0) > 1
+      {current.mode === 'calendar' && !(kind === 'filter' && (filterResult.error || !filter)) ? (
+        <CalendarSurface key={viewKey} viewKey={viewKey} items={pool0} childrenOf={childrenOf} onOpen={onOpen} onAddTaskTo={onAddTaskTo} />
+      ) : kind === 'filter' && (filterResult.parts?.length ?? 0) > 1
         && current.mode === 'list' && current.group === 'none' ? (
         <div className="mode">
           {lead}
