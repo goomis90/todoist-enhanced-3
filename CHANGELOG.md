@@ -13,6 +13,12 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.12.0
+
+🆕 **A better mobile version.** On a phone the pages use the full width, fields no longer zoom the page when you tap them, screens fit above the browser toolbar, and the menu, search, review, logbook and table are easier to use with a finger. The setup keeps its preview and keeps Back and Continue in reach.
+
+🐛 **Long descriptions in the new task window.** A long pasted description now stops at about ten lines and scrolls inside its field, so the buttons stay visible and the task can be added.
+
 ## 2.11.0
 
 🆕 **Table view.** Compare tasks in columns for dates, deadlines, priorities, durations and tags. Choose visible columns, sort from their headers, edit values in cells and colour rows by priority, date or project.

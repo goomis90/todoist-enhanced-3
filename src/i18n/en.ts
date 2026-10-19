@@ -1571,6 +1571,7 @@ export const en = {
   'setup.end.title': 'All set, {name}.',
   'setup.end.hint': 'Everything you chose is in Settings, whenever you change your mind.',
   'setup.end.tour': 'Show me around',
+  'setup.end.start': 'Start using the app',
   'setup.end.skip': 'Skip the tour',
   'setup.useThese': 'Use these settings',
   'setup.welcome.karma': '{remaining} karma to reach {next}',

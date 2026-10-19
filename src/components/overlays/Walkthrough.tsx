@@ -9,6 +9,7 @@ import { DetailsEditor } from '../DetailsEditor';
 import { SidebarNavEditor } from '../SidebarNavEditor';
 import { WorkspacePreview, type PreviewStage } from '../WorkspacePreview';
 import { useT } from '@/hooks/useT';
+import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import { useStore } from '@/store/store';
 import { TASK_OPENS } from '@/store/prefs';
 import { markOnboarded } from '@/domain/onboarding';
@@ -49,6 +50,7 @@ export function Walkthrough({
   open, onDone, onTour,
 }: { open: boolean; onDone: () => void; onTour: () => void }) {
   const { t, locale } = useT();
+  const phone = usePhoneBehaviour();
   const prefs = useStore((s) => s.prefs);
   const setPrefs = useStore((s) => s.setPrefs);
   const user = useStore((s) => s.snapshot.user);
@@ -163,8 +165,15 @@ export function Walkthrough({
             <h2 className="setup-name">{title}</h2>
             <p className="setup-lead">{hint}</p>
             <div className="setup-endactions">
-              <button className="btn primary lg" onClick={() => finish(true)}>{t('setup.end.tour')}</button>
-              <button className="setup-skiplink" onClick={() => finish(false)}>{t('setup.end.skip')}</button>
+              {/* No tour on a phone: it points at a desktop layout that is not there. */}
+              {phone ? (
+                <button className="btn primary lg" onClick={() => finish(false)}>{t('setup.end.start')}</button>
+              ) : (
+                <>
+                  <button className="btn primary lg" onClick={() => finish(true)}>{t('setup.end.tour')}</button>
+                  <button className="setup-skiplink" onClick={() => finish(false)}>{t('setup.end.skip')}</button>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -310,6 +319,10 @@ export function Walkthrough({
             )}
 
             <footer className="setup-foot">
+              {/* Written out, not only a tooltip: a finger never sees a title. */}
+              {current.id === 'content' && mustChooseStorage && (
+                <p className="setup-hint" role="status">{t('setup.estimates.required')}</p>
+              )}
               <div className="setup-actions">
                 <button className="btn soft" onClick={() => go(step - 1)}>
                   {t('review.back')}
