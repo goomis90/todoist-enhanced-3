@@ -1,3 +1,4 @@
+import { CalendarSurface } from '@/components/CalendarSurface';
 import { InsightsButton } from '@/components/InsightsButton';
 import { HireNote } from '@/components/HireNote';
 import { useMemo, useState } from 'react';
@@ -115,23 +116,24 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
         actions={
           <>
             <DisplayMenu
-              pageItems={pool}
+              pageItems={current.mode === 'calendar' ? items : pool}
               viewKey="upcoming"
-              modes={['list', 'board']}
+              modes={['list', 'board', 'calendar']}
               groups={UPCOMING_GROUPS}
             />
             <InsightsButton onClick={onInsights} />
-            <PageMenu
+            {current.mode !== 'calendar' && <PageMenu
               items={[7, 15, 30, 60].map((days) => ({
                 key: `h${days}`,
                 label: t('upcoming.horizon', { days }),
                 checked: horizon === days,
                 onPick: () => { setHorizon(days); setPrefs({ upcomingHorizonDays: days }); },
               }))}
-            />
+            />}
           </>
         }
         load={load}
+        hideMetrics={current.mode === 'calendar'}
         onOpenUnestimated={load.unestimatedCount > 0 ? () => {
           const ids = new Set(scoped.map((item) => item.projection?.sourceId ?? item.id));
           onUnestimated(items.filter((item) => ids.has(item.id)));
@@ -139,7 +141,9 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
       />
 
 
-      {group !== 'day' ? (
+      {current.mode === 'calendar' ? (
+        <CalendarSurface viewKey="upcoming" items={items} onOpen={onOpen} onAddTaskTo={onAddTaskTo} />
+      ) : group !== 'day' ? (
         /* A week or a month is a span, not a date, so its column takes no
            drop: the day columns are where a date is changed by hand. */
         <ModeSurface
@@ -184,7 +188,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
         </div>
       )}
 
-      <div style={{ marginTop: 'var(--s5)', display: 'flex', justifyContent: 'center' }}>
+      {current.mode !== 'calendar' && <div style={{ marginTop: 'var(--s5)', display: 'flex', justifyContent: 'center' }}>
         <div className="upcoming-extend">
           <p className="psub" aria-live="polite">{t('upcoming.visibleThrough', {
             date: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(addDays(today, horizon)),
@@ -198,7 +202,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
             {t('upcoming.extend')}
           </button>}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

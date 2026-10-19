@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import english from '../../CHANGELOG.md?raw';
 import french from '../../CHANGELOG.fr.md?raw';
 import {
-  compareVersions, hasChanges, localisedReleases, parseChangelog, unseenReleases,
+  changePresentation, compareVersions, hasChanges, localisedReleases, parseChangelog, unseenReleases,
 } from './changelog';
 import { VERSION } from '@/app-info';
 
@@ -99,4 +99,11 @@ describe('the changelog (#115)', () => {
     expect(running.map((r) => r.version)).toEqual([VERSION]);
     expect(hasChanges(running)).toBe(true);
   });
+});
+
+it('gives legacy entries a title without losing their description', () => {
+  expect(changePresentation('**A title.** A description.')).toEqual({ title: 'A title', description: 'A description.' });
+  expect(changePresentation('A legacy feature. More detail.')).toEqual({ title: 'A legacy feature', description: 'More detail.' });
+  expect(changePresentation('Support version 1.2.0. More detail.')).toEqual({ title: 'Support version 1.2.0', description: 'More detail.' });
+  expect(changePresentation('A single sentence.')).toEqual({ title: 'A single sentence', description: '' });
 });

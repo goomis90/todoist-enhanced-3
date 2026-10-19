@@ -1,3 +1,4 @@
+import { CalendarSurface } from '@/components/CalendarSurface';
 import { InsightsButton } from '@/components/InsightsButton';
 import { HireNote } from '@/components/HireNote';
 import { useMemo } from 'react';
@@ -208,25 +209,28 @@ function WeekBody({
           <>
             <DisplayMenu
               viewKey={viewKey}
-              pageItems={pool}
-              modes={['list', 'board']}
+              pageItems={current.mode === 'calendar' ? items : pool}
+              modes={['list', 'board', 'calendar']}
               groups={['none', 'project', 'priority', 'label', 'estimate']}
             />
             <InsightsButton onClick={onInsights} />
           </>
         }
         load={load}
+        hideMetrics={current.mode === 'calendar'}
         onOpenUnestimated={load.unestimatedCount > 0 ? onUnestimated : undefined}
         time={timePill}
       />
-      <TimePanel
+      {current.mode !== 'calendar' && <TimePanel
         pageItems={scoped}
         pageLabel={t(scope === 'today' ? 'nav.today' : 'nav.week')}
         onOpen={onOpen}
         onUnestimated={onUnestimated}
-      />
+      />}
 
-      {current.mode === 'list' && current.group === 'none' ? (
+      {current.mode === 'calendar' ? (
+        <CalendarSurface key={viewKey} viewKey={viewKey} items={items} onOpen={onOpen} onAddTaskTo={onAddTaskTo} />
+      ) : current.mode === 'list' && current.group === 'none' ? (
         <div className="mode">
           {scope !== 'anytime' && (
           <>

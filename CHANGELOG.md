@@ -13,6 +13,10 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.10.0
+
+🆕 **Calendar view.** Plan your tasks across 3 days, a week or a month. Drag undated tasks onto a time slot, move or resize blocks, and create a task directly in the calendar. Choose colours, recurring forecasts and completed tasks in Display.
+
 ## 2.9.0
 
 🆕 **Assign a task by typing `+`.** In a shared project, `+` in the composer title lists the people of the project, with their photo. `+Anne` gives the task to Anne, marks her in the title and fills the assignee chip.

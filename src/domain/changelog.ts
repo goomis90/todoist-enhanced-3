@@ -135,3 +135,13 @@ export function localisedReleases(
     return local ? { ...local, untranslated: false } : { ...release, untranslated: true };
   });
 }
+
+
+/** Old entries predate bold leads; their first sentence serves as the title. */
+export function changePresentation(text: string): { title: string; description: string } {
+  const clean = text.trim();
+  const lead = /^\*\*(.+?)\*\*\s*([\s\S]*)$/.exec(clean);
+  if (lead) return { title: lead[1].replace(/[.:]$/, ''), description: lead[2] };
+  const sentence = /^(.*?[.!?])(?:\s+|$)([\s\S]*)$/.exec(clean);
+  return { title: (sentence?.[1] ?? clean).replace(/[.:]$/, ''), description: sentence?.[2] ?? '' };
+}

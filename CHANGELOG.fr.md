@@ -8,6 +8,10 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.10.0
+
+🆕 **Vue Calendrier.** Planifiez vos tâches sur 3 jours, une semaine ou un mois. Glissez les tâches sans date sur un créneau, déplacez ou redimensionnez les blocs, et créez une tâche directement dans le calendrier. Les couleurs, les récurrences et les tâches terminées se règlent dans Affichage.
+
 ## 2.9.0
 
 🆕 **Assignez une tâche en tapant `+`.** Dans un projet partagé, `+` dans le titre du composeur liste les personnes du projet, avec leur photo. `+Anne` donne la tâche à Anne, la marque dans le titre et remplit la puce d’assignation.

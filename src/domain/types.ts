@@ -382,7 +382,14 @@ export type ViewId =
   | 'insights'
   | 'search';
 
-export type DisplayMode = 'list' | 'board' | 'focus';
+export type DisplayMode = 'list' | 'board' | 'focus' | 'calendar';
+
+export interface CalendarPrefs {
+  presentation: '3-days' | 'week' | 'month';
+  futureOccurrences: boolean;
+  completed: boolean;
+  coloration: 'priority' | 'project' | 'tag';
+}
 
 export type GroupKey =
   | 'assignee'
@@ -441,6 +448,7 @@ export const defaultFilters = (viewKey?: string): ViewFilters => ({
 });
 
 export interface ViewPrefs {
+  calendar?: CalendarPrefs;
   mode: DisplayMode;
   group: GroupKey;
   sort: SortKey;

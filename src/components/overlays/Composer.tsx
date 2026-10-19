@@ -33,6 +33,7 @@ interface ComposerProps {
   defaultSectionId?: string;
   /** Pre-filled date when the task is added from a dated section. */
   defaultDate?: string;
+  defaultMinutes?: number;
   /** Pre-filled tags, for a page that is one tag. */
   defaultLabels?: string[];
   defaultPriority?: DisplayPriority;
@@ -47,7 +48,7 @@ interface ComposerProps {
  * priority, tags and the estimate all sit on the row below.
  */
 export function Composer({
-  open, onClose, defaultProjectId, defaultSectionId, defaultDate, defaultLabels, defaultPriority, defaultResponsibleUid,
+  open, onClose, defaultProjectId, defaultSectionId, defaultDate, defaultMinutes, defaultLabels, defaultPriority, defaultResponsibleUid,
 }: ComposerProps) {
   const { t } = useT();
   const snapshot = useStore((s) => s.snapshot);
@@ -121,7 +122,7 @@ export function Composer({
     setPriority(4);
     setLabels(defaultLabels ?? []);
     setPriority(defaultPriority ?? 4);
-    setMinutes(null);
+    setMinutes(defaultMinutes ?? null);
     setTagsOpen(false);
     setTagQuery('');
     setSubtasks([]);
@@ -136,7 +137,7 @@ export function Composer({
     setDeadline('');
     /* eslint-disable-next-line react-hooks/exhaustive-deps -- the array is
        built fresh by the caller on every render; its contents are the dep. */
-  }, [open, defaultProjectId, defaultSectionId, defaultDate, defaultPriority, defaultLabels?.join('\u0000'),
+  }, [open, defaultProjectId, defaultSectionId, defaultDate, defaultMinutes, defaultPriority, defaultLabels?.join('\u0000'),
     inboxId, defaultResponsibleUid]);
 
   useEffect(() => {
@@ -157,7 +158,7 @@ export function Composer({
     const target = named || projectId || inboxId;
     return target && snapshot.projects[target]?.can_assign_tasks !== false ? assignees(snapshot, target) : [];
   };
-  const parsed = parseShorthand(name, snapshot, naturalDates, refusals, dateFormat, peopleOf);
+  const parsed = parseShorthand(name, snapshot, naturalDates, refusals, dateFormat, peopleOf, defaultDate);
 
   /*
    * The task's tags: the ones picked by hand, and the ones the name says right

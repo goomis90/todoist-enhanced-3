@@ -39,6 +39,7 @@ export interface SyncedView {
   sort: ViewPrefs['sort'];
   showSubtasks: boolean;
   showCompleted: boolean;
+  calendar?: ViewPrefs['calendar'];
   /* A `wide` written by a 1.x build is still in some comments and is ignored:
      a board is always the width of the page now. */
 }
@@ -64,6 +65,7 @@ export function syncedPreferences(prefs: Preferences): SyncedPreferences {
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([key, view]): [string, SyncedView] => [key, {
       mode: view.mode,
+      ...(view.calendar ? { calendar: view.calendar } : {}),
       group: view.group,
       sort: view.sort,
       showSubtasks: view.filters.showSubtasks,
@@ -130,6 +132,7 @@ export function mergeSynced(
     views[key] = {
       ...mine,
       mode: shared.mode ?? mine.mode,
+      calendar: shared.calendar ?? mine.calendar,
       group: shared.group ?? mine.group,
       sort: shared.sort ?? mine.sort,
       filters: {

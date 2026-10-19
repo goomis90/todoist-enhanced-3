@@ -14,6 +14,8 @@ import {
   defaultViewPrefs, type DisplayMode, type DisplayPriority,
   type GroupKey, type SortKey,
 } from '@/domain/types';
+import { calendarPrefs } from '@/domain/calendar';
+import type { CalendarPrefs } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
 import type { Item } from '@/domain/types';
 import type { TranslationKey } from '@/i18n';
@@ -42,6 +44,7 @@ const MODE_ICON: Record<DisplayMode, IconName> = {
   list: 'list',
   board: 'board',
   focus: 'stack',
+  calendar: 'calendar',
 };
 
 /** An icon for every grouping and sort, so the list reads at a glance. */
@@ -76,7 +79,10 @@ export function DisplayMenu({
      and the reset both mean "back to how this view starts", and a view that
      starts grouped by project has to be able to say so. */
   const base = defaultViewPrefs(viewKey);
-  const scheduledToggle = viewKey !== 'today' && viewKey !== 'upcoming';
+  const calendar = calendarPrefs(current, viewKey);
+  const setCalendar = (patch: Partial<CalendarPrefs>) => setViewPrefs(viewKey, { calendar: { ...calendar, ...patch } });
+  const isCalendar = current.mode === 'calendar';
+  const scheduledToggle = !isCalendar && viewKey !== 'today' && viewKey !== 'upcoming';
   const scheduledLabel = viewKey === 'week' ? 'filter.showToday' : 'filter.includeScheduled';
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -84,7 +90,7 @@ export function DisplayMenu({
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node) && !(e.target as Element).closest('.fselect-list, .popover.listbox')) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', onDown);
@@ -115,7 +121,7 @@ export function DisplayMenu({
   const changed =
     countActiveFilters(scheduledToggle ? current.filters : { ...current.filters, includeScheduled: true }) - Number(allWorkspaces && current.filters.workspaces.length > 0) - Number(current.filters.assignees != null)
       + Number(JSON.stringify(allAssignees && base.filters.assignees == null ? null : current.filters.assignees) !== JSON.stringify(base.filters.assignees)) +
-    (shownGroup !== base.group ? 1 : 0) +
+    (!isCalendar && shownGroup !== base.group ? 1 : 0) +
     (current.sort !== base.sort ? 1 : 0);
 
   /* The tags this page has: those on its tasks and on their subtasks, plus any
@@ -181,10 +187,33 @@ export function DisplayMenu({
             ))}
           </div>
 
+          {isCalendar && <div className="calendar-display-settings">
+            <h5>{t('calendar.presentation')}</h5>
+            <div className="segmented small calendar-presentations" role="group" aria-label={t('calendar.presentation')}>
+              {(['3-days', 'week', 'month'] as const).map((value) => <button key={value}
+                aria-pressed={calendar.presentation === value} onClick={() => setCalendar({ presentation: value })}>
+                <small>{t(`calendar.${value}`)}</small>
+              </button>)}
+            </div>
+            <div className="display-toggles">
+              {(['futureOccurrences', 'completed'] as const).map((key) => <div className="panelrow" key={key}>
+                <span>{t(key === 'completed' ? 'calendar.completed' : 'calendar.future')}</span>
+                <button className="switch" role="switch" aria-checked={calendar[key]}
+                  aria-label={t(key === 'completed' ? 'calendar.completed' : 'calendar.future')}
+                  onClick={() => setCalendar({ [key]: !calendar[key] })} />
+              </div>)}
+            </div>
+            <div className="calendar-coloration-row"><span>{t('calendar.coloration')}</span>
+            <Select ariaLabel={t('calendar.coloration')} value={calendar.coloration}
+              options={(['priority', 'project', 'tag'] as const).map((value) => ({ value, label: t(`calendar.${value}`), icon: ({ priority: 'flag', project: 'project', tag: 'tag' } as const)[value] }))}
+              onChange={(value) => setCalendar({ coloration: value as CalendarPrefs['coloration'] })} /></div>
+            {prefs.estimateStorage !== 'duration' && <p className="calendar-pref-hint">{t('calendar.tagHint')}</p>}
+          </div>}
           {/* Two questions, two selects, drawn the way every other select in
               the app is drawn. */}
-          <div className="panelgrid">
-            <Select
+          <div className={`panelgrid ${isCalendar ? 'calendar-sort calendar-coloration-row' : ''}`}>
+            {isCalendar && <span>{t('toolbar.sortBy')}</span>}
+            {!isCalendar && <Select
               label={t('toolbar.group')}
               value={shownGroup}
               onChange={(value) => setViewPrefs(viewKey, { group: value as GroupKey })}
@@ -193,9 +222,10 @@ export function DisplayMenu({
                 label: t(`group.${group}` as TranslationKey),
                 icon: GROUP_ICON[group],
               }))}
-            />
+            />}
             <Select
-              label={t('toolbar.sortBy')}
+              label={isCalendar ? undefined : t('toolbar.sortBy')}
+              ariaLabel={t('toolbar.sortBy')}
               value={current.sort}
               onChange={(value) => setViewPrefs(viewKey, { sort: value as SortKey })}
               options={sorts.map((sort) => ({
@@ -271,7 +301,7 @@ export function DisplayMenu({
               onClick={() => setFilters({ showSubtasks: !current.filters.showSubtasks })}
             />
           </div>
-          {completedToggle && (
+          {completedToggle && !isCalendar && (
             <div className="panelrow">
               <span>{t('filter.showCompleted')}</span>
               <button
@@ -304,11 +334,13 @@ export function DisplayMenu({
           </>}
 
 
+          {!isCalendar && <>
           <hr />
           {/* The one setting here that is not about this page: what every task
               row shows, and in what order. It says so, and Reset all leaves it. */}
           <h5>{t('details.title')} <em className="global">{t('details.global')}</em></h5>
           <DetailsEditor />
+          </>}
         </div>
       )}
     </div>
