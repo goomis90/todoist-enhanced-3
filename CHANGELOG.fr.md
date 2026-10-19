@@ -8,6 +8,12 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.12.0
+
+🆕 **Une meilleure version mobile.** Sur téléphone, les pages utilisent toute la largeur, les champs ne zooment plus la page quand on les touche, les écrans tiennent au-dessus de la barre du navigateur, et le menu, la recherche, la revue, le journal et la table sont plus faciles à utiliser au doigt. La configuration garde son aperçu et garde Retour et Continuer à portée.
+
+🐛 **Descriptions longues dans la fenêtre de nouvelle tâche.** Une longue description collée s'arrête à environ dix lignes et défile dans son champ : les boutons restent visibles et la tâche peut être ajoutée.
+
 ## 2.11.0
 
 🆕 **Vue Table.** Comparez vos tâches dans des colonnes pour les dates, échéances, priorités, durées et tags. Choisissez les colonnes visibles, triez depuis leurs en-têtes, modifiez les valeurs dans les cellules et colorez les lignes par priorité, date ou projet.

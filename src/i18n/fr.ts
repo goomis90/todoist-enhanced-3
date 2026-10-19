@@ -1571,6 +1571,7 @@ export const fr: Record<TranslationKey, string> = {
   'setup.end.title': 'C’est prêt, {name}.',
   'setup.end.hint': 'Tout ce que vous avez choisi est dans les Réglages, si vous changez d’avis.',
   'setup.end.tour': 'Faites-moi visiter',
+  'setup.end.start': "Commencer",
   'setup.end.skip': 'Passer la visite',
   'setup.useThese': 'Utiliser ces réglages',
   'setup.welcome.karma': '{remaining} points de karma avant de devenir {next}',

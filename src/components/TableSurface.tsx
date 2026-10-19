@@ -24,7 +24,7 @@ export function TableSurface({ groups, viewKey, childrenOf, onOpen }: {
   const total = all.reduce((sum, item) => sum + (effectiveEstimate(item, childrenOf).minutes ?? 0), 0);
   return <TableContext.Provider value={{ columns, coloration: current.tableColoration ?? 'none' }}>
     <div className="table-scroll fullwidth">
-      <div className="task-table" style={{ '--table-columns': `18px minmax(240px,1fr) ${widths.join(' ')} 28px`, minWidth: 400 + widths.reduce((sum, width) => sum + parseInt(width), 0) } as CSSProperties}>
+      <div className="task-table" style={{ '--table-columns': `18px minmax(var(--table-title-min,240px),var(--table-title-max,1fr)) ${widths.join(' ')} 28px`, minWidth: 400 + widths.reduce((sum, width) => sum + parseInt(width), 0) } as CSSProperties}>
         <div className="table-head"><span />{columns.map((column) => <div key={column} aria-sort={tableColumnSort[column] === current.sort ? current.tableDescending ? 'descending' : 'ascending' : 'none'}>
           <button onClick={() => setViewPrefs(viewKey, { sort: tableColumnSort[column],
             tableDescending: current.sort === tableColumnSort[column] ? !current.tableDescending : false })}>
