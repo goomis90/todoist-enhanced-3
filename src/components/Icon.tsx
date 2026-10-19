@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import {
-  Image as ImageGlyph,
+  Image as ImageGlyph, Table2,
   ArrowLeft, ArrowRight, ArrowUpDown, BarChart3, Bell, Calendar, CalendarClock,
   CalendarDays, Check, ChevronDown, ChevronUp, Clock, Coffee, CornerDownRight,
   ExternalLink, Filter, Flag, Flame, Folder, GripVertical, Group, Inbox,
@@ -20,13 +20,14 @@ export type IconName =
   | 'filter' | 'flag' | 'flame' | 'group' | 'inbox' | 'link' | 'list' | 'logout' | 'mail' | 'menu' | 'more'
   | 'plus' | 'project' | 'repeat' | 'search' | 'settings' | 'sidebar'
   | 'section' | 'sliders' | 'someday' | 'sort' | 'stack' | 'star' | 'subtask'
-  | 'tag' | 'tasks' | 'user' | 'eye' | 'sparkles' | 'info' | 'palette'
+  | 'table' | 'tag' | 'tasks' | 'user' | 'eye' | 'sparkles' | 'info' | 'palette'
   | 'checkbox' | 'paperclip' | 'react' | 'copy' | 'trash' | 'arrow-up' | 'file' | 'image'
   | 'trend' | 'upcoming' | 'warning' | 'week' | 'lock' | 'globe'
   | 'bold' | 'italic' | 'strike' | 'heading1' | 'heading2' | 'quote' | 'code' | 'list-ordered';
 
 /** Lucide (MIT, lucide.dev) — chosen to replace the app's hand-drawn sprite. */
 const ICONS: Record<IconName, LucideIcon> = {
+  table: Table2,
   checkbox: SquareCheck, paperclip: Paperclip, react: SmilePlus, copy: Copy, trash: Trash2, 'arrow-up': ArrowUp, file: FileText, image: ImageGlyph,
   user: User, eye: Eye, sparkles: Sparkles, info: Info, palette: Palette, bold: Bold, italic: Italic, strike: Strikethrough, heading1: Heading1, heading2: Heading2, quote: Quote, code: Code, 'list-ordered': ListOrdered,
   'arrow-left': ArrowLeft,

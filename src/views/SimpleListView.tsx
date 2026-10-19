@@ -1,3 +1,4 @@
+import { filterRoots } from '@/domain/filterSelection';
 import { CalendarSurface } from '@/components/CalendarSurface';
 import { InsightsButton } from '@/components/InsightsButton';
 import { LabelTitle } from '@/components/LabelTitle';
@@ -93,10 +94,7 @@ function SimpleListBody({
       : allChildrenOf),
     [kind, allChildrenOf, matched],
   );
-  const filterPool = (ids: string[]): Item[] => ids
-    .map((id) => snapshot.items[id])
-    .filter((item): item is Item => Boolean(item) && !item.checked && !item.is_deleted
-      && !(item.parent_id && matched.has(item.parent_id)));
+  const filterPool = (ids: string[]): Item[] => filterRoots(ids, snapshot.items);
 
   const pool0 = useMemo(() => {
     const roots = rootItems(items);
@@ -137,7 +135,7 @@ function SimpleListBody({
   const split = useMemo(
     /* A filter shows what Todoist's query returns and nothing else, so its
        tasks stay in the lists the query draws rather than leaving for Quick. */
-    () => kind === 'filter' || (current.mode === 'board' && current.group !== 'none')
+    () => current.mode === 'table' || kind === 'filter' || (current.mode === 'board' && current.group !== 'none')
       ? { quick: [], rest: scoped }
       : pullQuick(scoped, prefs.showQuickGroup, current.sort, childrenOf, order, snapshot),
     [kind, scoped, current.mode, current.group, current.sort, prefs.showQuickGroup, childrenOf, order, snapshot],
@@ -147,7 +145,7 @@ function SimpleListBody({
      first unless the Display sort asks for something else. */
   const dustKept = useStore((s) => s.dustKept);
   const dustSplit = useMemo(() => {
-    if (kind !== 'someday' || !prefs.showDustGroup || current.mode === 'board') {
+    if (kind !== 'someday' || !prefs.showDustGroup || (current.mode === 'board' || current.mode === 'table')) {
       return { dust: [], rest: split.rest };
     }
     const { dust, rest } = splitDust(split.rest, {
@@ -261,7 +259,7 @@ function SimpleListBody({
             <DisplayMenu
               viewKey={viewKey}
               pageItems={pool0}
-              modes={['list', 'board', 'calendar']}
+              modes={['list', 'board', 'table', 'calendar']}
               groups={['none', 'project', 'priority', 'label', 'estimate']}
             />
             <InsightsButton onClick={onInsights} />
@@ -327,14 +325,18 @@ function SimpleListBody({
         <div className="mode">
           {lead}
           {filterResult.parts!.map((part, index) => {
-            const own = new Set(filterPool(part.ids).map((item) => item.id));
-            const shown = ordered.filter((item) => own.has(item.id));
+            const ownMatches = new Set(part.ids);
+            const partChildrenOf = (id: string) => allChildrenOf(id).filter((child) => ownMatches.has(child.id));
+            const shown = sortItems(applyFilters(filterPool(part.ids), current.filters, snapshot, partChildrenOf),
+              current.sort, partChildrenOf, order, snapshot);
             return (
               <TaskGroup
                 key={`${index}-${part.query}`}
-                title={part.query}
+                title={/^(overdue|en retard)$/i.test(part.query.trim()) ? t('filters.overdueGroup')
+                  : /^(today|aujourd’hui|aujourd'hui)$/i.test(part.query.trim()) ? t('date.today')
+                  : /^(tomorrow|demain)$/i.test(part.query.trim()) ? t('date.tomorrow') : part.query}
                 items={shown}
-                childrenOf={childrenOf}
+                childrenOf={partChildrenOf}
                 onOpen={onOpen}
                 lead={index === 0 && hireNoteOpen ? <HireNote /> : undefined}
                 keepWhenEmpty
@@ -368,6 +370,7 @@ function SimpleListBody({
       ) : (
         <ModeSurface
           items={pool}
+          viewKey={viewKey}
           lead={lead}
           firstGroupLead={hireNoteOpen ? <HireNote /> : undefined}
           /* A board with no grouping is its one column, led by Quick: blue,

@@ -7,11 +7,11 @@ import { CHANGELOG_VISUALS, changelogVisual } from './changelogVisuals';
 describe('editorial changelog illustrations', () => {
   it('keeps illustrated entries aligned with both source histories', () => {
     const en = parseChangelog(english), fr = parseChangelog(french);
-    for (const key of Object.keys(CHANGELOG_VISUALS)) {
+    for (const [key, visual] of Object.entries(CHANGELOG_VISUALS)) {
       const [version, index] = key.split(':');
       const source = en.find((release) => release.version === version)?.changes[Number(index)];
       expect(source, key).toBeDefined();
-      expect(source?.kind, key).toBe('new');
+      expect(source?.kind, key).toBe(visual === 'composerImage' ? 'design' : 'new');
       expect(Number(version.split('.')[0]), key).toBeGreaterThanOrEqual(2);
       const translated = fr.find((release) => release.version === version);
       if (translated) expect(translated.changes[Number(index)]?.kind, key).toBe(source?.kind);

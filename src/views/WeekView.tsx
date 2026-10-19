@@ -210,7 +210,7 @@ function WeekBody({
             <DisplayMenu
               viewKey={viewKey}
               pageItems={current.mode === 'calendar' ? items : pool}
-              modes={['list', 'board', 'calendar']}
+              modes={['list', 'board', 'table', 'calendar']}
               groups={['none', 'project', 'priority', 'label', 'estimate']}
             />
             <InsightsButton onClick={onInsights} />

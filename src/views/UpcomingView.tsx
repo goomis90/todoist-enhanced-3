@@ -118,7 +118,7 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
             <DisplayMenu
               pageItems={current.mode === 'calendar' ? items : pool}
               viewKey="upcoming"
-              modes={['list', 'board', 'calendar']}
+              modes={['list', 'board', 'table', 'calendar']}
               groups={UPCOMING_GROUPS}
             />
             <InsightsButton onClick={onInsights} />
@@ -143,6 +143,10 @@ function UpcomingBody({ onOpen, onInsights, onUnestimated, onAddTaskTo }: Upcomi
 
       {current.mode === 'calendar' ? (
         <CalendarSurface viewKey="upcoming" items={items} onOpen={onOpen} onAddTaskTo={onAddTaskTo} />
+      ) : current.mode === 'table' ? (
+        <ModeSurface items={scoped} childrenOf={childrenOf} mode="table" viewKey="upcoming"
+          group={group} sort={current.sort} order="day" onOpen={onOpen}
+          addToGroup={(key) => group === 'day' ? () => onAddTaskTo({ date: key }) : undefined} />
       ) : group !== 'day' ? (
         /* A week or a month is a span, not a date, so its column takes no
            drop: the day columns are where a date is changed by hand. */

@@ -1421,7 +1421,7 @@
 .sheet .composerbox{padding:0;gap:0}
 /* Margin, not padding: the mirror behind the name covers its box exactly,
    and padding would put the marks above the words. */
-.composerbox > .namefield{margin:var(--s4) var(--s5) 0}
+:is(.composerbox, .composer-fields) > .namefield{margin:var(--s4) var(--s5) 0}
 .composerbox .composer-desc{
   display:block;width:100%;min-height:0;margin:-4px 0 var(--s3);padding:0 var(--s5);
   border:0;border-radius:0;background:transparent;resize:none;overflow:hidden;

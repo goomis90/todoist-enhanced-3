@@ -368,7 +368,7 @@ test('full changelog keeps its history visible and current footer actions', asyn
   await dialog.locator('.whatsnew-body').evaluate((el) => { el.scrollTop = 370; });
   await page.screenshot({ path: '../../outputs/changelog-historique-2.10.0.png', fullPage: true });
   await page.evaluate(() => { const s = (window as any).__store; s.setState({ prefs: { ...s.getState().prefs, locale: 'fr' } }); }); // eslint-disable-line @typescript-eslint/no-explicit-any
-  await expect(dialog.locator('.whatsnew-illustrated').first()).toContainText('Vue Calendrier');
+  await expect(dialog.locator('.whatsnew-illustrated').filter({ hasText: 'Vue Calendrier' }).first()).toBeVisible();
   await dialog.locator('.whatsnew-body').evaluate((el) => { el.scrollTop = 0; });
   await page.screenshot({ path: '../../outputs/changelog-complet-fr-2.10.0.png', fullPage: true, animations: 'disabled' });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -452,8 +452,10 @@ test('historical features show relevant previews including sidebar filters in bo
   const history = page.locator('.whatsnew');
   await expect(history.locator('.whatsnew-illustrated').first()).toBeVisible();
   expect(await history.locator('.whatsnew-illustrated').count()).toBeGreaterThan(20);
-  await expect(history.locator('.whatsnew-change.design.whatsnew-illustrated, .whatsnew-change.fix.whatsnew-illustrated')).toHaveCount(0);
-  await expect(history.locator('.whatsnew-change.design .changelog-preview, .whatsnew-change.fix .changelog-preview')).toHaveCount(0);
+  await expect(history.locator('.whatsnew-change.design.whatsnew-illustrated')).toHaveCount(1);
+  await expect(history.locator('.whatsnew-change.fix.whatsnew-illustrated')).toHaveCount(0);
+  await expect(history.locator('.whatsnew-change.design .changelog-preview')).toHaveCount(1);
+  await expect(history.locator('.whatsnew-change.fix .changelog-preview')).toHaveCount(0);
   await history.getByRole('button', { name: 'Versions', exact: true }).click();
   await page.getByRole('option', { name: 'Version 2.2.0', exact: true }).click();
   const sidebar = history.locator('#whatsnew-2-2-0 [data-changelog-preview="sidebarFilters"]');
