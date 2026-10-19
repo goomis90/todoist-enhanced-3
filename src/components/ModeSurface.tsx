@@ -1,3 +1,4 @@
+import { TableSurface } from './TableSurface';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useDndMonitor } from '@dnd-kit/core';
 import { SectionName, TaskGroup } from './TaskGroup';
@@ -76,6 +77,7 @@ interface ModeSurfaceProps {
  */
 export function ModeSurface(props: ModeSurfaceProps) {
   const { mode } = props;
+  if (mode === 'table') return <GroupedTable {...props} />;
   if (mode === 'board') return <BoardSurface {...props} />;
   return <ListSurface {...props} />;
 }
@@ -83,12 +85,13 @@ export function ModeSurface(props: ModeSurfaceProps) {
 function useGrouped(props: ModeSurfaceProps) {
   const { t, locale } = useT();
   const snapshot = useStore((s) => s.snapshot);
-  const { items, group, sort, childrenOf, order } = props;
+  const { items, group, sort, childrenOf, order, viewKey } = props;
 
   return useMemo(() => {
     const sorted = sortItems(items, sort, childrenOf, order, snapshot);
     return groupItems(sorted, group, snapshot, {
       none: t('common.none'),
+      overdue: viewKey?.startsWith('filter:') ? t('filters.overdueGroup') : undefined,
       noProject: t('nav.inbox'),
       noSection: t('group.noSection'),
       noEstimate: t('metrics.noEstimates'),
@@ -112,7 +115,16 @@ function useGrouped(props: ModeSurfaceProps) {
       scheduled: t('section.scheduled'),
       available: t('section.available'),
     });
-  }, [items, group, sort, childrenOf, order, snapshot, t, locale]);
+  }, [items, group, sort, childrenOf, order, viewKey, snapshot, t, locale]);
+}
+
+function GroupedTable(props: ModeSurfaceProps) {
+  const groups = useGrouped(props);
+  return <TableSurface viewKey={props.viewKey ?? 'table'} childrenOf={props.childrenOf} onOpen={props.onOpen}
+    groups={groups.length ? groups.map((group) => ({ title: group.title || undefined, items: group.items,
+      childrenOf: props.childrenOf, onOpen: props.onOpen, onAddTask: props.addToGroup?.(group.key),
+      reorderable: props.order })) : [{ items: [], childrenOf: props.childrenOf, onOpen: props.onOpen,
+        onAddTask: props.addToGroup?.('none') }]} />;
 }
 
 function ListSurface(props: ModeSurfaceProps) {

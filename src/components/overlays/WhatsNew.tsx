@@ -183,7 +183,7 @@ export function WhatsNew({ scope, onClose, onShowMe, onSeeChangelog }: WhatsNewP
               </h3>
               <ul>
                 {release.changes.map((change, at) => (
-                  <li className={`whatsnew-change ${change.kind}${change.kind === 'new' && changelogVisual(release.version, at) ? ' whatsnew-illustrated' : ''}`} key={at}>
+                  <li className={`whatsnew-change ${change.kind}${changelogVisual(release.version, at) ? ' whatsnew-illustrated' : ''}`} key={at}>
                     <div className="whatsnew-copy">
                     <span className="whatsnew-mark" hidden>{change.mark}</span>
                     <span className="whatsnew-badge">{t(KIND_LABEL[change.kind])}</span>
@@ -213,7 +213,7 @@ export function WhatsNew({ scope, onClose, onShowMe, onSeeChangelog }: WhatsNewP
                     {release.version === '2.9.0' && change.kind === 'new' && at === 1 && <div className="whatsnew-mini-subtasks" aria-hidden="true">
                       {(locale === 'fr' ? ['Préparer le brief demain à 9h', 'Relire les textes p1', 'Choisir les photos pendant 30 min'] : ['Prepare the brief tomorrow at 9am', 'Review the copy p1', 'Choose photos for 30 min']).map((text, i) => <div key={text}><i /><span>{text}</span><small>{['9:00', 'P1', '30 min'][i]}</small></div>)}
                     </div>}
-                    {change.kind === 'new' && <ChangelogPreview kind={changelogVisual(release.version, at)} locale={locale} />}
+                    <ChangelogPreview kind={changelogVisual(release.version, at)} locale={locale} />
                   </li>
                 ))}
               </ul>

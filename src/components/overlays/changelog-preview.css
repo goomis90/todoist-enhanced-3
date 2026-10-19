@@ -50,3 +50,18 @@
 .cv-swipe{display:flex;align-items:center;background:var(--accent-soft);border-radius:6px;overflow:hidden}.cv-swipe>.cv-row{background:var(--surface);flex:1;transform:translateX(-12px);border:1px solid var(--border)}.cv-swipe>span{display:flex;gap:10px;padding-right:10px;color:var(--accent-dark)}
 .cv-load{height:6px;border-radius:5px;background:var(--hover);overflow:hidden;margin:10px 0}.cv-load>i{display:block;width:72%;height:100%;background:var(--accent);border-radius:inherit}
 .cv-density{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cv-density>div{border:1px solid var(--border);border-radius:6px;overflow:hidden}.cv-density .cv-row{font-size:8px;padding:9px 5px}.cv-density>div:last-child .cv-row{padding:3px 5px}
+
+.cv-task-table>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:9px}
+.cv-task-table>div>span:first-child{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cv-task-table .cv-table-heading{color:var(--muted);font-size:9px;padding-top:0}
+.cv-task-table .ic{flex:none}.cv-task-table .cv-chip{font-size:8px;padding:2px 4px}
+.cv-resize-window{display:flex;min-height:112px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--subtle)}
+.cv-resize-sidebar{width:70%;min-width:0;padding:6px;background:var(--surface)}
+.cv-resize-edge{display:flex;align-items:center;justify-content:center;flex:none;gap:0;width:24px;color:var(--accent);background:var(--accent-soft)}
+.cv-resize-edge .ic{width:11px}.cv-resize-page{flex:1;padding:17px 8px}
+.cv-resize-page i{display:block;height:5px;border-radius:3px;background:var(--border);margin-bottom:13px}
+
+.cv-image-attachment{display:flex;align-items:center;gap:9px;padding:10px;background:var(--subtle);border-radius:8px;margin-top:10px}
+.cv-image-thumbnail{display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
+.cv-image-attachment>span:nth-child(2){flex:1;min-width:0;font-size:10px}.cv-image-attachment small{display:block;font-size:9px;color:var(--muted);margin-top:2px}
+.cv-image-attachment>.ic{color:var(--muted);flex:none}

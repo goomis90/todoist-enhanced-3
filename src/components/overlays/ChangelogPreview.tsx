@@ -21,6 +21,24 @@ export function ChangelogPreview({ kind, locale }: { kind: ChangelogVisual | nul
   switch (kind) {
     // These three keep their original illustrations in WhatsNew.
     case null: case 'calendar': case 'assign': case 'subtasks': return null;
+    case 'composerImage':
+      content = <>{title(say('Add task', 'Ajouter une tâche'))}<div className="cv-field">{say('Review the mockup', 'Relire la maquette')}</div>
+        <div className="cv-image-attachment"><span className="cv-image-thumbnail"><Icon name="image" /></span><span>{say('Screenshot.png', 'Capture.png')}<small>{say('Image attached', 'Image jointe')}</small></span><Icon name="close" size="sm" /></div>
+        <div className="cv-chips">{chip(say('Today', 'Aujourd’hui'), 'green')}{chip(say('Add task', 'Ajouter une tâche'), 'accent')}</div>
+        <div className="cv-footnote">{say('Paste an image · Preview · Add it as a comment', 'Coller une image · Vérifier l’aperçu · Joindre en commentaire')}</div></>; break;
+    case 'table':
+      content = <>{title(say('Table view', 'Vue Table'))}<div className="cv-task-table">
+        <div className="cv-table-heading"><b>{say('Task', 'Tâche')}</b><b>{say('Date', 'Date')} ↑</b><b>{say('Priority', 'Priorité')}</b></div>
+        <div><span><Icon name="checkbox" size="sm" />{review}</span>{chip(say('Today', 'Aujourd’hui'), 'green')}{chip('P1', 'red')}</div>
+        <div><span><Icon name="checkbox" size="sm" />{say('Choose photos', 'Choisir les photos')}</span>{chip(say('Tomorrow', 'Demain'), 'orange')}{chip('P2', 'orange')}</div>
+        <div><span><Icon name="checkbox" size="sm" />{say('Publish the page', 'Publier la page')}</span>{chip(say('Friday', 'Vendredi'), 'purple')}{chip('P3', 'blue')}</div>
+      </div><div className="cv-footnote">{say('Choose columns · Sort · Edit in place', 'Choisir les colonnes · Trier · Modifier sur place')}</div></>; break;
+    case 'sidebarResize':
+      content = <>{title(say('Room for longer project names', 'De la place pour les noms de projets'))}<div className="cv-resize-window">
+        <div className="cv-resize-sidebar">{row(say('My week', 'Cette semaine'), 'week')}{row(say('Organise the client workshop', 'Organiser l’atelier client'), 'project', undefined, true)}{row(say('Website redesign', 'Refonte du site internet'), 'project')}</div>
+        <span className="cv-resize-edge"><Icon name="arrow-left" size="sm" /><Icon name="arrow-right" size="sm" /></span>
+        <div className="cv-resize-page"><i /><i /><i /></div>
+      </div><div className="cv-footnote">{say('Drag the edge · Double-click to reset', 'Glisser le bord · Double-cliquer pour réinitialiser')}</div></>; break;
     case 'sidebarFilters':
       content = <div className="cv-sidebar">{row(say('My week', 'Cette semaine'), 'week', '12')}{row(say('Filters', 'Filtres'), 'filter', undefined, true)}<div className="cv-section">{say('Favourites', 'Favoris')}</div>{row(say('Quick wins', 'Tâches rapides'), 'filter', '4')}{row(say('Important this week', 'Important cette semaine'), 'filter', '8')}</div>; break;
     case 'filterEditor':

@@ -8,6 +8,20 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.11.0
+
+🆕 **Vue Table.** Comparez vos tâches dans des colonnes pour les dates, échéances, priorités, durées et tags. Choisissez les colonnes visibles, triez depuis leurs en-têtes, modifiez les valeurs dans les cellules et colorez les lignes par priorité, date ou projet.
+
+🆕 **Une barre latérale à votre largeur.** Faites glisser son bord droit pour lire les noms de projets plus longs. La largeur est conservée sur cet appareil ; un double-clic rétablit la largeur par défaut. La poignée fonctionne aussi au clavier.
+
+🎨 **Des images dans le composeur.** Collez une image pour voir son aperçu et son nom avant de valider la tâche. Retirez-la si besoin ; à la validation, elle est jointe en commentaire. Le composeur et la fenêtre d’ajout rapide partagent ce fonctionnement.
+
+🎨 **Un choix de vue plus lisible.** Dans Affichage, les quatre vues présentent leur icône au-dessus de leur nom dans des boutons rectangulaires aux angles arrondis.
+
+🎨 **Des repères plus nets dans la Table.** Les sous-tâches sont indentées, les priorités portent un drapeau coloré et la poignée de déplacement laisse davantage de place à la case à cocher.
+
+🐛 **Les filtres gardent les tâches dans la bonne liste.** Une sous-tâche ne disparaît plus d’une liste parce que son parent correspond à une autre. Dans un filtre regroupé par date, les tâches en retard sont réunies dans un même bloc ; les titres des jours affichent la bonne date.
+
 ## 2.10.0
 
 🆕 **Vue Calendrier.** Planifiez vos tâches sur 3 jours, une semaine ou un mois. Glissez les tâches sans date sur un créneau, déplacez ou redimensionnez les blocs, et créez une tâche directement dans le calendrier. Les couleurs, les récurrences et les tâches terminées se règlent dans Affichage.

@@ -13,6 +13,20 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.11.0
+
+🆕 **Table view.** Compare tasks in columns for dates, deadlines, priorities, durations and tags. Choose visible columns, sort from their headers, edit values in cells and colour rows by priority, date or project.
+
+🆕 **A sidebar at your width.** Drag its right edge to read longer project names. The width is kept on this device; double-click to restore the default. The handle also works from the keyboard.
+
+🎨 **Images in the composer.** Paste an image to see its preview and filename before adding the task. Remove it if needed; when you add the task, the image is attached as a comment. The composer and Quick Add window share this behaviour.
+
+🎨 **Clearer view choices.** In Display, the four views show their icon above their name in rounded rectangular buttons.
+
+🎨 **Clearer cues in Table.** Subtasks are indented, priorities carry coloured flags and the drag handle leaves more room beside the checkbox.
+
+🐛 **Filters keep tasks in the right list.** A subtask no longer disappears from one list because its parent matches another. When a filter is grouped by date, overdue tasks share one group and day headings show the correct date.
+
 ## 2.10.0
 
 🆕 **Calendar view.** Plan your tasks across 3 days, a week or a month. Drag undated tasks onto a time slot, move or resize blocks, and create a task directly in the calendar. Choose colours, recurring forecasts and completed tasks in Display.

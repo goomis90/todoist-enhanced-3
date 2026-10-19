@@ -1,3 +1,4 @@
+import { TABLE_COLUMNS, tableColumns, tableColumnLabel } from '@/domain/table';
 import { ME, UNASSIGNED } from '@/domain/assignees';
 import { AssigneeFilter } from './AssigneeFilter';
 import { WorkspaceFilter } from './WorkspaceFilter';
@@ -41,6 +42,7 @@ interface DisplayMenuProps {
 }
 
 const MODE_ICON: Record<DisplayMode, IconName> = {
+  table: 'table',
   list: 'list',
   board: 'board',
   focus: 'stack',
@@ -54,6 +56,7 @@ const GROUP_ICON: Partial<Record<GroupKey, IconName>> = {
   label: 'tag', estimate: 'clock',
 };
 const SORT_ICON: Record<SortKey, IconName> = {
+  deadline: 'deadline', project: 'project', description: 'list',
   assignee: 'user',
   manual: 'drag', priority: 'flag', due: 'calendar', 'added-desc': 'sort', 'added-asc': 'sort',
   alphabetical: 'sort', 'estimate-asc': 'clock', 'estimate-desc': 'clock', label: 'tag',
@@ -103,7 +106,7 @@ export function DisplayMenu({
 
   const sorts: SortKey[] = [
     ...(viewKey.startsWith('project:') ? ['assignee' as const] : []),
-    'manual', 'priority', 'due', 'added-desc', 'added-asc', 'alphabetical',
+    'manual', 'priority', 'due', 'deadline', 'project', 'description', 'added-desc', 'added-asc', 'alphabetical',
     'estimate-asc', 'estimate-desc', 'label',
   ];
 
@@ -173,7 +176,7 @@ export function DisplayMenu({
             </button>
           </div>
 
-          <div className="segmented">
+          <div className="segmented display-modes">
             {modes.map((mode) => (
               <button
                 key={mode}
@@ -187,6 +190,17 @@ export function DisplayMenu({
             ))}
           </div>
 
+          {current.mode === 'table' && <div className="table-column-options">
+            <h5>{t('table.columns')}</h5>
+            <div className="chipgroup">{TABLE_COLUMNS.filter((column) => column !== 'title').map((column) => <button key={column}
+              className="btn" aria-pressed={tableColumns(current).includes(column)}
+              onClick={() => setViewPrefs(viewKey, { tableColumns: tableColumns(current).includes(column)
+                ? tableColumns(current).filter((value) => value !== column) : [...tableColumns(current), column] })}>
+              {t(tableColumnLabel[column])}</button>)}</div>
+            <Select label={t('table.coloration')} value={current.tableColoration ?? 'none'}
+              options={(['none', 'priority', 'date', 'project'] as const).map((value) => ({ value, label: t(`table.color.${value}`) }))}
+              onChange={(value) => setViewPrefs(viewKey, { tableColoration: value as NonNullable<typeof current.tableColoration> })} />
+          </div>}
           {isCalendar && <div className="calendar-display-settings">
             <h5>{t('calendar.presentation')}</h5>
             <div className="segmented small calendar-presentations" role="group" aria-label={t('calendar.presentation')}>

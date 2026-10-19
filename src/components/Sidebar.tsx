@@ -1,3 +1,4 @@
+import { SidebarResize } from './SidebarResize';
 import { addDays, endOfDay } from 'date-fns';
 import { dueDate, isToday } from '@/domain/dates';
 import { viewPrefs } from '@/store/prefs';
@@ -639,6 +640,7 @@ export function Sidebar({
         </span>,
         document.body,
       )}
+      {!sheet && <SidebarResize hidden={collapsed} />}
     </aside>
     {collapsed && (
       <div className="expand-wrap">

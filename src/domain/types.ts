@@ -382,7 +382,7 @@ export type ViewId =
   | 'insights'
   | 'search';
 
-export type DisplayMode = 'list' | 'board' | 'focus' | 'calendar';
+export type DisplayMode = 'list' | 'board' | 'focus' | 'calendar' | 'table';
 
 export interface CalendarPrefs {
   presentation: '3-days' | 'week' | 'month';
@@ -412,6 +412,9 @@ export type SortKey =
   | 'manual'
   | 'priority'
   | 'due'
+  | 'deadline'
+  | 'project'
+  | 'description'
   | 'added-desc'
   | 'added-asc'
   | 'alphabetical'
@@ -447,7 +450,12 @@ export const defaultFilters = (viewKey?: string): ViewFilters => ({
   showCompleted: false,
 });
 
+export type TableColumn = 'title' | 'date' | 'deadline' | 'priority' | 'estimate' | 'labels' | 'description' | 'project';
+
 export interface ViewPrefs {
+  tableColumns?: TableColumn[];
+  tableColoration?: 'none' | 'priority' | 'date' | 'project';
+  tableDescending?: boolean;
   calendar?: CalendarPrefs;
   mode: DisplayMode;
   group: GroupKey;

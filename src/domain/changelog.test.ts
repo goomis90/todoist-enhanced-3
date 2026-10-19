@@ -94,7 +94,8 @@ describe('the changelog (#115)', () => {
 
   it('the running version opens the window after an update (#148)', () => {
     // Updating from the release just before the running one.
-    const [, previous] = parseChangelog(english);
+    const entries = parseChangelog(english);
+    const previous = entries[entries.findIndex((release) => release.version === VERSION) + 1];
     const running = unseenReleases(parseChangelog(english), VERSION, previous.version);
     expect(running.map((r) => r.version)).toEqual([VERSION]);
     expect(hasChanges(running)).toBe(true);

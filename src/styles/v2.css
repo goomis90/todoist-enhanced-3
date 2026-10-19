@@ -1726,14 +1726,14 @@ img.notifav{display:block;width:34px;height:34px;object-fit:cover}
 
 /* The composer's title wraps (#247). Same two layers as the task panel's title, at the composer's own size:
    the field and its mirror share every metric, or a mark slides off its word. */
-.composerbox > .namefield.multiline{margin-left:var(--s5)}
-.composerbox > .namefield.multiline .composer-name,
-.composerbox > .namefield.multiline .namemirror{
+:is(.composerbox, .composer-fields) > .namefield.multiline{margin-left:var(--s5)}
+:is(.composerbox, .composer-fields) > .namefield.multiline .composer-name,
+:is(.composerbox, .composer-fields) > .namefield.multiline .namemirror{
   width:100%;box-sizing:border-box;display:block;margin:0;padding:9px 0;border:0;border-radius:0;
   font:inherit;font-size:18px;font-weight:650;line-height:1.4;letter-spacing:normal;
   white-space:pre-wrap;overflow-wrap:anywhere;overflow:hidden;
 }
-.composerbox > .namefield.multiline .composer-name{position:relative;z-index:1;resize:none;background:transparent;color:var(--text)}
+:is(.composerbox, .composer-fields) > .namefield.multiline .composer-name{position:relative;z-index:1;resize:none;background:transparent;color:var(--text)}
 
 /* Settings, About: the author's links, each in its network's colours (#231). */
 .alinks.social{margin-top:0}

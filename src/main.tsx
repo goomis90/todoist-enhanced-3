@@ -8,6 +8,7 @@ import './styles/additions.css';
 import './styles/theme.css';
 import './styles/polish.css';
 import './styles/v2.css';
+import './styles/table.css';
 import { startSegSlider } from './lib/segSlider';
 import { startTabStops } from './lib/tabStops';
 
