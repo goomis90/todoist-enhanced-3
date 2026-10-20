@@ -202,7 +202,7 @@ function WeekBody({
   )) || (scope !== 'today' && groups.anytime.length > 0);
 
   return (
-    <div className={pageClass(current, prefs.listCards)}>
+    <div className={pageClass(current)}>
       <PageHeader
         hireNote={current.mode === 'board'}
         title={t(scope === 'today' ? 'nav.today' : 'nav.week')}

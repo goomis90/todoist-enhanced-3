@@ -1,4 +1,5 @@
 import type { Locale } from '@/i18n';
+import { DEFAULT_COMPLETION_CHOICE, isCompletionChoice, type CompletionChoice } from '@/lib/completionSound';
 import type { EstimateStorage, ViewId } from '@/domain/types';
 import { DEFAULT_WEEK_LABEL, defaultViewPrefs, type ViewPrefs } from '@/domain/types';
 import { defaultConflictSettings, type ConflictSettings } from '@/domain/conflicts';
@@ -308,8 +309,8 @@ export interface Preferences {
   dailyCapacity: DailyCapacity;
   weeklyCapacityOverride: number | null;
   showQuickGroup: boolean;
-  /** Each task of a list drawn on a soft card, as a board does. Off by default; found in Settings. */
-  listCards: boolean;
+  /** The sound that plays when a task is ticked off, or none (#282). */
+  completionSoundChoice: CompletionChoice;
   /** The Gathering dust group at the top of Someday (#161). */
   showDustGroup: boolean;
   /** How many months a task sits in Someday before it is said to gather dust. */
@@ -425,7 +426,7 @@ export const defaultPreferences = (locale: Locale): Preferences => ({
   dailyCapacity: defaultCapacity(),
   weeklyCapacityOverride: null,
   showQuickGroup: true,
-  listCards: false,
+  completionSoundChoice: DEFAULT_COMPLETION_CHOICE,
   showDustGroup: true,
   dustAfterMonths: DEFAULT_DUST_MONTHS,
   conflicts: defaultConflictSettings(),
@@ -548,6 +549,7 @@ export function hydratePreferences(stored: unknown, locale: Locale): Preferences
     eisenhowerIncludeSomeday: s.eisenhowerIncludeSomeday === true,
     eisenhowerWorkspace: typeof s.eisenhowerWorkspace === 'string' ? s.eisenhowerWorkspace : null,
     showDustGroup: s.showDustGroup !== false,
+    completionSoundChoice: isCompletionChoice(s.completionSoundChoice) ? s.completionSoundChoice : base.completionSoundChoice,
     // Only the delays the Settings offers: anything else reads as the default.
     dustAfterMonths: isDustMonths(s.dustAfterMonths) ? s.dustAfterMonths : base.dustAfterMonths,
     onboarded: s.onboarded === true,

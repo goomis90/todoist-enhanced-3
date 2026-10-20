@@ -199,23 +199,7 @@ export function WhatsNew({ scope, onClose, onShowMe, onSeeChangelog }: WhatsNewP
                       </span>;
                     })()}
                     </div>
-                    {release.version === '2.10.0' && change.kind === 'new' && <div className="whatsnew-calendar-preview" aria-hidden="true">
-                      <div className="whatsnew-preview-title"><Icon name="calendar" size="sm" /><strong>{t('calendar.week')}</strong><span>‹ ›</span></div>
-                      <div className="whatsnew-preview-days">{(locale === 'fr' ? ['LUN', 'MAR', 'MER'] : ['MON', 'TUE', 'WED']).map((day, i) => <span key={day}>{day}<b>{12 + i}</b></span>)}</div>
-                      <div className="whatsnew-preview-grid"><span className="whatsnew-preview-hour"><span>09:00</span><span>10:00</span><span>11:00</span></span>
-                        <div><span className="preview-event purple">{locale === 'fr' ? 'Préparer la semaine' : 'Plan the week'}<small>09:00 · 30 min</small></span></div>
-                        <div><span className="preview-event blue">{locale === 'fr' ? 'Faire avancer le projet' : 'Move the project forward'}<small>09:30 · 1 h</small></span></div>
-                        <div><span className="preview-event orange">{locale === 'fr' ? 'Un moment pour soi' : 'Time for yourself'}<small>10:00 · 45 min</small></span></div>
-                      </div>
-                    </div>}
-                    {release.version === '2.9.0' && change.kind === 'new' && at === 0 && <div className="whatsnew-mini-composer" aria-hidden="true">
-                      <strong>{locale === 'fr' ? 'Préparer la présentation' : 'Prepare the presentation'} <em>+Anne</em></strong>
-                      <div className="whatsnew-assignee"><span>A</span><div><b>Anne</b><small>{locale === 'fr' ? 'Assigner la tâche' : 'Assign task'}</small></div><span>↵</span></div>
-                    </div>}
-                    {release.version === '2.9.0' && change.kind === 'new' && at === 1 && <div className="whatsnew-mini-subtasks" aria-hidden="true">
-                      {(locale === 'fr' ? ['Préparer le brief demain à 9h', 'Relire les textes p1', 'Choisir les photos pendant 30 min'] : ['Prepare the brief tomorrow at 9am', 'Review the copy p1', 'Choose photos for 30 min']).map((text, i) => <div key={text}><i /><span>{text}</span><small>{['9:00', 'P1', '30 min'][i]}</small></div>)}
-                    </div>}
-                    <ChangelogPreview kind={changelogVisual(release.version, at)} locale={locale} />
+                    <ChangelogPreview kind={changelogVisual(release.version, at)} />
                   </li>
                 ))}
               </ul>

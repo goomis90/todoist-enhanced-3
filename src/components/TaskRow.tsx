@@ -20,6 +20,7 @@ import { useT } from '@/hooks/useT';
 import { usePhoneBehaviour } from '@/hooks/useTouchLayout';
 import { useRowGesture } from '@/hooks/useRowGesture';
 import { useStore } from '@/store/store';
+import { completionTick } from '@/store/tick';
 import { displayTaskContent, isUncompletable, toDisplayPriority, type Item } from '@/domain/types';
 import { effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { dateTone, deadlineDate, dueDate, formatRelativeDay, formatTime, hasTime, isOverdue, isToday, overdueBy } from '@/domain/dates';
@@ -183,6 +184,7 @@ export function TaskRow({
     if (item.projection) return;
     if (item.checked) { void toggleTask(item.id); return; }
     if (settling) return;
+    completionTick(item);
     setSettling(true);
     /* A row that is still there afterwards — a habit that stays in today's
        list, a repeating task in a project — is not "settling" any more, or it

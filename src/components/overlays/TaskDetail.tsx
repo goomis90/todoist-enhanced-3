@@ -16,6 +16,7 @@ import { useMenuKeys } from '@/hooks/useMenuKeys';
 import { useData } from '@/hooks/useData';
 import { navigate } from '@/hooks/useRoute';
 import { useStore } from '@/store/store';
+import { completionTick } from '@/store/tick';
 import { useConfirm } from './Confirm';
 import {
   effectiveEstimate, formatDuration,
@@ -148,10 +149,11 @@ function EditableSubtask({ child, onOpen }: { child: Item; onOpen: (id: string) 
           aria-checked={child.checked}
           aria-label={t('task.complete')}
           tabIndex={0}
-          onClick={() => void toggleTask(child.id)}
+          onClick={() => { completionTick(child); void toggleTask(child.id); }}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
+              completionTick(child);
               void toggleTask(child.id);
             }
           }}
@@ -789,10 +791,11 @@ export function TaskDetail({ taskId, onClose, onOpen }: TaskDetailProps) {
                 aria-checked={item.checked}
                 aria-label={t('task.complete')}
                 tabIndex={0}
-                onClick={() => void toggleTask(item.id)}
+                onClick={() => { completionTick(item); void toggleTask(item.id); }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
+                    completionTick(item);
                     void toggleTask(item.id);
                   }
                 }}

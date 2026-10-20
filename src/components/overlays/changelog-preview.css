@@ -1,4 +1,5 @@
-.changelog-preview{border:1px solid var(--border);border-radius:12px;padding:15px;background:var(--surface);box-shadow:0 8px 25px #00000008;font-size:11px;line-height:1.5;min-width:0;overflow:hidden;user-select:none;pointer-events:none;color:var(--text)}
+.changelog-preview{position:relative;aspect-ratio:5/2;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 8px 25px #00000008;font-size:11px;line-height:1.5;min-width:0;overflow:hidden;user-select:none;pointer-events:none;color:var(--text)}
+.cv-fit{position:absolute;left:15px;transform-origin:0 0}
 .changelog-preview *{box-sizing:border-box}
 .cv-title{display:block;font-size:11px;margin:0 0 10px;font-weight:650;line-height:1.5}
 .cv-row{display:flex;align-items:center;gap:7px;padding:7px 5px;min-width:0;border-radius:6px;font-size:10px}
@@ -69,7 +70,10 @@
 .cv-modes span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:58px;padding:6px 2px;border-radius:9px;color:var(--muted)}
 .cv-modes span.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px #0000001a}
 .cv-modes small{font-size:9px}
-.cv-cards{display:grid;gap:7px}
-.cv-cards>div{padding:2px 14px;background:color-mix(in srgb,var(--text) 4%,var(--surface));border-radius:18px}
-.cv-cards .cv-row{padding:6px 0;border:0}
-.cv-cards .cv-indent{margin-left:14px;border-top:1px solid color-mix(in srgb,var(--text) 8%,transparent)}
+
+.cv-cal-days{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border);margin-bottom:6px}
+.cv-cal-days>span{text-align:center;font-size:8px;color:var(--muted);padding:2px}.cv-cal-days b{display:block;font-size:13px;color:var(--text)}
+.cv-cal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-height:78px}
+.cv-event{display:block;border-radius:6px;padding:5px 6px;font-size:9px;font-weight:600;line-height:1.35;border-left:2px solid currentColor}
+.cv-event small{display:block;font-size:8px;font-weight:400;margin-top:2px}
+.cv-event.purple{background:#ece5fc;color:#6943a3}.cv-event.blue{background:#e1efff;color:#2865a6;margin-top:12px}.cv-event.orange{background:#fff0d7;color:#9c641b;margin-top:28px}

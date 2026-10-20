@@ -1,12 +1,51 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { Icon, type IconName } from '../Icon';
 import type { ChangelogVisual } from '@/domain/changelogVisuals';
 import './changelog-preview.css';
 
-/** Illustrative, offline UI examples. No live task data or interactive controls. */
-export function ChangelogPreview({ kind, locale }: { kind: ChangelogVisual | null; locale: string }) {
-  const fr = locale === 'fr';
-  const say = (en: string, french: string) => fr ? french : en;
+const PAD = 15;
+
+/**
+ * Every picture sits in the same 5:2 frame, the one of the subtasks card, and
+ * its content is scaled to fill it: never a small drawing lost in a big white
+ * card, never a tall one that pushes its entry open.
+ */
+function Fit({ kind, children }: { kind: string; children: ReactNode }) {
+  const frame = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const box = frame.current, content = inner.current;
+    if (!box || !content) return;
+    const fit = () => {
+      const width = box.clientWidth - 2 * PAD, room = box.clientHeight - 2 * PAD;
+      if (width <= 0 || room <= 0) return;
+      let scale = 1, height = 0;
+      for (let pass = 0; pass < 4; pass += 1) {
+        content.style.width = `${width / scale}px`;
+        height = content.scrollHeight;
+        scale = Math.min(1.6, Math.max(0.55, room / height));
+      }
+      content.style.width = `${width / scale}px`;
+      height = content.scrollHeight;
+      content.style.transform = `scale(${scale})`;
+      content.style.top = `${PAD + Math.max(0, (room - height * scale) / 2)}px`;
+    };
+    fit();
+    const watch = new ResizeObserver(fit);
+    watch.observe(box);
+    return () => watch.disconnect();
+  }, [kind]);
+  return <div className={`changelog-preview cv-kind-${kind}`} data-changelog-preview={kind} aria-hidden="true" ref={frame}>
+    <div className="cv-fit" ref={inner}>{children}</div>
+  </div>;
+}
+
+/**
+ * Illustrative, offline UI examples. No live task data or interactive controls.
+ * The pictures are always in English, whatever language the text around them is in.
+ */
+export function ChangelogPreview({ kind }: { kind: ChangelogVisual | null }) {
+  const say = (en: string, _french?: string) => en;
   const chip = (text: string, tone = '') => <span className={`cv-chip ${tone}`}>{text}</span>;
   const row = (text: string, icon: IconName = 'checkbox', end?: ReactNode, selected = false) => <div className={`cv-row${selected ? ' selected' : ''}`}><Icon name={icon} size="sm" /><span>{text}</span>{end && <small>{end}</small>}</div>;
   const title = (text: string) => <strong className="cv-title">{text}</strong>;
@@ -19,19 +58,25 @@ export function ChangelogPreview({ kind, locale }: { kind: ChangelogVisual | nul
   const parsed = <>{title(say('Add task', 'Ajouter une tâche'))}<div className="cv-sentence">{say('Call the client', 'Appeler le client')} {chip(say('tomorrow 9am', 'demain à 9h'), 'accent')} {chip('p1', 'red')} {chip('@design', 'purple')}</div><div className="cv-chips">{chip(say('Tomorrow · 09:00', 'Demain · 09:00'))}{chip('P1', 'red')}</div></>;
   let content: ReactNode;
   switch (kind) {
-    // These three keep their original illustrations in WhatsNew.
-    case null: case 'calendar': case 'assign': case 'subtasks': return null;
+    case null: return null;
+    case 'calendar':
+      content = <div className="cv-cal">
+        <div className="cv-cal-days">{['MON', 'TUE', 'WED'].map((day, i) => <span key={day}>{day}<b>{12 + i}</b></span>)}</div>
+        <div className="cv-cal-grid">
+          <div><span className="cv-event purple">Plan the week<small>09:00 · 30 min</small></span></div>
+          <div><span className="cv-event blue">Move the project forward<small>09:30 · 1 h</small></span></div>
+          <div><span className="cv-event orange">Time for yourself<small>10:00 · 45 min</small></span></div>
+        </div>
+      </div>; break;
+    case 'assign':
+      content = <><div className="cv-sentence">Prepare the presentation {chip('+Anne', 'accent')}</div>{row('Anne', 'user', '↵', true)}</>; break;
+    case 'subtasks':
+      content = <>{row('Prepare the brief tomorrow at 9am', 'checkbox', '9:00')}{row('Review the copy p1', 'checkbox', 'P1')}{row('Choose photos for 30 min', 'checkbox', '30 min')}</>; break;
     case 'composerImage':
       content = <>{title(say('Add task', 'Ajouter une tâche'))}<div className="cv-field">{say('Review the mockup', 'Relire la maquette')}</div>
         <div className="cv-image-attachment"><span className="cv-image-thumbnail"><Icon name="image" /></span><span>{say('Screenshot.png', 'Capture.png')}<small>{say('Image attached', 'Image jointe')}</small></span><Icon name="close" size="sm" /></div>
         <div className="cv-chips">{chip(say('Today', 'Aujourd’hui'), 'green')}{chip(say('Add task', 'Ajouter une tâche'), 'accent')}</div>
         <div className="cv-footnote">{say('Paste an image · Preview · Add it as a comment', 'Coller une image · Vérifier l’aperçu · Joindre en commentaire')}</div></>; break;
-    case 'listCards':
-      content = <div className="cv-cards">
-        <div>{row(task)}</div>
-        <div>{row(review)}<div className="cv-indent">{row(say('Choose photos', 'Choisir les photos'))}{row(say('Write the captions', 'Écrire les légendes'))}</div></div>
-        <div>{row(say('Publish the page', 'Publier la page'))}</div>
-      </div>; break;
     case 'viewChoices':
       content = <div className="cv-modes">{([['list', say('List', 'Liste'), false], ['board', say('Board', 'Tableau'), false], ['table', 'Table', true], ['calendar', say('Calendar', 'Calendrier'), false]] as Array<[IconName, string, boolean]>)
         .map(([icon, label, on]) => <span key={label} className={on ? 'on' : ''}><Icon name={icon} size="sm" /><small>{label}</small></span>)}</div>; break;
@@ -132,5 +177,5 @@ export function ChangelogPreview({ kind, locale }: { kind: ChangelogVisual | nul
     case 'density':
       content = <>{title(say('List density', 'Densité des listes'))}<div className="cv-density"><div>{row(task)}{row(review)}</div><div>{row(task)}{row(review)}</div></div></>; break;
   }
-  return <div className={`changelog-preview cv-kind-${kind}`} data-changelog-preview={kind} aria-hidden="true">{content}</div>;
+  return <Fit kind={kind}>{content}</Fit>;
 }
