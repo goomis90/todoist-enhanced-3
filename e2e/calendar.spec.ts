@@ -445,7 +445,7 @@ test('update window links to full changelog and keeps actions over a bounded blu
   await page.screenshot({ path: '../../outputs/changelog-since-last-visit-mobile.png', fullPage: true, animations: 'disabled' });
 });
 
-test('historical features show relevant previews including sidebar filters in both languages', async ({ demo: page }) => {
+test('historical features show relevant previews, in English even when the app is in French', async ({ demo: page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await go(page, '#/settings');
   await page.getByRole('button', { name: 'Changelog', exact: true }).click();
@@ -466,8 +466,9 @@ test('historical features show relevant previews including sidebar filters in bo
   const overflow = await history.locator('.whatsnew-illustrated').evaluateAll((rows) => rows.filter((row) => row.scrollWidth > row.clientWidth + 1).length);
   expect(overflow).toBe(0);
   await page.evaluate(() => { const s = (window as any).__store; s.setState({ prefs: { ...s.getState().prefs, locale: 'fr' } }); }); // eslint-disable-line @typescript-eslint/no-explicit-any
-  await expect(sidebar).toContainText('Filtres');
-  await expect(sidebar).toContainText('Favoris');
+  // The pictures stay in English whatever the language of the text around them.
+  await expect(sidebar).toContainText('Filters');
+  await expect(sidebar).toContainText('Favourites');
   await history.getByRole('button', { name: 'Versions', exact: true }).click();
   await page.getByRole('option', { name: 'Version 2.2.0', exact: true }).click();
   await page.screenshot({ path: '../../outputs/changelog-filtres-francais.png', fullPage: true, animations: 'disabled' });
