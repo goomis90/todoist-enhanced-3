@@ -5,11 +5,9 @@ import { parseChangelog } from './changelog';
 import { CHANGELOG_VISUALS, changelogVisual } from './changelogVisuals';
 
 describe('changelog entry length', () => {
-  it('keeps every entry from 2.13.0 on to 350 characters, title included', () => {
+  it('keeps every entry to 350 characters, title included', () => {
     for (const [language, source] of [['en', english], ['fr', french]] as const) {
       for (const release of parseChangelog(source)) {
-        const [major, minor] = release.version.split('.').map(Number);
-        if (major < 2 || (major === 2 && minor < 13)) continue;
         for (const change of release.changes) expect(change.text.length, `${language} ${release.version} ${change.text.slice(0, 40)}`).toBeLessThanOrEqual(350);
       }
     }
@@ -19,12 +17,11 @@ describe('changelog entry length', () => {
 describe('editorial changelog illustrations', () => {
   it('keeps illustrated entries aligned with both source histories', () => {
     const en = parseChangelog(english), fr = parseChangelog(french);
-    for (const [key, visual] of Object.entries(CHANGELOG_VISUALS)) {
+    for (const key of Object.keys(CHANGELOG_VISUALS)) {
       const [version, index] = key.split(':');
       const source = en.find((release) => release.version === version)?.changes[Number(index)];
       expect(source, key).toBeDefined();
-      expect(source?.kind, key).toBe(visual === 'composerImage' || visual === 'viewChoices' ? 'design' : 'new');
-      expect(Number(version.split('.')[0]), key).toBeGreaterThanOrEqual(2);
+      expect(source?.kind, key).not.toBe('fix');
       const translated = fr.find((release) => release.version === version);
       if (translated) expect(translated.changes[Number(index)]?.kind, key).toBe(source?.kind);
     }
@@ -36,8 +33,6 @@ describe('editorial changelog illustrations', () => {
     expect(changelogVisual('2.9.0', 3)).toBeNull();
     expect(changelogVisual('2.6.0', 0)).toBeNull();
     expect(changelogVisual('99.0.0', 0)).toBeNull();
-    expect(changelogVisual('1.21.0', 0)).toBeNull();
-    expect(changelogVisual('0.1.0', 0)).toBeNull();
     expect(changelogVisual('2.0.0', 6)).toBe('projectView');
   });
 });

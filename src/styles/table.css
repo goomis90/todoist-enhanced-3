@@ -117,13 +117,3 @@
 .display-fullwidth{margin:var(--s3) 0}
 .table-column-options .detailschips{margin-bottom:var(--s3)}
 
-/* A list drawn as cards: a task and its subtasks are one soft, rounded card, the way a board draws them.
-   No outline, no shadow, and the card stays still under the pointer: only its tint deepens. */
-.page.cards .taskwrap{position:relative;padding:6px 20px;margin-bottom:10px;border-radius:22px;
-  background:color-mix(in srgb,var(--text) 4%,var(--surface));transition:background .15s ease}
-.page.cards .taskwrap:hover{background:color-mix(in srgb,var(--text) 6.5%,var(--surface))}
-.page.cards .task,.page.cards .task:hover{background:transparent;border:0;border-radius:0;padding-top:12px;padding-bottom:12px}
-.page.cards .task::after,.page.cards .task[data-depth]::after{display:none}
-.page.cards .taskwrap .task ~ .task{border-top:1px solid color-mix(in srgb,var(--text) 8%,transparent)}
-.page.cards .gheadblock{margin-bottom:14px}
-@media(prefers-reduced-motion:reduce){.page.cards .taskwrap{transition:none}}

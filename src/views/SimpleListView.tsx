@@ -250,7 +250,7 @@ function SimpleListBody({
     || (current.mode === 'list' && !(kind === 'filter' && (filterResult.error || !filter)));
 
   return (
-    <div className={pageClass(current, prefs.listCards)}>
+    <div className={pageClass(current)}>
       <PageHeader
         hireNote={!hireInList}
         title={filter ? <FilterTitle filter={filter} /> : kind === 'label' ? <LabelTitle name={title} /> : title}

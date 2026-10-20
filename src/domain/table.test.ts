@@ -29,8 +29,4 @@ describe('page layout', () => {
     expect(pageClass({ ...view, mode: 'list', fullWidth: true })).toBe('page');
   });
 
-  it('draws a list as cards only in the list view', () => {
-    expect(pageClass({ ...view, mode: 'list', fullWidth: true }, true)).toBe('page cards');
-    expect(pageClass({ ...view, mode: 'board' }, true)).toBe('page');
-  });
 });

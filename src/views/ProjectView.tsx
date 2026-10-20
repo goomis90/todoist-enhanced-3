@@ -308,7 +308,7 @@ function ProjectBody({
   ) : undefined;
 
   return (
-    <div className={pageClass(current, prefs.listCards)}>
+    <div className={pageClass(current)}>
       <PageHeader
         hireNote={!hireInList}
         title={

@@ -1730,3 +1730,9 @@ html.desktop-app .macapp,html.desktop-app .macapp-line{display:none}
 .maccallout{display:grid;gap:var(--s3);margin-top:var(--s2);padding:var(--s4);border:1px solid var(--border-strong);border-radius:var(--r-lg);background:var(--subtle)}
 .maccallout > strong{font-size:var(--fs-13);font-weight:600}
 @media (prefers-reduced-motion:reduce){.macfold,.macfold-in{transition:none}}
+
+/* A listbox row can carry a small button at its right edge (a sound preview). */
+.popover button.opt .opt-action{margin-left:auto;flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;color:var(--muted)}
+.popover button.opt .opt-action:hover{background:var(--hover);color:var(--text)}
+.popover button.opt .listbox-label+.ic,.popover button.opt .listbox-text+.ic{margin-left:auto}
+.popover button.opt .ic+.opt-action{margin-left:6px}

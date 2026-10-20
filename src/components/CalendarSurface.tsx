@@ -10,6 +10,7 @@ import { useT } from '@/hooks/useT';
 import { useData } from '@/hooks/useData';
 import { useCalendarHistory } from '@/hooks/useCalendarHistory';
 import { useStore } from '@/store/store';
+import { completionTick } from '@/store/tick';
 import { viewPrefs } from '@/store/prefs';
 import { applyFilters, sortItems } from '@/store/selectors';
 import { calendarDue, calendarLanes, calendarMinutes, calendarPrefs, calendarRange, minuteOfDay, snapMinutes } from '@/domain/calendar';
@@ -284,7 +285,7 @@ export function CalendarSurface({ viewKey, items, onOpen, onAddTaskTo, childrenO
         <div className="calendar-card-heading">
           {!isUncompletable(item) && !item.projection && <button className={`check p${toDisplayPriority(item.priority)}`} role="checkbox" aria-checked={item.checked}
             aria-label={displayTaskContent(item)} disabled={item.id.startsWith('calendar-done:')}
-            onClick={() => void useStore.getState().toggleTask(item.id)}>{item.checked && <Icon name="check" size="sm" />}</button>}
+            onClick={() => { completionTick(item); void useStore.getState().toggleTask(item.id); }}>{item.checked && <Icon name="check" size="sm" />}</button>}
           {item.projection && <span className="calendar-forecast-mark" title={t('upcoming.projectionHint')} aria-label={t('upcoming.projectionHint')}><Icon name="repeat" size="sm" /></span>}
           <button className="calendar-card-title" onPointerDown={(event) => begin(event, item, 'move')}
             onClick={() => open(item)} title={displayTaskContent(item)}>{displayTaskContent(item)}</button>
