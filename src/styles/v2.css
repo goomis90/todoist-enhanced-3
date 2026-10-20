@@ -343,7 +343,7 @@
    count under it, and each task on a white card.
    ========================================================================== */
 .board{gap:14px;padding:2px 2px 16px;margin:8px -2px 0}
-.board > *{flex:0 0 var(--colw,320px);min-width:0}
+.board > *{flex:0 0 var(--colw,272px);min-width:0}
 .col{padding:14px 12px 8px;border:0;border-radius:20px;background:var(--frame-card)}
 .col.accent-quick{background:var(--wash-quick-deep)}
 .col.accent-late{background:var(--late-wash)}

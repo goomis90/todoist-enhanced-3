@@ -9,6 +9,7 @@ import { effectiveEstimate, formatDuration } from '@/domain/estimates';
 import { dateTone, isOverdue } from '@/domain/dates';
 import { toDisplayPriority, toTodoistPriority, type Item, type TableColumn, type DisplayPriority } from '@/domain/types';
 import { tableColumnLabel } from '@/domain/table';
+import { markerStyle } from '@/domain/colors';
 
 /** Inline values use the same controls and store commands as task details. */
 export function TableCells({ item, columns, childrenOf }: { item: Item; columns: TableColumn[]; childrenOf: (id: string) => Item[] }) {
@@ -39,6 +40,14 @@ export function TableCells({ item, columns, childrenOf }: { item: Item; columns:
     else if (column === 'estimate') content = computed ? <span>{formatDuration(minutes ?? 0, locale)} *</span>
       : <EstimateField minutes={minutes} onCommit={async (value) => { await setEstimates([{ id: item.id, minutes: value }]); }} />;
     else if (column === 'labels') content = <MultiSelect label={t('detail.labels')} value={item.labels.filter((label) => !label.startsWith('est-'))}
+      face={item.labels.some((label) => !label.startsWith('est-'))
+        ? <span className="cell-tags">{(() => {
+          const names = item.labels.filter((label) => !label.startsWith('est-'));
+          return <>{names.slice(0, 2).map((label) => <span className="tag" key={label}
+            style={markerStyle(Object.values(snapshot.labels).find((entry) => entry.name === label)?.color)}><Icon name="tag" size="sm" />{label}</span>)}
+          {names.length > 2 && <span className="tag-more">+{names.length - 2}</span>}</>;
+        })()}</span>
+        : <span className="cell-tags is-none"><Icon name="plus" size="sm" /></span>}
       options={Object.values(snapshot.labels).filter((label) => !label.is_deleted && !label.name.startsWith('est-')).map((label) => ({ value: label.name, label: label.name }))}
       onChange={(labels) => void setTaskLabels(item.id, [...item.labels.filter((label) => label.startsWith('est-')),
         ...(labels ?? Object.values(snapshot.labels).filter((label) => !label.is_deleted && !label.name.startsWith('est-')).map((label) => label.name))])} />;

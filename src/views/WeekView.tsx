@@ -1,4 +1,5 @@
 import { CalendarSurface } from '@/components/CalendarSurface';
+import { pageClass } from '@/domain/pageLayout';
 import { InsightsButton } from '@/components/InsightsButton';
 import { HireNote } from '@/components/HireNote';
 import { useMemo } from 'react';
@@ -201,7 +202,7 @@ function WeekBody({
   )) || (scope !== 'today' && groups.anytime.length > 0);
 
   return (
-    <div className="page">
+    <div className={pageClass(current, prefs.listCards)}>
       <PageHeader
         hireNote={current.mode === 'board'}
         title={t(scope === 'today' ? 'nav.today' : 'nav.week')}
@@ -332,7 +333,7 @@ function WeekBody({
           /* Only when nothing else was asked for: a board grouped by project
              is a board of projects, not of the week's buckets. */
           boardColumns={
-            current.mode === 'board' && current.group === 'none'
+            (current.mode === 'board' || current.mode === 'table') && current.group === 'none'
               ? weekColumns.map((column) => column.id !== 'overdue' || column.items.length === 0 ? column : {
                 ...column,
                 action: (

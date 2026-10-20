@@ -635,7 +635,6 @@ function AppShell({
   const demo = useStore((s) => s.demo);
   const sidebarCollapsed = useStore((s) => s.prefs.sidebarCollapsed);
   const density = useStore((s) => s.prefs.density);
-  const leaveDemo = useStore((s) => s.disconnect);
   const clearSelection = useStore((s) => s.clearSelection);
 
   const roots = useMemo(() => rootItems(items), [items]);
@@ -799,13 +798,6 @@ function AppShell({
       className={`app${demo ? ' demo' : ''}${sidebarCollapsed ? ' collapsed' : ''}`}
       data-density={density}
     >
-      {demo && (
-        <div className="demobanner" role="status">
-          <Icon name="warning" size="sm" />
-          <span>{t('demo.banner')}</span>
-          <button onClick={() => void leaveDemo()}>{t('demo.exit')}</button>
-        </div>
-      )}
       <Sidebar
         route={route}
         onAddTask={addTask}

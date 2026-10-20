@@ -4,7 +4,8 @@
 .whatsnew-refresh .whatsnew-head{position:static;background:transparent;border-bottom:0;padding:26px 30px 18px;gap:16px}
 .whatsnew-refresh .whatsnew-head h2{font-size:23px;letter-spacing:-.6px}
 .whatsnew-refresh .whatsnew-body{padding:4px 30px calc(var(--whatsnew-footer-height,80px) + 20px);gap:32px}
-.whatsnew-refresh .whatsnew-release h3{font-size:13px;color:var(--muted);margin:0 0 18px;letter-spacing:.2px}
+.whatsnew-refresh .whatsnew-release h3{font-size:20px;font-weight:700;color:var(--text);margin:0 0 14px;letter-spacing:-.3px}
+.whatsnew-refresh .whatsnew-change .changelog-preview{max-height:210px;overflow:hidden}
 .whatsnew-refresh .whatsnew-release ul{gap:15px}
 .whatsnew-refresh .whatsnew-change{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding:18px 0;border-bottom:1px solid var(--border);align-items:center}
 .whatsnew-refresh .whatsnew-change.whatsnew-illustrated{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
@@ -48,3 +49,15 @@
 .whatsnew-mini-subtasks>div:last-child{border:0}
 .whatsnew-mini-subtasks i{width:12px;height:12px;border:1px solid var(--muted);border-radius:50%;flex:none}
 .whatsnew-mini-subtasks small{margin-left:auto;white-space:nowrap;color:var(--accent);background:var(--accent-soft);padding:3px;border-radius:4px;font-size:9px}
+
+/* An entry reads: title and badge on one line, then its description. */
+.whatsnew-refresh .whatsnew-change .whatsnew-text{display:grid;gap:5px}
+.whatsnew-refresh .whatsnew-titleline{display:flex;align-items:baseline;flex-wrap:nowrap;gap:10px}
+.whatsnew-refresh .whatsnew-titleline .whatsnew-badge{flex:none}
+.whatsnew-refresh .whatsnew-titleline .whatsnew-title{min-width:0}
+.whatsnew-refresh .whatsnew-change .whatsnew-badge{margin:0;vertical-align:baseline}
+.whatsnew-refresh .whatsnew-change .whatsnew-text .whatsnew-para{margin-top:0}
+/* A picture shows the idea, it does not caption itself. */
+.changelog-preview .cv-title,.changelog-preview .cv-footnote{display:none}
+/* The coffee button's icon takes the colour of its text, in both themes. */
+:root .whatsnew-foot .btn.coffee,:root[data-theme] .whatsnew-foot .btn.coffee .ic,:root .whatsnew-foot .btn.coffee .ic{color:#202020}

@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { TaskGroup } from './TaskGroup';
 import { TableContext } from './TableContext';
 import { useStore } from '@/store/store';
@@ -20,16 +20,32 @@ export function TableSurface({ groups, viewKey, childrenOf, onOpen }: {
   const current = viewPrefs(prefs, viewKey);
   const columns = tableColumns(current);
   const widths = columns.slice(1).map((column) => column === 'description' ? '240px' : column === 'labels' || column === 'project' ? '160px' : column === 'date' ? '140px' : column === 'deadline' ? '130px' : '110px');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  /* The table scrolls inside itself, so the header row stays in view: it is
+     given the height left under it in the window, measured again whenever the
+     window or the page above it changes size. */
+  const [room, setRoom] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const box = scrollRef.current;
+    if (!box) return;
+    const measure = () => setRoom(Math.max(240, Math.floor(window.innerHeight - box.getBoundingClientRect().top - 16)));
+    measure();
+    window.addEventListener('resize', measure);
+    const observer = new ResizeObserver(measure);
+    if (box.parentElement) observer.observe(box.parentElement);
+    return () => { window.removeEventListener('resize', measure); observer.disconnect(); };
+  }, []);
   const all = [...new Map(groups.flatMap((group) => group.items).map((item) => [item.id, item])).values()];
   const total = all.reduce((sum, item) => sum + (effectiveEstimate(item, childrenOf).minutes ?? 0), 0);
   return <TableContext.Provider value={{ columns, coloration: current.tableColoration ?? 'none' }}>
-    <div className="table-scroll fullwidth">
-      <div className="task-table" style={{ '--table-columns': `18px minmax(var(--table-title-min,240px),var(--table-title-max,1fr)) ${widths.join(' ')} 28px`, minWidth: 400 + widths.reduce((sum, width) => sum + parseInt(width), 0) } as CSSProperties}>
-        <div className="table-head"><span />{columns.map((column) => <div key={column} aria-sort={tableColumnSort[column] === current.sort ? current.tableDescending ? 'descending' : 'ascending' : 'none'}>
+    <div ref={scrollRef} className="table-scroll fullwidth"
+      style={room ? { maxHeight: room } : undefined}>
+      <div className="task-table" style={{ '--table-columns': `18px minmax(var(--table-title-min,240px),var(--table-title-max,1fr)) ${widths.join(' ')}`, minWidth: 372 + widths.reduce((sum, width) => sum + parseInt(width), 0) } as CSSProperties}>
+        <div className="table-head">{columns.map((column) => <div key={column} aria-sort={tableColumnSort[column] === current.sort ? current.tableDescending ? 'descending' : 'ascending' : 'none'}>
           <button onClick={() => setViewPrefs(viewKey, { sort: tableColumnSort[column],
             tableDescending: current.sort === tableColumnSort[column] ? !current.tableDescending : false })}>
             {t(tableColumnLabel[column])}{tableColumnSort[column] === current.sort ? current.tableDescending ? ' ↓' : ' ↑' : ''}
-          </button></div>)}<span /></div>
+          </button></div>)}</div>
         {groups.map((group, index) => {
           const sorted = sortItems(group.items, current.sort, childrenOf, group.reorderable || 'project', snapshot);
           return <TaskGroup key={group.sectionId ?? group.title ?? index} {...group} viewKey={viewKey}

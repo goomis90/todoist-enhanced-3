@@ -1,4 +1,5 @@
 import { filterRoots } from '@/domain/filterSelection';
+import { pageClass } from '@/domain/pageLayout';
 import { CalendarSurface } from '@/components/CalendarSurface';
 import { InsightsButton } from '@/components/InsightsButton';
 import { LabelTitle } from '@/components/LabelTitle';
@@ -249,7 +250,7 @@ function SimpleListBody({
     || (current.mode === 'list' && !(kind === 'filter' && (filterResult.error || !filter)));
 
   return (
-    <div className="page">
+    <div className={pageClass(current, prefs.listCards)}>
       <PageHeader
         hireNote={!hireInList}
         title={filter ? <FilterTitle filter={filter} /> : kind === 'label' ? <LabelTitle name={title} /> : title}

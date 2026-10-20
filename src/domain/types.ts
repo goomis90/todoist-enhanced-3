@@ -456,6 +456,8 @@ export interface ViewPrefs {
   tableColumns?: TableColumn[];
   tableColoration?: 'none' | 'priority' | 'date' | 'project';
   tableDescending?: boolean;
+  /** A list keeps a centred reading width unless this is true: then it takes the whole page. */
+  fullWidth?: boolean;
   calendar?: CalendarPrefs;
   mode: DisplayMode;
   group: GroupKey;
