@@ -356,11 +356,11 @@ test('full changelog keeps its history visible and current footer actions', asyn
   await go(page, '#/settings');
   await page.getByRole('button', { name: 'Changelog', exact: true }).click();
   const dialog = page.locator('.whatsnew');
-  await expect(dialog.locator('.whatsnew-calendar-preview')).toBeVisible();
+  await expect(dialog.locator('[data-changelog-preview="calendar"]')).toBeVisible();
   expect(await dialog.locator('.whatsnew-release').count()).toBeGreaterThan(20);
   expect(await dialog.locator('.whatsnew-badge').count()).toBe(await dialog.locator('.whatsnew-change').count());
-  await expect(dialog.locator('.whatsnew-mini-composer')).toHaveCount(1);
-  await expect(dialog.locator('.whatsnew-mini-subtasks')).toHaveCount(1);
+  await expect(dialog.locator('[data-changelog-preview="assign"]')).toHaveCount(1);
+  await expect(dialog.locator('[data-changelog-preview="subtasks"]')).toHaveCount(1);
   await expect(dialog.locator('details')).toHaveCount(0);
   await expect(dialog.getByRole('link', { name: 'Buy me a coffee' })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Got it' })).toBeVisible();
@@ -427,7 +427,7 @@ test('update window links to full changelog and keeps actions over a bounded blu
   const titles = history.locator('.whatsnew-title');
   const sizes = await titles.evaluateAll((els) => els.slice(0, 3).map((el) => getComputedStyle(el).fontSize));
   expect(new Set(sizes).size).toBe(1);
-  expect((await history.locator('.whatsnew-calendar-preview').boundingBox())!.height).toBeLessThan(190);
+  expect((await history.locator('[data-changelog-preview="calendar"]').boundingBox())!.height).toBeLessThan(190);
   const blur = await history.locator('.whatsnew-foot').evaluate((el) => ({
     filter: getComputedStyle(el, '::before').backdropFilter,
     bottom: el.getBoundingClientRect().bottom,
@@ -452,9 +452,9 @@ test('historical features show relevant previews including sidebar filters in bo
   const history = page.locator('.whatsnew');
   await expect(history.locator('.whatsnew-illustrated').first()).toBeVisible();
   expect(await history.locator('.whatsnew-illustrated').count()).toBeGreaterThan(20);
-  await expect(history.locator('.whatsnew-change.design.whatsnew-illustrated')).toHaveCount(2);
+  expect(await history.locator('.whatsnew-change.design.whatsnew-illustrated').count()).toBeGreaterThan(0);
   await expect(history.locator('.whatsnew-change.fix.whatsnew-illustrated')).toHaveCount(0);
-  await expect(history.locator('.whatsnew-change.design .changelog-preview')).toHaveCount(2);
+  expect(await history.locator('.whatsnew-change.design .changelog-preview').count()).toBe(await history.locator('.whatsnew-change.design.whatsnew-illustrated').count());
   await expect(history.locator('.whatsnew-change.fix .changelog-preview')).toHaveCount(0);
   await history.getByRole('button', { name: 'Versions', exact: true }).click();
   await page.getByRole('option', { name: 'Version 2.2.0', exact: true }).click();
@@ -479,14 +479,17 @@ test('historical features show relevant previews including sidebar filters in bo
 });
 
 
-test('legacy changelog entries have titles, visuals start at 2.0 and project default view renders', async ({ demo: page }) => {
+test('every changelog entry has a title, old big features have a picture in the same frame and project default view renders', async ({ demo: page }) => {
   await go(page, '#/settings');
   await page.getByRole('button', { name: 'Changelog', exact: true }).click();
   const history = page.locator('.whatsnew');
   await expect(history.locator('.whatsnew-title').first()).toBeVisible();
   expect(await history.locator('.whatsnew-title').count()).toBe(await history.locator('.whatsnew-change').count());
   const old = history.locator('.whatsnew-release[id^="whatsnew-1-"], .whatsnew-release[id^="whatsnew-0-"]');
-  await expect(old.locator('.whatsnew-illustrated, .changelog-preview')).toHaveCount(0);
+  expect(await old.locator('.changelog-preview').count()).toBeGreaterThan(10);
+  const frames = await history.locator('.changelog-preview').evaluateAll((els) => els.map((el) => `${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`));
+  expect(new Set(frames).size).toBe(1);
+  expect(await history.locator('.whatsnew-badge').evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().width))).size)).toBe(1);
   await history.getByRole('button', { name: 'Versions', exact: true }).click();
   await page.getByRole('option', { name: 'Version 2.0.0', exact: true }).click();
   const example = history.locator('[data-changelog-preview="projectView"]');

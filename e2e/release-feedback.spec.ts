@@ -163,12 +163,12 @@ test('2.11 features and the composer image entry have deliberate changelog illus
   await page.evaluate(() => window.dispatchEvent(new Event('enhanced:changelog')));
   const release = page.locator('#whatsnew-2-11-0');
   await expect(release).toBeVisible();
-  await expect(release.locator('.whatsnew-change.new')).toHaveCount(2);
+  await expect(release.locator('.whatsnew-change.new')).toHaveCount(3);
   await expect(release.locator('[data-changelog-preview="table"]')).toBeVisible();
   await expect(release.locator('[data-changelog-preview="sidebarResize"]')).toBeVisible();
-  await expect(release.locator('.whatsnew-change.design [data-changelog-preview="composerImage"]')).toBeVisible();
+  await expect(release.locator('.whatsnew-change.new [data-changelog-preview="composerImage"]')).toBeVisible();
   await expect(release.locator('.whatsnew-change.design [data-changelog-preview="viewChoices"]')).toBeVisible();
-  await expect(release.locator('.whatsnew-change.design .changelog-preview')).toHaveCount(2);
+  await expect(release.locator('.whatsnew-change.design .changelog-preview')).toHaveCount(1);
   await expect(release.locator('.whatsnew-change.fix .changelog-preview')).toHaveCount(0);
   await release.locator('[data-changelog-preview="composerImage"]').screenshot({ path: '../../outputs/changelog-composeur-image.png' });
   await release.locator('.whatsnew-change.new').first().screenshot({ path: '../../outputs/changelog-table.png' });
