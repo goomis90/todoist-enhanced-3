@@ -35,6 +35,7 @@ import { ConnectView } from './views/ConnectView';
 import { EstimateStorageDialog } from './components/overlays/EstimateStorageDialog';
 import { Walkthrough } from './components/overlays/Walkthrough';
 import { Tour } from './components/overlays/Tour';
+import { InstallPrompt } from './components/overlays/InstallPrompt';
 import { WhatsNew, type WhatsNewScope } from './components/overlays/WhatsNew';
 import { compareVersions, hasChanges, parseChangelog, unseenReleases } from './domain/changelog';
 import { VERSION } from './app-info';
@@ -759,6 +760,18 @@ function AppShell({
     // A new page brings a new heading to watch.
   }, [route.view, route.id]);
 
+  /* Whether the page has been scrolled at all: the bar on a phone is clear
+     at the top of a page and blurs once something goes under it (#291). */
+  const [barScrolled, setBarScrolled] = useState(false);
+  useEffect(() => {
+    const screen = document.querySelector('.screen.active');
+    if (!screen) { setBarScrolled(false); return; }
+    const sync = () => setBarScrolled(screen.scrollTop > 4);
+    sync();
+    screen.addEventListener('scroll', sync, { passive: true });
+    return () => screen.removeEventListener('scroll', sync);
+  }, [route.view, route.id]);
+
   const openTask = (id: string) => setOpenTaskId(id);
   const addTask = () => {
     setPlacement(placementForPage(route, snapshot.user?.inbox_project_id));
@@ -808,7 +821,7 @@ function AppShell({
       />
 
       <main className="workspace">
-        <header className="mobile-top">
+        <header className={`mobile-top${barScrolled ? ' scrolled' : ''}`}>
           {/* This opened My week, whatever it said. It opens the navigation. */}
           <button
             className="iconbtn"
@@ -823,9 +836,17 @@ function AppShell({
               scrolled away, which is the same title arriving where it is
               needed rather than a second one standing beside it. */}
           <strong className={titleShown ? ' shown' : ''}>{contextLabel}</strong>
-          <button className="iconbtn" aria-label={t('nav.search')} onClick={() => setSearchOpen(true)}>
-            <Icon name="search" />
-          </button>
+          <span className="mobile-top-end">
+            {/* The demo said so in a banner that cost a row of a short screen;
+                it is a chip now, and the way out is where it always was, in
+                the navigation (#291). */}
+            {demo && (
+              <button className="demochip" onClick={() => setBrowseOpen(true)}>{t('demo.chip')}</button>
+            )}
+            <button className="iconbtn" aria-label={t('nav.search')} onClick={() => setSearchOpen(true)}>
+              <Icon name="search" />
+            </button>
+          </span>
         </header>
 
         <section className="screen active">
@@ -864,16 +885,16 @@ function AppShell({
           <button
             aria-current={route.view === 'inbox' ? 'page' : undefined}
             onClick={() => navigate('inbox')}
-          >
+           aria-label={t('nav.inbox')}>
             <Icon name="inbox" size="lg" />
-            {t('nav.inbox')}
+            {t('nav.tab.inbox')}
           </button>
           <button
             aria-current={route.view === 'week' ? 'page' : undefined}
             onClick={() => navigate('week')}
-          >
+           aria-label={t('nav.week')}>
             <Icon name="week" size="lg" />
-            {t('nav.week')}
+            {t('nav.tab.week')}
           </button>
           <button className="fab" aria-label={t('nav.addTask')} onClick={addTask}>
             {/* The stylesheet paints the round accent disc on this wrapper. */}
@@ -882,9 +903,9 @@ function AppShell({
           <button
             aria-current={route.view === 'upcoming' ? 'page' : undefined}
             onClick={() => navigate('upcoming')}
-          >
+           aria-label={t('nav.upcoming')}>
             <Icon name="upcoming" size="lg" />
-            {t('nav.upcoming')}
+            {t('nav.tab.upcoming')}
           </button>
           {/* Browse was here and in the bar at the top of every page, which is
               one destination taking two of the five places a phone has. It
@@ -894,9 +915,9 @@ function AppShell({
           <button
             aria-current={route.view === 'someday' ? 'page' : undefined}
             onClick={() => navigate('someday')}
-          >
+           aria-label={t('nav.someday')}>
             <Icon name="someday" size="lg" />
-            {t('nav.someday')}
+            {t('nav.tab.someday')}
           </button>
         </nav>
       </main>
@@ -964,6 +985,7 @@ function AppShell({
         onOpen={openTask}
       />
       <BulkBar />
+      <InstallPrompt />
 
       <InsightsPanel
         projectId={route.view === 'project' ? route.id : undefined}

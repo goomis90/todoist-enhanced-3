@@ -169,6 +169,8 @@ const COLUMN_MIN = 272;
 /** Nor wider than this, past which a column stops reading as a column. They
  *  stretch between the two so that a whole number of them fills the page (#99). */
 const COLUMN_MAX = 340;
+/** How much of the next column a phone's board shows beside the one in front. */
+const PHONE_PEEK = 28;
 /** How close to the board's edge a held card has to be to turn the page. */
 const EDGE_ZONE = 48;
 /** How long it is held there before the first turn, and between the next ones. */
@@ -189,6 +191,8 @@ function BoardSurface(props: ModeSurfaceProps) {
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [reach, setReach] = useState({ left: false, right: false });
+  /** Which column is in front, for the dots under a phone's board (#295). */
+  const [at, setAt] = useState(0);
   /* How many columns make a page, and how wide each one is so that exactly
      that many fill the board: no column is ever half on screen (#99). */
   const [page, setPage] = useState<{ count: number; width: number } | null>(null);
@@ -207,8 +211,12 @@ function BoardSurface(props: ModeSurfaceProps) {
       const available = board.clientWidth;
       const fit = Math.max(1, Math.floor((available + gap) / (COLUMN_MIN + gap)));
       const count = Math.min(fit, slots);
-      const width = Math.min(COLUMN_MAX, (available - (count - 1) * gap) / count);
+      /* On a phone one column is the page, and the next one shows its edge so
+         that a swipe is the obvious thing to do (#295). */
+      const peek = count === 1 && slots > 1 && available <= 720 ? PHONE_PEEK : 0;
+      const width = Math.min(COLUMN_MAX, (available - (count - 1) * gap - peek) / count);
       setPage((was) => (was?.count === count && Math.abs(was.width - width) < 0.5 ? was : { count, width }));
+      setAt(Math.round(board.scrollLeft / Math.max(1, width + gap)));
       const max = board.scrollWidth - board.clientWidth;
       setReach({ left: board.scrollLeft > 1, right: board.scrollLeft < max - 1 });
     };
@@ -401,6 +409,12 @@ function BoardSurface(props: ModeSurfaceProps) {
           />
         )}
       </div>
+      {/* Where the swiping is: drawn on a phone only, where the board is one column wide. */}
+      {slots > 1 && (
+        <div className="boarddots" aria-hidden="true">
+          {Array.from({ length: slots }, (_, index) => <i key={index} className={index === Math.min(at, slots - 1) ? 'on' : undefined} />)}
+        </div>
+      )}
     </div>
   );
 }
