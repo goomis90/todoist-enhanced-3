@@ -452,9 +452,9 @@ test('historical features show relevant previews including sidebar filters in bo
   const history = page.locator('.whatsnew');
   await expect(history.locator('.whatsnew-illustrated').first()).toBeVisible();
   expect(await history.locator('.whatsnew-illustrated').count()).toBeGreaterThan(20);
-  await expect(history.locator('.whatsnew-change.design.whatsnew-illustrated')).toHaveCount(1);
+  await expect(history.locator('.whatsnew-change.design.whatsnew-illustrated')).toHaveCount(2);
   await expect(history.locator('.whatsnew-change.fix.whatsnew-illustrated')).toHaveCount(0);
-  await expect(history.locator('.whatsnew-change.design .changelog-preview')).toHaveCount(1);
+  await expect(history.locator('.whatsnew-change.design .changelog-preview')).toHaveCount(2);
   await expect(history.locator('.whatsnew-change.fix .changelog-preview')).toHaveCount(0);
   await history.getByRole('button', { name: 'Versions', exact: true }).click();
   await page.getByRole('option', { name: 'Version 2.2.0', exact: true }).click();
