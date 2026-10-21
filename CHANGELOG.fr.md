@@ -5,8 +5,12 @@ La traduction française de [CHANGELOG.md](CHANGELOG.md), lue par la fenêtre
 traduites ici y apparaissent en français ; les autres s'affichent en anglais.
 Chaque ligne est marquée :
 - 🆕 Nouveau : ce que l'app ne faisait pas avant,
-- 🎨 Mieux : ce qui existait et fonctionne ou se présente mieux,
-- 🐛 Correction : un bug ou une régression corrigés.
+- 🎨 Amélioré : ce qui existait et fonctionne ou se présente mieux,
+- 🐛 Corrigé : un bug ou une régression corrigés.
+
+## 2.15.0
+
+🎨 **Des finitions pour la version mobile.** Navigation, menus, détail d’une tâche, nouvelle tâche et connexion sont repensés pour le téléphone : zones plus faciles à toucher, feuilles qui montent du bas, vues adaptées aux petits écrans. Une invitation explique comment ajouter l’app à l’écran d’accueil.
 
 ## 2.14.0
 

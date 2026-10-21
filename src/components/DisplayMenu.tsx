@@ -20,6 +20,7 @@ import type { CalendarPrefs } from '@/domain/types';
 import { markerStyle } from '@/domain/colors';
 import type { Item } from '@/domain/types';
 import type { TranslationKey } from '@/i18n';
+import { PanelSheet } from '@/components/SheetChrome';
 
 interface DisplayMenuProps {
   viewKey: string;
@@ -157,15 +158,16 @@ export function DisplayMenu({
         className="btn"
         aria-expanded={open}
         aria-haspopup="dialog"
+        aria-label={t('toolbar.display')}
         onClick={() => setOpen((v) => !v)}
       >
         <Icon name="sliders" />
-        {t('toolbar.display')}
+        <span className="tb-label">{t('toolbar.display')}</span>
         {changed > 0 && <span className="displaycount">{changed}</span>}
       </button>
 
       {open && (
-        <div className="popover displaypanel" role="dialog" aria-label={t('toolbar.display')}>
+        <PanelSheet className="popover displaypanel" label={t('toolbar.display')} onClose={() => setOpen(false)}>
           <div className="panelhead">
             <h5>{t('toolbar.display')}</h5>
             <button
@@ -357,7 +359,7 @@ export function DisplayMenu({
           <h5>{t('details.title')} <em className="global">{t('details.global')}</em></h5>
           <DetailsEditor />
           </>}
-        </div>
+        </PanelSheet>
       )}
     </div>
   );

@@ -221,9 +221,11 @@ export function WhatsNew({ scope, onClose, onShowMe, onSeeChangelog }: WhatsNewP
             footerRef.current?.querySelector<HTMLButtonElement>('[data-autofocus]')?.focus();
           }}>{t('whatsNew.seeChangelog')}</button>}
           <span className="whatsnew-end">
-            <a className="btn coffee" href={COFFEE_URL} target="_blank" rel="noreferrer noopener">
+            {/* The full words are the name; a phone has room for two. */}
+            <a className="btn coffee" href={COFFEE_URL} target="_blank" rel="noreferrer noopener" aria-label={t('coffee.offer')} title={t('coffee.offer')}>
               <Icon name="coffee" size="md" />
-              {t('coffee.offer')}
+              <span className="coffee-long">{t('coffee.offer')}</span>
+              <span className="coffee-short">{t('coffee.offerShort')}</span>
             </a>
             <button className="btn primary" data-autofocus onClick={onClose}>
               {t('whatsNew.continue')}

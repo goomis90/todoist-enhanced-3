@@ -35,6 +35,10 @@ translation lives in CHANGELOG.fr.md.
 - Only what a person using the app can see or do. No technical work, no
   intermediate states of the same release.
 
+## 2.15.0
+
+🎨 **Mobile version refinements.** Navigation, menus, task details, the new task window and sign-in are redesigned for phones, with bigger touch targets, sheets that slide up and views that fit a small screen. A short invitation shows how to add the app to your home screen.
+
 ## 2.14.0
 
 🆕 **A sound when you complete a task.** A little pat on the shoulder, right when you tick it. Not for you? Turn it off in Settings, General.

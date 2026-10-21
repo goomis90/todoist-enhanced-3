@@ -30,7 +30,8 @@ async function openCalendar(page: Page, view = 'inbox') {
   await go(page, view);
   await active(page).getByRole('button', { name: /^Display(?: \d+)?$/ }).click();
   await active(page).getByRole('dialog', { name: 'Display', exact: true }).getByRole('button', { name: 'Calendar', exact: true }).click();
-  await active(page).getByRole('button', { name: /^Display(?: \d+)?$/ }).click();
+  // Escape puts the menu away: on a phone it is a sheet, and its scrim is over the Display button.
+  await page.keyboard.press('Escape');
   await expect(calendar(page)).toBeVisible();
   await calendar(page).locator('.calendar-scroll').evaluate((el) => { el.scrollTop = 8 * 56; });
 }

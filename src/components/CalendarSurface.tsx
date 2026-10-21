@@ -22,8 +22,9 @@ import { displayTaskContent, isUncompletable, toDisplayPriority, type Item } fro
 import { scheduleCalendarTask } from '@/store/calendar';
 import './calendar.css';
 
-const HOUR_HEIGHT = 56;
-const GRID_HEIGHT = 24 * HOUR_HEIGHT;
+/** An hour of the day grid: a phone's is shorter, so three days and the hours around now fit one screen (#295). */
+const HOUR_HEIGHT_WIDE = 56;
+const HOUR_HEIGHT_PHONE = 46;
 type Placement = { day: Date; minute: number | null; duration: number };
 type SlotSelection = { day: Date; minute: number | null; end: number | null; top: number; x: number; y: number };
 type Drag = { item: Item; kind: 'move' | 'start' | 'end'; x: number; y: number; moved: boolean; offset: number; placement: Placement | null };
@@ -47,6 +48,18 @@ export function CalendarSurface({ viewKey, items, onOpen, onAddTaskTo, childrenO
   const [anchor, setAnchor] = useState(() => new Date());
   const [now, setNow] = useState(() => new Date());
   const [small, setSmall] = useState(() => window.matchMedia('(max-width: 700px)').matches);
+  const HOUR_HEIGHT = small ? HOUR_HEIGHT_PHONE : HOUR_HEIGHT_WIDE;
+  const GRID_HEIGHT = 24 * HOUR_HEIGHT;
+  /* On a phone the page is the one thing that scrolls, so the grid is framed by scrolling it. */
+  const frame = (hour: number) => {
+    const grid = scroll.current;
+    if (!grid) return;
+    if (!small) { grid.scrollTop = Math.max(0, hour) * HOUR_HEIGHT; return; }
+    const screen = document.querySelector<HTMLElement>('.screen.active');
+    if (!screen) return;
+    const top = grid.getBoundingClientRect().top - screen.getBoundingClientRect().top + screen.scrollTop;
+    screen.scrollTo({ top: Math.max(0, top + Math.max(0, hour) * HOUR_HEIGHT - 110) });
+  };
   const [sidebar, setSidebar] = useState(false);
   const [expanded, setExpanded] = useState<{ date: string; anchor: HTMLElement } | null>(null);
   const [schedule, setSchedule] = useState<Item | null>(null);
@@ -76,7 +89,7 @@ export function CalendarSurface({ viewKey, items, onOpen, onAddTaskTo, childrenO
     return () => { media.removeEventListener('change', onChange); clearInterval(timer); };
   }, []);
   useEffect(() => {
-    if (scroll.current) scroll.current.scrollTop = Math.max(0, (days.some((day) => isSameDay(day, now)) ? now.getHours() - 2 : 8)) * HOUR_HEIGHT;
+    frame(days.some((day) => isSameDay(day, now)) ? now.getHours() - 2 : 8);
     // Only frame the opening period; minute ticks must not interrupt scrolling.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentation]);
@@ -237,7 +250,7 @@ export function CalendarSurface({ viewKey, items, onOpen, onAddTaskTo, childrenO
     window.addEventListener('pointermove', onMove, { passive: false });
     window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end); window.addEventListener('keydown', escape);
     return () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end); window.removeEventListener('keydown', escape); };
-  }, []);
+  }, [HOUR_HEIGHT]);
 
   const begin = (event: ReactPointerEvent, item: Item, kind: Drag['kind']) => {
     if (event.button !== 0 || item.checked || item.projection || item.id.startsWith('calendar-done:')) return;
@@ -328,7 +341,7 @@ export function CalendarSurface({ viewKey, items, onOpen, onAddTaskTo, childrenO
       <h2 aria-live="polite">{periodTitle}</h2>
       <div className="calendar-navigation">
         <button className="iconbtn" aria-label={t('calendar.previous')} onClick={() => navigate(-1)}><Icon name="arrow-left" size="sm" /></button>
-        <button className="btn" onClick={() => { setAnchor(new Date()); setNow(new Date()); setExpanded(null); if (scroll.current) scroll.current.scrollTop = Math.max(0, new Date().getHours() - 2) * HOUR_HEIGHT; }}>{t('calendar.today')}</button>
+        <button className="btn" onClick={() => { setAnchor(new Date()); setNow(new Date()); setExpanded(null); frame(new Date().getHours() - 2); }}>{t('calendar.today')}</button>
         <button className="iconbtn" aria-label={t('calendar.next')} onClick={() => navigate(1)}><Icon name="arrow-right" size="sm" /></button>
         <button className="btn" ref={sideToggle} aria-expanded={sidebar} aria-controls={`calendar-undated-${viewKey}`} onClick={() => setSidebar((value) => !value)}>{t('calendar.noDate', { count: undated.length })}<Icon name="sidebar" size="sm" /></button>
       </div>
@@ -352,7 +365,7 @@ export function CalendarSurface({ viewKey, items, onOpen, onAddTaskTo, childrenO
           <div className="calendar-day-head"><div />{days.map((day) => <div key={toApiDate(day)} className={isSameDay(day, now) ? 'is-today' : ''}>
             {new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(day)} <time dateTime={toApiDate(day)}>{day.getDate()}</time>
           </div>)}</div>
-          <div className="calendar-all-day"><div>{t('calendar.allDay')}</div>{days.map((day) => <div key={toApiDate(day)} {...cellProps(day, 'all-day')}>
+          <div className="calendar-all-day"><div>{small ? t('calendar.allDayShort') : t('calendar.allDay')}</div>{days.map((day) => <div key={toApiDate(day)} {...cellProps(day, 'all-day')}>
             {sorted.filter((item) => isSameDay(dueDate(item)!, day) && !hasTime(item.due)).map((item) => card(item))}
           </div>)}</div>
           <div className="calendar-scroll" ref={scroll}>
