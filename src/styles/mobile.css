@@ -159,7 +159,7 @@
   /* ---- What's new: badge above the title, a footer that no longer floats on the text (#293) ---- */
   :root .sheet:has(> .whatsnew){overflow:hidden;display:flex;flex-direction:column}
   :root .whatsnew.whatsnew-refresh{width:100%;max-height:none;height:calc(100dvh - 56px - env(safe-area-inset-top))}
-  :root .whatsnew-refresh .whatsnew-head{padding:20px 6px 6px 18px;gap:6px;flex-wrap:nowrap;background:var(--surface)}
+  :root .whatsnew-refresh .whatsnew-head{padding:20px 12px 6px 18px;gap:6px;flex-wrap:nowrap;background:var(--surface)}
   :root .whatsnew-refresh .whatsnew-head h2{font-size:19px;letter-spacing:-.01em}
   :root .whatsnew-refresh .whatsnew-head .iconbtn{width:44px;height:44px;flex:none}
   :root .whatsnew-refresh .whatsnew-body{padding:4px 18px 16px;gap:22px}
